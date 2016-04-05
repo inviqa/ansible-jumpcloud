@@ -1,0 +1,7 @@
+---
+
+- name: restart JumpCloud
+  service:
+    name:  "{{ jumpcloud_agent_service }}"
+    state: restarted
+...

@@ -1,0 +1,34 @@
+---
+galaxy_info:
+  author: "inviqa"
+  description: "Install and Configure JumpCloud (https://jumpcloud.com) AD and LDAP agent"
+  company: "Inviqa UK Ltd"
+  license: MIT
+  min_ansible_version: 1.5
+  platforms:
+    - name: EL
+      versions:
+        - 6
+        - 7
+    - name: Fedora
+      versions:
+        - 22
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - precise
+        - quantal
+        - raring
+        - saucy
+        - trusty
+  categories:
+    - authentication
+    - monitoring
+    - networking
+
+dependencies: []
+
+
+...

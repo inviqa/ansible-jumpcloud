@@ -1,0 +1,20 @@
+---
+
+- name: Install JumpCloud Agent
+  shell: >
+          curl --silent \
+               --show-error \
+                   --header 'x-connect-key: {{ jumpcloud_x_connect_key }}' \
+                   {{ jumpcloud_x_connect_url }} \
+          | bash
+
+  become: "{{ jumpcloud_use_sudo }}"
+  # notify:
+  #   - restart JumpCloud
+
+# restart is needed to generate the jcagent.config file
+- name: restart JumpCloud
+  service:
+    name:  "{{ jumpcloud_agent_service }}"
+    state: restarted
+...

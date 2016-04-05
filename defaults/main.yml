@@ -1,0 +1,15 @@
+---
+jumpcloud_directory: /opt/jc
+jumpcloud_agent_config: "{{ jumpcloud_directory }}/jcagent.conf"
+jumpcloud_x_connect_url: 'https://kickstart.jumpcloud.com/Kickstart'
+jumpcloud_api_url: 'https://console.jumpcloud.com/api'
+jumpcloud_agent_service: jcagent
+jumpcloud_force_install: no
+jumpcloud_use_sudo: no
+# defaults for new hosts
+jumpcloud_displayName: "{{ inventory_hostname }}"
+jumpcloud_allowPublicKeyAuthentication: 'true'
+jumpcloud_allowSshPasswordAuthentication: 'true'
+jumpcloud_allowSshRootLogin: 'true'
+jumpcloud_allowMultiFactorAuthentication: 'false'
+...

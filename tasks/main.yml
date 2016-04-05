@@ -1,0 +1,27 @@
+---
+- name:       check JumpCloud agent config
+  stat:
+    path:     "{{ jumpcloud_agent_config }}"
+  register:   jumpcloud_agent_config_status
+
+- name:       check if JumpCloud is installed
+  set_fact:
+    jumpcloud_not_installed: "{{ not (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
+
+- name:       Install JumpCloud if required
+  include:    install.yml
+  when:       jumpcloud_not_installed or jumpcloud_force_install
+
+- name:       check JumpCloud agent config again
+  stat:
+    path:     "{{ jumpcloud_agent_config }}"
+  register:   jumpcloud_agent_config_status
+
+- name:       check again if JumpCloud is installed
+  set_fact:
+    jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
+
+- name:       Update System Attributes if JumpCloud is insalled
+  include:    update_system.yml
+  when:       jumpcloud_is_installed
+...

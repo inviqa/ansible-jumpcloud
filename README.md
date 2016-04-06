@@ -91,6 +91,10 @@ This value must be contained in single quotes "\'"
     jumpcloud_allowMultiFactorAuthentication: 'false'
 ...
 ```
+## TODO
+- [ ] create a conditional check to update tags only if they are defined as Variables
+- [ ] add the automation of the tag creation if the tag doesn't exists in JC role
+- [ ] add the possibility to define which users need to be tagged for that host's tag
 
 ## License
 -------

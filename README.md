@@ -105,7 +105,7 @@ This value must be contained in single quotes "\'"
 ------------------
 Author Marco Massari Calderone at Inviq UK Ltd
 
-Inspired by Barney Hanlon's [ansible-jumpcloud] galaxy role (https://github.com/shrikeh/ansible-jumpcloud)
+Inspired by Barney Hanlon's Galaxy role [ansible-jumpcloud](https://github.com/shrikeh/ansible-jumpcloud)
 
 [github]: https://github.com/inviqa/ansible-jumpcloud "Github location of this role"
 [curl]: https://galaxy.ansible.com/list#/roles/4384

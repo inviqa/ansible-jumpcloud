@@ -9,7 +9,7 @@ It also make use of JumpCloud API to set JumpCloud System attributes.
 
 ## Role Variables
 ------------
-#### [`jumpcloud_api_key`][jc-api-key]
+#### [`jumpcloud_api_key`][jumpcloud-api-key]
 Default: none
 Used to modify the attribute of a System on JC portal.
 
@@ -18,57 +18,57 @@ To be retrieved from JumpCloud portal by a JC Admin account
 
 To be stored in an Ansible Vault. It's very high-sensitivity Information.
 
-#### [`jumpcloud_x_connect_key`][jc-x-connect-key]
+#### [`jumpcloud_x_connect_key`][jumpcloud-x-connect-key]
 Default: none
 
 The X_Connect key as displayed on the `Servers > Add` screen. **Mandatory**.
 
-#### [`jumpcloud_directory`][jc-directory]
+#### [`jumpcloud_directory`][jumpcloud-directory]
 Default: `/opt/jc`
 
 Path to check if JumpCloud has been previously installed.
 
-#### [`jumpcloud_x_connect_url`][jc-x-connect-url]
+#### [`jumpcloud_x_connect_url`][jumpcloud-x-connect-url]
 Default: 'https://kickstart.jumpcloud.com/Kickstart'
 
 URL for the install script.
 
-#### [`jumpcloud_force_install`][jc-force-install]
+#### [`jumpcloud_force_install`][jumpcloud-force-install]
 Default: `no`
 
 Used to determine whether or not to force installation of the client if it has been previously installed.
 
-#### [`jumpcloud_agent_service`][jc-agent-service]
+#### [`jumpcloud_agent_service`][jumpcloud-agent-service]
 Default: `jcagent`
 
 Name of the service to restart.
 
-#### [`jumpcloud_use_sudo`][jc-use-sudo]
+#### [`jumpcloud_use_sudo`][jumpcloud-use-sudo]
 Default: `no`
 
 Whether or not to use sudo during installation.
 
-#### [`jumpcloud_tags`][tags]
+#### [`jumpcloud_tags`]
 The list of JC tags you want a host or a group of hosts to be part of
   - 'tag_one'
   - 'tag_two'
 
-#### [`jumpcloud_displayName`][displayName]
+#### [`jumpcloud_displayName`][jumpcloud-displayName]
 Default: `{{ inventory_hostname }}``
 
-#### [`jumpcloud_allowPublicKeyAuthentication`][allowPublicKeyAuthentication]
+#### [`jumpcloud_allowPublicKeyAuthentication`][jumpcloud-allowPublicKeyAuthentication]
 Default: `'true'`
 This value must be contained in single quotes "\'"
 
-#### [`jumpcloud_allowSshPasswordAuthentication`][allowSshPasswordAuthentication]
+#### [`jumpcloud_allowSshPasswordAuthentication`][jumpcloud-allowSshPasswordAuthentication]
 Default: `'true'`
 This value must be contained in single quotes "\'"
 
-#### [`jumpcloud_allowSshRootLogin`][allowSshRootLogin]
+#### [`jumpcloud_allowSshRootLogin`][jumpcloud-allowSshRootLogin]
 Default: `'true'`
 This value must be contained in single quotes "\'"
 
-#### [`jumpcloud_allowMultiFactorAuthentication`][allowMultiFactorAuthentication]
+#### [`jumpcloud_allowMultiFactorAuthentication`][jumpcloud-allowMultiFactorAuthentication]
 Default: `'false'`
 This value must be contained in single quotes "\'"
 
@@ -105,11 +105,16 @@ Inspired by @[barney_hanlon][twitter] (https://github.com/shrikeh/ansible-jumpcl
 [github]: https://github.com/inviqa/ansible-jumpcloud "Github location of this role"
 [curl]: https://galaxy.ansible.com/list#/roles/4384
 [jumpcloud]: https://jumpcloud.com "JumpCloud website"
-[jc-x-connect-key]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L4 "Link to variable on master"
-[jc-directory]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L12 "Link to variable on master"
-[jc-x-connect-url]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L13 "Link to variable on master"
-[jc-template-path]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L15 "Link to variable on master"
-[jc-force-install]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L17 "Link to variable on master"
-[jc-agent-service]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L18 "Link to variable on master"
-[jc-use-sudo]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L19 "Link to variable on master"
+[jumpcloud-x-connect-key]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L4 "Link to variable on master"
+[jumpcloud-directory]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L12 "Link to variable on master"
+[jumpcloud-x-connect-url]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L6 "Link to variable on master"
+[jumpcloud-agent-service]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L8 "Link to variable on master"
+[jumpcloud-force-install]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L9 "Link to variable on master"
+[jumpcloud-use-sudo]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L10 "Link to variable on master"
+[jumpcloud-displayName]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L11 "Link to variable on master"
+[jumpcloud-allowPublicKeyAuthentication]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L12 "Link to variable on master"
+[jumpcloud-allowSshPasswordAuthentication]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L13 "Link to variable on master"
+[jumpcloud-allowSshRootLogin]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L14 "Link to variable on master"
+[jumpcloud-allowMultiFactorAuthentication]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L15 "Link to variable on master"
+
 [licence]: https://raw.githubusercontent.com/inviqa/ansible-jumpcloud/master/LICENSE

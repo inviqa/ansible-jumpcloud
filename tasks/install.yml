@@ -17,5 +17,5 @@
   service:
     name:  "{{ jumpcloud_agent_service }}"
     state: restarted
-  become: jumpcloud_use_sudo
+  become: "{{ jumpcloud_use_sudo }}"
 ...

@@ -2,7 +2,7 @@
 - name: Get JumpCloud SystemKey
   command: grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
   register: jumpcloud_system_key
-  become: true
+  become: "{{ jumpcloud_use_sudo }}"
 
 - name: Update System Information
   command: >

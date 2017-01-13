@@ -23,7 +23,7 @@
   delegate_to: localhost
   #no_log: True
   when: jumpcloud_system_key is defined
-  become: true
+  become: "{{ jumpcloud_use_sudo }}"
 
 # It would be more elegant to use the URI: syntax..but can't see how to pass the data in the correct format needed to the RESTAPI
 # can't understand if it has to go { "body:" { "comtent: { "data"}"}}... or somewhere else

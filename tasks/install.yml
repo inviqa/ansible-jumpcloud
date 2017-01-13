@@ -17,4 +17,5 @@
   service:
     name:  "{{ jumpcloud_agent_service }}"
     state: restarted
+  become: true
 ...

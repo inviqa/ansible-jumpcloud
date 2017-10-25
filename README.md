@@ -92,9 +92,10 @@ This value must be contained in single quotes "\'"
 ...
 ```
 ## TODO
-- [ ] create a conditional check to update tags only if they are defined as Variables
-- [ ] add the automation of the tag creation if the tag doesn't exists in JC role
-- [ ] add the possibility to define which users need to be tagged for that host's tag
+- [ ] replace TAGS support with GROUPS support 
+- [ ] create a conditional check to update groups only if they are defined as Variables
+- [ ] add the automation of the group creation if the group doesn't exists in JC role
+- [ ] add the possibility to define which users need to be grouped for that host's group
 
 ## License
 -------

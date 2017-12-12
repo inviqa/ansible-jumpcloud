@@ -1,0 +1,43 @@
+---
+- name: Bring up Docker containers
+  hosts: localhost
+  gather_facts: false
+  vars:
+    inventory:
+      - name: ansible_jumpcloud_test_host_1
+        image: "chrismeyers/centos6"
+  roles:
+  - role: provision_docker
+    provision_docker_company: 'ansible'
+    provision_docker_inventory: "{{ inventory }}"
+
+- name: Update the hostname
+  hosts: docker_containers
+  tasks:
+    - hostname:
+        name: "{{ inventory_hostname}}"
+
+- name: Run JumpCloud role
+  hosts: docker_containers
+  roles:
+    - { role: ansible-jumpcloud }
+  vars_files:
+    - ./test_variables.yml
+  vars:
+    jumpcloud_tags:
+      - 'test_tag1'
+      - 'test_tag2'
+    jumpcloud_displayName: "{{ inventory.name }}"
+    jumpcloud_allowPublicKeyAuthentication: 'false'
+    jumpcloud_allowSshPasswordAuthentication: 'false'
+    jumpcloud_allowSshRootLogin: 'true'
+    jumpcloud_allowMultiFactorAuthentication: 'false'
+
+- name: Run Tests
+  hosts: docker_containers
+  tasks:
+    - { include: tasks/test_tasks.yml }
+
+
+- name: Destroy Docker Containers
+...

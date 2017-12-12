@@ -1,0 +1,4 @@
+---
+- name: Check that the host has been added to JumpCloud
+- name: Check that the host has been associated to all the specified Groups
+...

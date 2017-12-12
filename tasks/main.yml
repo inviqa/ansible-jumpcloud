@@ -9,7 +9,7 @@
     jumpcloud_not_installed: "{{ not (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
 
 - name:       Install JumpCloud if required
-  include:    install.yml
+  import_tasks:    install.yml
   when:       jumpcloud_not_installed or jumpcloud_force_install
 
 - name:       check JumpCloud agent config again
@@ -22,6 +22,6 @@
     jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
 
 - name:       Update System Attributes if JumpCloud is insalled
-  include:    update_system.yml
+  import_tasks:    update_system.yml
   when:       jumpcloud_is_installed
 ...

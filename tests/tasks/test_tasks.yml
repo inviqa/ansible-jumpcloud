@@ -1,4 +1,67 @@
 ---
 - name: Check that the host has been added to JumpCloud
-- name: Check that the host has been associated to all the specified Groups
+  uri:
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key.stdout }}"
+    method: GET
+    headers:
+      "Content-Type": "application/json"
+      "Accept":       "application/json"
+      "x-api-key":    "{{ jumpcloud_api_key }}"
+    body_format:  json
+    body: '{ "displayName" : "{{ jumpcloud_displayName }}",
+    "allowPublicKeyAuthentication" : "{{ jumpcloud_allowPublicKeyAuthentication }}",
+    "allowSshPasswordAuthentication" : "{{ jumpcloud_allowSshPasswordAuthentication }}",
+    "allowSshRootLogin" : "{{ jumpcloud_allowSshRootLogin }}",
+    "allowMultiFactorAuthentication" : "{{ jumpcloud_allowMultiFactorAuthentication }}" }'
+    follow_redirects: all
+    return_content: yes
+    status_code: 200
+  delegate_to: localhost
+  register: jc_system_json_response
+  when: jumpcloud_system_key is defined
+  ignore_errors: yes
+
+# - name: Check that the host has been added to JumpCloud
+#   set_fact: jc_system="{{jc_system_json_response.displayName}}"
+#   delegate_to: localhost
+
+- debug: msg="System Created with the name `{{jc_system_json_response.json.displayName}}`"
+  delegate_to: localhost
+
+- name: Check that the host has been added to the required Groups
+  uri:
+    url: "{{ jumpcloud_api_v2_url }}/systems/{{ jumpcloud_system_key.stdout }}/memberof"
+    method: GET
+    headers:
+      "Content-Type": "application/json"
+      "Accept":       "application/json"
+      "x-api-key":    "{{ jumpcloud_api_key }}"
+    body_format:  json
+    body: '{ "displayName" : "{{ jumpcloud_displayName }}",
+    "allowPublicKeyAuthentication" : "{{ jumpcloud_allowPublicKeyAuthentication }}",
+    "allowSshPasswordAuthentication" : "{{ jumpcloud_allowSshPasswordAuthentication }}",
+    "allowSshRootLogin" : "{{ jumpcloud_allowSshRootLogin }}",
+    "allowMultiFactorAuthentication" : "{{ jumpcloud_allowMultiFactorAuthentication }}" }'
+    follow_redirects: all
+    return_content: yes
+    status_code: 200
+  delegate_to: localhost
+  register: jc_system_memberof_json_response
+  when: jumpcloud_system_key is defined
+  ignore_errors: yes
+
+- debug: msg="{{jc_system_memberof_json_response}}"
+  delegate_to: localhost
+
+- name: Create the list of System Groups attributes
+  # add a check with the current jc_system_groups to make sure that they match
+  set_fact: jc_system_memberof={{ jc_system_memberof|default([]) | union([item.id]) }}
+  with_items: "{{ jc_system_memberof_json_response.json}}"
+  delegate_to: localhost
+
+- debug: msg="System added to the following Groups `{{item}}`"
+  with_items: "{{jc_system_memberof}}"
+  delegate_to: localhost
+# - name: Check that the host has been associated to all the specified Groups
+#curl --quite -i -X 'GET'  -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'x-api-key: yyyyy ' https://console.jumpcloud.com/api/v2/systems/xxxxxx/memberof
 ...

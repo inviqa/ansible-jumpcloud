@@ -21,7 +21,18 @@
   set_fact:
     jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
 
+- name:        Get JumpCloud SystemKey
+  command:     grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
+  register:    jumpcloud_system_key
+  become:      "{{ jumpcloud_use_sudo }}"
+  when:        jumpcloud_is_installed
+
 - name:       Update System Attributes if JumpCloud is insalled
   import_tasks:    update_system.yml
   when:       jumpcloud_is_installed
+
+- name:       Add System to Groups if Groups are defined
+  import_tasks:    update_groups.yml
+  when:       jumpcloud_is_installed and jumpcloud_system_groups is defined
+
 ...

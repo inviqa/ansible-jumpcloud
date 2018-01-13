@@ -1,10 +1,13 @@
 ---
+
 jumpcloud_directory: /opt/jc
 jumpcloud_agent_config: "{{ jumpcloud_directory }}/jcagent.conf"
 jumpcloud_x_connect_key: "{{ enc_jumpcloud_x_connect_key }}"
 #store enc_jumpcloud_x_connect_key in an ansible vault
 jumpcloud_x_connect_url: 'https://kickstart.jumpcloud.com/Kickstart'
-jumpcloud_api_url: 'https://console.jumpcloud.com/api'
+jumpcloud_kickstart_script: "/tmp/Kickstart.sh"
+jumpcloud_api_v1_url: 'https://console.jumpcloud.com/api'
+jumpcloud_api_v2_url: 'https://console.jumpcloud.com/api/v2'
 jumpcloud_agent_service: jcagent
 jumpcloud_force_install: no
 jumpcloud_use_sudo: no

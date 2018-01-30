@@ -19,6 +19,8 @@ To be retrieved from JumpCloud portal by a JC Admin account
 To be stored in an Ansible Vault. It's very high-sensitivity Information.
 
 ## Testing
+See README file in the `tests` directory
+
 ### Requirements
 create the file tests/test_variables.yml that must include your private jumpcloud_x_connect_key as follow:
 ```

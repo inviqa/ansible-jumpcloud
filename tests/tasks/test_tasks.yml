@@ -47,12 +47,13 @@
     status_code: 200
   delegate_to: localhost
   register: jc_system_memberof_json_response
-  when: jumpcloud_system_key is defined
+  when: jumpcloud_system_key is defined and jumpcloud_system_groups is defined
   ignore_errors: yes
 
 - set_fact: jc_system_memberof={{ jc_system_memberof|default([]) | union([item.id]) }}
   with_items: "{{ jc_system_memberof_json_response.json}}"
   delegate_to: localhost
+  when: jumpcloud_system_groups is defined
 
 - name: Check that the host is member of the required groups
   assert:
@@ -61,4 +62,5 @@
     msg: "The host seems not to be member of the required System Groups {{jumpcloud_system_groups}}"
   with_items: "{{jc_system_groups}}"
   delegate_to: localhost
+  when: jumpcloud_system_groups is defined
 ...

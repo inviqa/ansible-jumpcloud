@@ -111,4 +111,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       ansible.playbook = "playbook.yml"
     end
   end
+  # CentOS 6
+  config.vm.define "centos6-without-system-groups" do |centos6|
+    centos6.vm.hostname = "centos6test-without-system-groups"
+    if not TEST_MODE
+      centos6.vm.box = "geerlingguy/centos6"
+    else
+      centos6.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + "-centos6.box"
+    end
+    centos6.vm.network :private_network, ip: NETWORK_PRIVATE_IP_PREFIX + "6"
+
+    # Ansible.
+    centos6.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbook_without-system-groups.yml"
+    end
+  end
 end

@@ -7,11 +7,41 @@
     headers: "x-connect-key: {{ jumpcloud_x_connect_key }}"
   become: "{{ jumpcloud_use_sudo }}"
 
+- name: if the system is a Ubuntu 12.xx then tricks the temporary the version for the Kickstarter to work
+  lineinfile:
+    path: /etc/issue
+    regexp: '^Ubuntu 12'
+    line: 'Ubuntu 14.04.5 LTS \n \l'
+    state: present
+    backup: yes
+  when: ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version
+  register: line_infile_result
+
+- name: saving the position of the `/etc/issue` backup
+  set_fact:
+    issue_backup_file: "{{ line_infile_result.backup}}"
+  when: line_infile_result is defined
+
 - name: Install JumpCloud Agent
   shell: "{{ jumpcloud_kickstart_script }}"
   args:
     creates: "{{ jumpcloud_agent_config}}"
   become: "{{ jumpcloud_use_sudo }}"
+
+- name: restore '/etc/issue' backup if present
+  file:
+    src: "{{issue_backup_file}}"
+    path: /etc/issue
+    state: hard
+    force: yes
+  when: issue_backup_file is defined
+
+- name: removes '/etc/issue' backup file if present
+  file:
+    path: "{{issue_backup_file}}"
+    state: absent
+  when: issue_backup_file is defined
+
 
 - name: Restart JumpCloud
   service:

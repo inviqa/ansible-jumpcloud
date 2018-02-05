@@ -18,6 +18,29 @@ To be retrieved from JumpCloud portal by a JC Admin account
 
 To be stored in an Ansible Vault. It's very high-sensitivity Information.
 
+## Testing
+See README file in the `tests` directory
+
+### Requirements
+create the file tests/test_variables.yml that must include your private jumpcloud_x_connect_key as follow:
+```
+---
+enc_jumpcloud_x_connect_key: "xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz"
+...
+```
+
+Make sure that on you JumpCloud account you have the following System Groups:
+```
+ansible_test_1
+ansible_test_2
+```
+
+Run
+```
+cd tests/
+ansible-playbook main.yml
+```
+
 #### [`jumpcloud_x_connect_key`][jumpcloud-x-connect-key]
 Default: none
 
@@ -91,10 +114,7 @@ This value must be contained in single quotes "\'"
     jumpcloud_allowMultiFactorAuthentication: 'false'
 ...
 ```
-## TODO
-- [ ] create a conditional check to update tags only if they are defined as Variables
-- [ ] add the automation of the tag creation if the tag doesn't exists in JC role
-- [ ] add the possibility to define which users need to be tagged for that host's tag
+
 
 ## License
 -------

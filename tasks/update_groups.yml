@@ -1,0 +1,42 @@
+---
+- name: retrive System Groups attributes based on the System Group name
+  uri:
+    url: "{{ jumpcloud_api_v2_url }}/systemgroups?filter=name:eq:{{ item }}"
+    method: GET
+    headers:
+      "Content-Type": "application/json"
+      "Accept":       "application/json"
+      "x-api-key":    "{{ jumpcloud_api_key }}"
+    follow_redirects: all
+    return_content: yes
+  with_items: "{{ jumpcloud_system_groups }}"
+  delegate_to: localhost
+  register:  jc_system_groups_json_response
+  ignore_errors: yes
+  when: jumpcloud_system_key is defined and jumpcloud_system_groups is defined
+
+- name: Create the list of System Groups attributes
+  set_fact: jc_system_groups={{ jc_system_groups|default([]) | union(item.json) }}
+  with_items: "{{ jc_system_groups_json_response.results}}"
+  delegate_to: localhost
+
+- name: Add System to Group(s)
+  uri:
+    url: "{{ jumpcloud_api_v2_url }}/systemgroups/{{ item.id }}/members"
+    method: POST
+    headers:
+      "Content-Type": "application/json"
+      "Accept":       "application/json"
+      "x-api-key":    "{{ jumpcloud_api_key }}"
+    body_format:  json
+    body: '{ "op": "add","type": "system", "id": "{{ jumpcloud_system_key.stdout }}" }'
+    follow_redirects: all
+    return_content: yes
+    # 204 = Successfully added, 409 = Already member
+    status_code: 204,409
+  with_items: "{{ jc_system_groups }}"
+  delegate_to: localhost
+  register: http_outcome
+  ignore_errors: yes
+  when: jumpcloud_system_key is defined and jc_system_groups is defined
+...

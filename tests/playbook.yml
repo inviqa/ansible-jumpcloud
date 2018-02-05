@@ -1,0 +1,20 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: yes
+
+  vars_files:
+    - ./test_variables.yml
+  vars:
+    jumpcloud_system_groups:
+      - 'ansible_test_1'
+      - 'ansible_test_2'
+    jumpcloud_use_sudo: true
+    jumpcloud_displayName: "ansible-jc-role-{{ ansible_hostname }}"
+
+  pre_tasks: []
+
+  roles:
+      - { role: ansible-jumpcloud }
+  tasks:
+      - include_tasks: tasks/test_tasks.yml

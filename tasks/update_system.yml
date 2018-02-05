@@ -1,48 +1,23 @@
 ---
-- name: Get JumpCloud SystemKey
-  command: grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
-  register: jumpcloud_system_key
-  become: "{{ jumpcloud_use_sudo }}"
 
 - name: Update System Information
-  command: >
-          curl -iq \
-                   -d '{
-                      "tags" : [ {{ '"' + jumpcloud_tags|join('", "') + '"' }} ],
-                      "displayName" : "{{ jumpcloud_displayName }}",
-                      "allowPublicKeyAuthentication" : "{{ jumpcloud_allowPublicKeyAuthentication }}",
-                      "allowSshPasswordAuthentication" : "{{ jumpcloud_allowSshPasswordAuthentication }}",
-                      "allowSshRootLogin" : "{{ jumpcloud_allowSshRootLogin }}",
-                      "allowMultiFactorAuthentication" : "{{ jumpcloud_allowMultiFactorAuthentication }}"
-                    }' \
-                   -X 'PUT' \
-                   -H 'Content-Type: application/json' \
-                   -H 'Accept: application/json' \
-                   -H 'x-api-key: {{ jumpcloud_api_key }}' \
-                   "{{ jumpcloud_api_url }}/systems/{{ jumpcloud_system_key.stdout }}"
+  uri:
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key.stdout }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Accept":       "application/json"
+      "x-api-key":    "{{ jumpcloud_api_key }}"
+    body_format:  json
+    body: '{ "displayName" : "{{ jumpcloud_displayName }}",
+    "allowPublicKeyAuthentication" : "{{ jumpcloud_allowPublicKeyAuthentication }}",
+    "allowSshPasswordAuthentication" : "{{ jumpcloud_allowSshPasswordAuthentication }}",
+    "allowSshRootLogin" : "{{ jumpcloud_allowSshRootLogin }}",
+    "allowMultiFactorAuthentication" : "{{ jumpcloud_allowMultiFactorAuthentication }}" }'
+    follow_redirects: all
+    return_content: yes
+    status_code: 200
   delegate_to: localhost
-  #no_log: True
+  register: http_outcome
   when: jumpcloud_system_key is defined
-  become: "{{ jumpcloud_use_sudo }}"
-
-# It would be more elegant to use the URI: syntax..but can't see how to pass the data in the correct format needed to the RESTAPI
-# can't understand if it has to go { "body:" { "comtent: { "data"}"}}... or somewhere else
-# - name: Update System Information
-#   uri:
-#     url: "{{ jumpcloud_api_url }}/systems/{{ jumpcloud_system_key.stdout }}"
-#     headers:
-#       Content-Type: 'application/json'
-#       Accept:       'application/json'
-#       x-api-key:    "{{ jumpcloud_api_key }}"
-#     body_format:  json
-#     body:
-#       content:
-#         tags: ["xxx","yyy","zzz"]
-#         displayName: "{{ jumpcloud_displayName }}"
-#     method: PUT
-#     follow_redirects: all
-#     return_content: yes
-#   delegate_to: localhost
-#   register: http_outcome
-
 ...

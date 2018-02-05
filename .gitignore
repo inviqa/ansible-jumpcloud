@@ -1,2 +1,4 @@
 tests/.vagrant
+tests/test_variables
 !.gitignore
+*.retry

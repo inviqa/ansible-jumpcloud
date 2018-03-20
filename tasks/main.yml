@@ -17,7 +17,7 @@
     path:     "{{ jumpcloud_agent_config }}"
   register:   jumpcloud_agent_config_status
 
-- name:       check again if JumpCloud is installed
+- name:       check if JumpCloud is installed again
   set_fact:
     jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
 

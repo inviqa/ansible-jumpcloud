@@ -1,0 +1,26 @@
+---
+
+- name: Get `vagrant` status
+  local_action: shell type vagrant
+  register: vagrant_status
+  ignore_errors: true
+  run_once: true
+
+- name: Check if `vagrant` is installed
+  set_fact:
+    vagrant_is_installed: "{{ not 'not found' in vagrant_status.stdout }}"
+  run_once: true
+
+- debug:
+    msg: "Warning ==> vagrant is not installed"
+  when: not vagrant_is_installed
+  run_once: true
+  
+- name: run 'vagrant up'
+  local_action: shell vagrant up {{ inventory_hostname }}
+  when: vagrant_is_installed
+  register: vagrant_output
+  ignore_errors: True
+
+- debug: var=vagrant_output.stdout_lines
+...

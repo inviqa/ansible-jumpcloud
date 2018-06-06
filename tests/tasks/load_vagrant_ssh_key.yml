@@ -1,0 +1,16 @@
+---
+
+- name: add 'vagrant_ssh_key' to ssh-agent
+  local_action: shell ssh-add {{vagrant_ssh_key}}
+  register: ssh_add_output
+  ignore_errors: True
+
+- name: Check if `vagrant_ssh_key` has been added
+  set_fact:
+    vagrant_ssh_key_added: "{{ not 'not found' in ssh_add_output.stdout }}"
+
+- debug:
+    msg: "Warning ==> vagrant_ssh_key wasn't added to ssh-agent"
+  when: not vagrant_ssh_key_added
+
+...

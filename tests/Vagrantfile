@@ -10,13 +10,14 @@ LOCAL_BOX_DIRECTORY = "file://~/Downloads/"
 # Uncomment when explicitly testing VirtualBox.
 PROVIDER_UNDER_TEST = "virtualbox"
 NETWORK_PRIVATE_IP_PREFIX = "172.16.3."
+PROJECT_NAME="ansible-jumpcloud"
 
 # Uncomment when explicitly testing VMWare.
-# PROVIDER_UNDER_TEST = "vmware"
+# PROVIDER_UNDER_TEST + PROJECT_NAME = "vmware"
 # NETWORK_PRIVATE_IP_PREFIX = "192.168.3."
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.ssh.insert_key = false
+  config.ssh.insert_key = true
 
   # VirtualBox.
   config.vm.provider :virtualbox do |v|
@@ -38,14 +39,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     if not TEST_MODE
       ubuntu1604.vm.box = "geerlingguy/ubuntu1604"
     else
-      ubuntu1604.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + "-ubuntu1604.box"
+      ubuntu1604.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + PROJECT_NAME + "-ubuntu1604.box"
     end
     ubuntu1604.vm.network :private_network, ip: NETWORK_PRIVATE_IP_PREFIX + "2"
 
-    # Ansible.
-    ubuntu1604.vm.provision "ansible" do |ansible|
-      ansible.playbook = "playbook.yml"
-    end
   end
 
   # Ubuntu 14.04 - Trusty Tahr
@@ -54,14 +51,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     if not TEST_MODE
       ubuntu1404.vm.box = "geerlingguy/ubuntu1404"
     else
-      ubuntu1404.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + "-ubuntu1404.box"
+      ubuntu1404.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + PROJECT_NAME + "-ubuntu1404.box"
     end
     ubuntu1404.vm.network :private_network, ip: NETWORK_PRIVATE_IP_PREFIX + "3"
-
-    # Ansible.
-    ubuntu1404.vm.provision "ansible" do |ansible|
-      ansible.playbook = "playbook.yml"
-    end
   end
 
   # Ubuntu 12.04 - Precise Pangolin
@@ -70,14 +62,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     if not TEST_MODE
       ubuntu1204.vm.box = "geerlingguy/ubuntu1204"
     else
-      ubuntu1204.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + "-ubuntu1204.box"
+      ubuntu1204.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + PROJECT_NAME + "-ubuntu1204.box"
     end
     ubuntu1204.vm.network :private_network, ip: NETWORK_PRIVATE_IP_PREFIX + "4"
-
-    # Ansible.
-    ubuntu1204.vm.provision "ansible" do |ansible|
-      ansible.playbook = "playbook.yml"
-    end
   end
 
   # CentOS 7
@@ -86,14 +73,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     if not TEST_MODE
       centos7.vm.box = "geerlingguy/centos7"
     else
-      centos7.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + "-centos7.box"
+      centos7.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + PROJECT_NAME + "-centos7.box"
     end
     centos7.vm.network :private_network, ip: NETWORK_PRIVATE_IP_PREFIX + "5"
-
-    # Ansible.
-    centos7.vm.provision "ansible" do |ansible|
-      ansible.playbook = "playbook.yml"
-    end
   end
 
   # CentOS 6
@@ -102,14 +84,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     if not TEST_MODE
       centos6.vm.box = "geerlingguy/centos6"
     else
-      centos6.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + "-centos6.box"
+      centos6.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + PROJECT_NAME + "-centos6.box"
     end
     centos6.vm.network :private_network, ip: NETWORK_PRIVATE_IP_PREFIX + "6"
-
-    # Ansible.
-    centos6.vm.provision "ansible" do |ansible|
-      ansible.playbook = "playbook.yml"
-    end
   end
   # CentOS 6
   config.vm.define "centos6-without-system-groups" do |centos6|
@@ -117,13 +94,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     if not TEST_MODE
       centos6.vm.box = "geerlingguy/centos6"
     else
-      centos6.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + "-centos6.box"
+      centos6.vm.box = LOCAL_BOX_DIRECTORY + PROVIDER_UNDER_TEST + PROJECT_NAME + "-centos6.box"
     end
     centos6.vm.network :private_network, ip: NETWORK_PRIVATE_IP_PREFIX + "6"
-
-    # Ansible.
-    centos6.vm.provision "ansible" do |ansible|
-      ansible.playbook = "playbook_without-system-groups.yml"
-    end
   end
 end

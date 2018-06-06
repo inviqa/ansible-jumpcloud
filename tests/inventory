@@ -1,0 +1,9 @@
+[ubuntu]
+ubuntu1604 ansible_ssh_host=172.16.3.2
+ubuntu1404 ansible_ssh_host=172.16.3.3
+ubuntu1204 ansible_ssh_host=172.16.3.4
+
+
+[centos]
+centos7 ansible_ssh_host=172.16.3.5
+centos6 ansible_ssh_host=172.16.3.6

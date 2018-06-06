@@ -13,13 +13,49 @@ Use Vagrant and some VirtualBox boxes that I build to follow the latest releases
 
 The project is extremely simple, and simply requires [Vagrant](https://www.vagrantup.com/), [VirtualBox](https://www.virtualbox.org/), and [Ansible](http://docs.ansible.com/intro_installation.html) to be installed on your host machine.
 
+## Requirements
+
+set local Environment Variables that will be read by Ansible
+```
+JUMPCLOUD_X_CONNECT_KE=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
+JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
+```
+
+Make sure that on you JumpCloud account you have the following System Groups:
+```
+ansible_test_1
+ansible_test_2
+```
+
 ## Testing a Role
+The testing process works as follows:
+There are an Ansible Playbook and Inventory configured to spin a bunch of VirtualBox's virtual machines via Vagrant.
+Vagrant takes care of all the vms setup and and creation of the required rsa-keys to allow interaction with them.
+Ansible will install JumpCloud's agent in the VMs.
 
-To test a role, the role must be installed on your host machine (you can install galaxy roles via `$ ansible-galaxy install [rolename]`, but this project is more focused on testing roles you'd be working on locally). Just add the role to `playbook.yml` and run `vagrant up`.
+At the end of the provisioning Ansible will run a few test-tasks that will verify if the JumpCloud agent has been istalled and if the hosts have been regitered again JC portal.
 
-It should take a few minutes to download each of the base boxes the first time, but after that, it takes about a minute to boot each VM, then run the playbook with your role(s).
+This is the command to start the testing process the use of the `-l <inventory_group_name>|<inventory_hostname>` parameter is optional and is useful to run the test on a specific vm instead of all of them.
 
-After testing a role, you can destroy the four VMs with `vagrant destroy -f`. You can also just build one particular VM with `vagrant up ubuntu1204` (as an example), or re-run the ansible playbook with `vagrant provision ubuntu1204`.
+```
+cd  ./tests
+ansible-playbook -i inventory [ -l centos,ubuntu | centos6,centos7,ubuntu1202,ubuntu1402,ubuntu1602 ] playbook.yml
+```
+
+This command is to to run a playbook which will instruct Vagrant to destroy the testing vms.
+```
+cd  ./tests
+ansible-playbook -i inventory [ -l centos,ubuntu |  centos6,centos7,ubuntu1202,ubuntu1402,ubuntu1602 ] playbook_delete_vms.yml
+
+```
+
+### Travis CI Testing
+for the testing to work set up in the Travis CI project's settings the following `Environment Variables` that will be read by Anbsible
+
+```
+JUMPCLOUD_X_CONNECT_KE=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
+JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
+```
 
 ## License
 

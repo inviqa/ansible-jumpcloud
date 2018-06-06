@@ -1,0 +1,21 @@
+---
+
+- name: Get `ssh-agent` status
+  local_action: shell type ssh-agent
+  register: ssh_agent_status
+  ignore_errors: true
+
+- name: Check if `ssh-agent` is installed
+  set_fact:
+    ssh_agent_is_installed: "{{ not 'not found' in ssh_agent_status.stdout }}"
+
+- fail:
+    msg: "Warning ==> ssh-agent is not installed"
+  when: not ssh_agent_is_installed
+
+- name: stop 'ssh-agent' to reset the loaded keys
+  local_action: shell killall -9 ssh-agent
+  when: ssh_agent_is_installed
+  ignore_errors: true
+
+...

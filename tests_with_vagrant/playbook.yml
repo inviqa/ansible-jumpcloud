@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    # - include_tasks: tasks/run_vagrant.yml
+    - include_tasks: tasks/reset_ssh_agent.yml
+
+
+- hosts: all:!localhost
+  gather_facts: no
+  vars:
+    ansible_ssh_private_key_file: '.vagrant/machines/{{ inventory_hostname}}/virtualbox/private_key'
+    vagrant_ssh_key: "{{ ansible_ssh_private_key_file }}"
+  tasks:
+    - include_tasks: tasks/run_vagrant.yml
+    - pause: seconds=3
+    - include_tasks: tasks/load_vagrant_ssh_key.yml
+
+- hosts: all:!localhost
+  gather_facts: yes
+  become: yes
+
+  vars:
+    enc_jumpcloud_x_connect_key: "{{ lookup('env','JUMPCLOUD_X_CONNECT_KEY') }}"
+    jumpcloud_api_key: "{{ lookup('env','JUMPCLOUD_API_KEY') }}"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_ssh_user: 'vagrant'
+    ansible_ssh_port: 22
+    jumpcloud_system_groups:
+      - 'ansible_test_1'
+      - 'ansible_test_2'
+    jumpcloud_use_sudo: true
+    jumpcloud_displayName: "ansible-jc-role-{{ ansible_hostname }}"
+
+  pre_tasks: []
+
+  roles:
+      - { role: ansible-jumpcloud }
+  tasks:
+      - include_tasks: tasks/test_tasks.yml

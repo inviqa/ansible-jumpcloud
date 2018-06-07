@@ -1,0 +1,14 @@
+---
+
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: delete test box
+      local_action: shell vagrant destroy -f {{ inventory_hostname }}
+      ignore_errors: true
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_tasks: tasks/reset_ssh_agent.yml
+...

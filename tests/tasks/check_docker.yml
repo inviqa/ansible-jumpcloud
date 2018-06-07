@@ -1,0 +1,18 @@
+---
+
+- name: Get `docker` status
+  local_action: shell type docker
+  register: docker_status
+  ignore_errors: true
+  run_once: true
+
+- name: Check if `docker` is installed
+  set_fact:
+    docker_is_installed: "{{ not 'not found' in docker_status.stdout }}"
+  run_once: true
+
+- debug:
+    msg: "Warning ==> docker is not installed"
+  when: not docker_is_installed
+  run_once: true
+...

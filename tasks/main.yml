@@ -8,18 +8,13 @@
   set_fact:
     jumpcloud_not_installed: "{{ not (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
 
-- name:       Install JumpCloud if required
-  import_tasks:    install.yml
+- name:       Install JumpCloud dependencies if required
+  import_tasks: install_deps.yml
   when:       jumpcloud_not_installed or jumpcloud_force_install
 
-- name:       check JumpCloud agent config again
-  stat:
-    path:     "{{ jumpcloud_agent_config }}"
-  register:   jumpcloud_agent_config_status
-
-- name:       check again if JumpCloud is installed
-  set_fact:
-    jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
+- name:       Install JumpCloud if required
+  import_tasks: install.yml
+  when:       jumpcloud_not_installed or jumpcloud_force_install
 
 - name:        Get JumpCloud SystemKey
   command:     grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}

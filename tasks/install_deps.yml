@@ -1,0 +1,37 @@
+---
+- debug:
+    msg: "Distribution {{ ansible_distribution }}"
+
+- name: Install dependencies in CentOS systems
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ jumpcloud_centos_dependencies }}"
+  when: ansible_distribution == "CentOS"
+  become: "{{ jumpcloud_use_sudo }}"
+
+- name: Install dependencies in RHEL systems
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ jumpcloud_rhel_dependencies }}"
+  when: ansible_distribution == "Red Hat Enterprise Linux"
+  become: "{{ jumpcloud_use_sudo }}"
+
+- name: Install JumpCloud depenedencies for Debian systems
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ jumpcloud_debian_dependencies }}"
+  when: ansible_distribution == "Debian"
+  become: "{{ jumpcloud_use_sudo }}"
+
+- name: Install JumpCloud depenedencies for Ubuntu systems
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ jumpcloud_ubuntu_dependencies }}"
+  when: ansible_distribution == "Ubuntu"
+  become: "{{ jumpcloud_use_sudo }}"
+
+...

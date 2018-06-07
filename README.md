@@ -52,7 +52,8 @@ Default: `no`
 
 Whether or not to use sudo during installation.
 
-#### [`jumpcloud_tags`]
+#### [`jumpcloud_tags`][jumpcloud-tagsh]
+
 The list of JC tags you want a host or a group of hosts to be part of
   - 'tag_one'
   - 'tag_two'

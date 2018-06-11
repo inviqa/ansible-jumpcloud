@@ -1,0 +1,30 @@
+---
+  - name: Remove "/etc/apt/apt.conf.d/docker-gzip-indexes"
+    raw: bash -c "rm /etc/apt/apt.conf.d/docker-gzip-indexes"
+    register: output
+    changed_when: output.stdout != ""
+    when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+    become: "{{ jumpcloud_use_sudo }}"
+
+  - name: Purge "apt-show-versions"
+    raw: bash -c "apt-get -y purge apt-show-versions"
+    register: output
+    changed_when: output.stdout != ""
+    when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+    become: "{{ jumpcloud_use_sudo }}"
+
+  - name: Remove "/var/lib/apt/lists/*lz4"
+    raw: bash -c "rm /var/lib/apt/lists/*lz4"
+    register: output
+    changed_when: output.stdout != ""
+    when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+    become: "{{ jumpcloud_use_sudo }}"
+
+  - name: Set "Acquire::GzipIndexes=false"
+    raw: bash -c "apt-get -o Acquire::GzipIndexes=false update"
+    register: output
+    changed_when: output.stdout != ""
+    when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+    become: "{{ jumpcloud_use_sudo }}"
+
+...

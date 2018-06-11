@@ -1,12 +1,12 @@
 ---
-  - name: Install Python on CentoOS or RHEL system if not present
+  - name: Install Python on CentoOS or RHEL systems if not present
     raw: bash -c "test -e /usr/bin/python || (yum -qy update &&  yum install -qy python python-pip python3 python3-pip)"
     register: output
     changed_when: output.stdout != ""
     when:  '"centos" in inventory_hostname or "rehel" in inventory_hostname'
     become: "{{ jumpcloud_use_sudo }}"
 
-  - name: Install Python on Ubuntu or Debian system if not present
+  - name: Install Python on Ubuntu or Debian systems if not present
     raw: bash -c "test -e /usr/bin/python || (apt -qqy update &&  apt install -qqy python python-pip python3 python3-pip)"
     register: output
     changed_when: output.stdout != ""

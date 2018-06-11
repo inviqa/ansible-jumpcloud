@@ -17,7 +17,7 @@ The project is extremely simple, and simply requires [Vagrant](https://www.vagra
 
 set local Environment Variables that will be read by Ansible
 ```
-JUMPCLOUD_X_CONNECT_KE=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
+JUMPCLOUD_X_CONNECT_KEY=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
 JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
 ```
 
@@ -35,6 +35,37 @@ Ansible will install JumpCloud's agent in the VMs.
 
 At the end of the provisioning Ansible will run a few test-tasks that will verify if the JumpCloud agent has been istalled and if the hosts have been regitered again JC portal.
 
+### with Docker
+This is the command to start the testing process
+
+```
+cd  ./tests
+ansible-playbook -i inventory playbook.yml
+```
+
+To run the test on a specific containers you will need tocreate additional inventory files, i.e:
+
+
+```
+# *inventory-centos*
+
+[centos]
+centos7 image=chrismeyers/centos7
+centos6 image=chrismeyers/centos6
+
+[docker_containers:children]
+centos
+
+```
+
+This command is to to run a playbook which will instruct Docker to destroy the testing containers.
+```
+cd  ./tests
+ansible-playbook -i inventory playbook_delete_containers.yml
+
+```
+
+### with Vagrant
 This is the command to start the testing process the use of the `-l <inventory_group_name>|<inventory_hostname>` parameter is optional and is useful to run the test on a specific vm instead of all of them.
 
 ```
@@ -53,7 +84,7 @@ ansible-playbook -i inventory [ -l centos,ubuntu |  centos6,centos7,ubuntu1202,u
 for the testing to work set up in the Travis CI project's settings the following `Environment Variables` that will be read by Anbsible
 
 ```
-JUMPCLOUD_X_CONNECT_KE=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
+JUMPCLOUD_X_CONNECT_KEY=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
 JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
 ```
 

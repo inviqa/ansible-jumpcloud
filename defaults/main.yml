@@ -65,6 +65,7 @@ jumpcloud_centos_dependencies:
   - psmisc
   - redhat-lsb-core
 jumpcloud_debian_dependencies:
+  - apt-show-versions
   - apt-rdepends
   - openssl
   - coreutils
@@ -86,6 +87,7 @@ jumpcloud_debian_dependencies:
   - sudo
   - psmisc
 jumpcloud_ubuntu_dependencies:
+  - apt-show-versions
   - apt-rdepends
   - openssl
   - coreutils

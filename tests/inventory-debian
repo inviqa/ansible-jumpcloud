@@ -1,0 +1,5 @@
+[debian]
+debian-stable image=debian:stable
+
+[docker_containers:children]
+debian

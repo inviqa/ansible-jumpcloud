@@ -1,0 +1,17 @@
+---
+
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Remove Docker containers
+      docker_container:
+        name: "{{ inventory_hostname }}"
+        state: absent
+      delegate_to: localhost
+    #
+    # - name: remove Docker container
+    #   raw: bash -c "docker rm -f {{ inventory_hostname }}"
+    #   register: output
+    #   changed_when: output.stdout != ""
+    #   delegate_to: localhost
+...

@@ -21,20 +21,20 @@
   gather_facts: false
   vars:
     inventory:
-      - name: centos6
-        image: "chrismeyers/centos6"
+      # - name: centos6
+      #   image: "chrismeyers/centos6"
       - name: centos7
         image: "chrismeyers/centos7"
-      - name: debian-stable
-        image: "debian:stable"
-      - name: ubuntu1204
-        image: "chrismeyers/ubuntu12.04"
-      - name: ubuntu1404
-        image: "ubuntu:14.04"
-      - name: ubuntu1604
-        image: "ubuntu:16.04"
-      - name: ubuntu1804
-        image: "ubuntu:18.04"
+      # - name: debian-stable
+      #   image: "debian:stable"
+      # - name: ubuntu1204
+      #   image: "chrismeyers/ubuntu12.04"
+      # - name: ubuntu1404
+      #   image: "ubuntu:14.04"
+      # - name: ubuntu1604
+      #   image: "ubuntu:16.04"
+      # - name: ubuntu1804
+      #   image: "ubuntu:18.04"
   roles:
     - { role: provision_docker, provision_docker_inventory: "{{ inventory }}" }
 
@@ -48,6 +48,7 @@
   tasks:
   - name: Install Python for Ansible requirements
     import_tasks: tasks/install_python.yml
+  - import_tasks: tasks/install_yum_patch.yml
 
 - hosts: docker_containers
   gather_facts: true

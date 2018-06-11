@@ -1,0 +1,9 @@
+---
+  - name: Install YUM patch on CentOS images
+    raw: bash -c "yum install -qy yum-plugin-ovl"
+    register: output
+    changed_when: output.stdout != ""
+    when:  '"centos" in inventory_hostname'
+    become: "{{ jumpcloud_use_sudo }}"
+    ignore_errors: true
+...

@@ -4,11 +4,13 @@
 
 - name: Install dependencies in CentOS systems
   yum:
+    update_cache: true
     name: "{{ item }}"
     state: present
   with_items: "{{ jumpcloud_centos_dependencies }}"
   when: ansible_distribution == "CentOS"
   become: "{{ jumpcloud_use_sudo }}"
+  # ignore_errors: true
 
 - name: Install dependencies in RHEL systems
   yum:

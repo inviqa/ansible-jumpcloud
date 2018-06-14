@@ -27,6 +27,7 @@ install:
   - ansible --version
 
 script:
+  - ansible-galaxy install -v -f -r tests/requirements.yml
   - ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
   - ansible-playbook -i tests/inventory-debian tests/playbook.yml --syntax-check
   - ansible-playbook -i tests/inventory-ubuntu tests/playbook.yml --syntax-check

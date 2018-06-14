@@ -26,7 +26,7 @@ install:
   - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
   - ansible --version
   # - "printf '[defaults]\nroles_path = ../.galaxy' > ansible.cfg"
-  - ansible-galaxy install -v -f -r tests/requirements.ymlm -p /home/travis/.ansible/roles
+  - ansible-galaxy install -v -f -r tests/requirements.yml -p /home/travis/.ansible/roles
 
 
 script:

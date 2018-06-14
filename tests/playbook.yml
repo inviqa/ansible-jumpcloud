@@ -21,7 +21,7 @@
   gather_facts: false
   roles:
     # - { role: provision_docker, provision_docker_inventory: "{{ inventory }}" }
-    - role: provision_docker
+    - role: provision-docker
       provision_docker_inventory_group: "{{ groups['docker_containers']}}"
 
 - hosts: docker_containers

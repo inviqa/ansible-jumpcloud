@@ -25,8 +25,8 @@ install:
   - sudo apt-get install -y ansible
   - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
   - ansible --version
-  - "printf '[defaults]\nroles_path = ../.galaxy' > ansible.cfg"
-  - ansible-galaxy install -v -f -r tests/requirements.yml  -p .galaxy
+  # - "printf '[defaults]\nroles_path = ../.galaxy' > ansible.cfg"
+  - ansible-galaxy install -v -f -r tests/requirements.yml
 
 
 script:

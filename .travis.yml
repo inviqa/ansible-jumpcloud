@@ -25,7 +25,6 @@ install:
   - sudo apt-get install -y ansible
   - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
   - ansible --version
-  # - "printf '[defaults]\nroles_path = ../.galaxy' > ansible.cfg"
   - ansible-galaxy install -v -f -r tests/requirements.yml
 
 
@@ -33,9 +32,6 @@ script:
   - ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
   - ansible-playbook -i tests/inventory tests/playbook.yml --connection=local --sudo
   # - ansible-playbook -i tests/inventory tests/playbook.yml --connection=local --sudo  | grep -q 'changed=0.*failed=0' && (echo 'Idempotence test: pass' && exit 0) || (echo 'Idempotence test: fail' && exit 1)
-  # - ansible-playbook -i tests/inventory-debian tests/playbook.yml --syntax-check
-  # - ansible-playbook -i tests/inventory-ubuntu tests/playbook.yml --syntax-check
-  # - ansible-playbook -i tests/inventory-centos tests/playbook.yml --syntax-check
   # - cd tests && make centos
 
 # notifications:

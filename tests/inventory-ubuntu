@@ -6,3 +6,7 @@ ubuntu1204 image=chrismeyers/ubuntu12.04
 
 [docker_containers:children]
 ubuntu
+
+[docker_containers:vars]
+# needed for idempotence test
+restart=False

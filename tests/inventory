@@ -6,8 +6,8 @@ ubuntu1204 image=chrismeyers/ubuntu12.04
 
 
 [centos]
-centos7 image=chrismeyers/centos7 restart=false
-centos6 image=chrismeyers/centos6 restart=false
+centos7 image=chrismeyers/centos7
+centos6 image=chrismeyers/centos6
 
 [debian]
 debian-stable image=debian:stable
@@ -16,3 +16,7 @@ debian-stable image=debian:stable
 centos
 ubuntu
 debian
+
+[docker_containers:vars]
+# needed for idempotence test
+restart=False

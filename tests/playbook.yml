@@ -4,24 +4,11 @@
   tasks:
     - include_tasks: tasks/check_docker.yml
 
-# - name: Bring up docker containers
-#   hosts: all:!localhost
-#   gather_facts: false
-#   vars:
-#     # ansible_ssh_private_key_file: '.vagrant/machines/{{ inventory_hostname}}/virtualbox/private_key'
-#     # vagrant_ssh_key: "{{ ansible_ssh_private_key_file }}"
-#
-#     # - pause: seconds=3
-#     # - include_tasks: tasks/load_vagrant_ssh_key.yml
-#   roles:
-#     - { role: provision_docker }
-
 - name: Bring up docker containers
   hosts: localhost
-  gather_facts: false
   roles:
-    # - { role: provision_docker, provision_docker_inventory: "{{ inventory }}" }
     - role: provision-docker
+      provision_docker_network: host
       provision_docker_inventory_group: "{{ groups['docker_containers']}}"
 
 - hosts: docker_containers

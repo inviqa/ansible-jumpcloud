@@ -6,8 +6,8 @@ ubuntu1204 image=chrismeyers/ubuntu12.04
 
 
 [centos]
-centos7 image=chrismeyers/centos7
-centos6 image=chrismeyers/centos6
+centos7 image=chrismeyers/centos7 restart=false
+centos6 image=chrismeyers/centos6 restart=false
 
 [debian]
 debian-stable image=debian:stable

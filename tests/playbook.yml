@@ -43,11 +43,6 @@
       register: output
       changed_when: output.stdout == ""
 
-    - debug:
-        var: output
-
-    - pause:
-
   roles:
       - { role: ansible-jumpcloud }
 

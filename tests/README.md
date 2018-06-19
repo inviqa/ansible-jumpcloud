@@ -9,7 +9,7 @@ Use Docker+Vagrant and some VirtualBox boxes to follow the latest releases of th
   - Ubuntu 12.04.x
   - Ubuntu 14.04.x
   - Ubuntu 16.04.x
-  - Ubuntu 16.04.x
+  - Ubuntu 18.04.x
   - CentOS 6.x (192.168.3.6)
   - CentOS 7.x (192.168.3.5)
 
@@ -69,7 +69,7 @@ ansible-playbook -i inventory playbook_delete_containers.yml
 ```
 
 ### Travis CI Testing
-For the testing to work set up in the Travis CI project's settings the following `Environment Variables` that will be read by Anbsible
+For the testing to work set up in the Travis CI project's settings the following `Environment Variables` that will be read by Ansible
 
 ```
 JUMPCLOUD_X_CONNECT_KEY=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx

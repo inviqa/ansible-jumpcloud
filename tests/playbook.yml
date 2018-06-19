@@ -41,8 +41,12 @@
     - name: Update the hostname
       raw: bash -c "(hostname | grep -x {{ inventory_hostname }}test-with-ansible) || hostname {{ inventory_hostname }}test-with-ansible"
       register: output
-      changed_when: output.stdout != ""
+      changed_when: output.stdout == ""
 
+    - debug:
+        var: output
+
+    - pause:
 
   roles:
       - { role: ansible-jumpcloud }

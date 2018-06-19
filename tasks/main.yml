@@ -6,21 +6,22 @@
 
 - name:       check if JumpCloud is installed
   set_fact:
-    jumpcloud_not_installed: "{{ not (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
+    jumpcloud_is_installed: "{{ (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
 
 - name:       Install JumpCloud dependencies if required
   import_tasks: install_deps.yml
-  when:       jumpcloud_not_installed or jumpcloud_force_install
+  when:       not jumpcloud_is_installed or jumpcloud_force_install
 
 - name:       Install JumpCloud if required
   import_tasks: install.yml
-  when:       jumpcloud_not_installed or jumpcloud_force_install
+  when:       not jumpcloud_is_installed or jumpcloud_force_install
 
 - name:        Get JumpCloud SystemKey
   command:     grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
   register:    jumpcloud_system_key
   become:      "{{ jumpcloud_use_sudo }}"
   when:        jumpcloud_is_installed
+  changed_when: "not jumpcloud_system_key.stdout"
 
 - name:       Update System Attributes if JumpCloud is insalled
   import_tasks:    update_system.yml

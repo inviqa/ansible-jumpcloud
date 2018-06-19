@@ -7,13 +7,13 @@
     line:     'Ubuntu 14.04.5 LTS \n \l'
     state:    present
     backup:   yes
-  when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and (jumpcloud_not_installed or jumpcloud_force_install)
+  when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and (not jumpcloud_is_installed or jumpcloud_force_install)
   register:   line_infile_result
 
 - name:       saving the position of the `/etc/issue` backup
   set_fact:
     issue_backup_file: "{{ line_infile_result.backup}}"
-  when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and line_infile_result is defined and (jumpcloud_not_installed or jumpcloud_force_install)
+  when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and line_infile_result is defined and (not jumpcloud_is_installed or jumpcloud_force_install)
 
 - name:       Download JumpCloud Kickstart script
   get_url:

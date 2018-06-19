@@ -5,6 +5,7 @@
   register: docker_status
   ignore_errors: true
   run_once: true
+  changed_when: false
 
 - name: Check if `docker` is installed
   set_fact:

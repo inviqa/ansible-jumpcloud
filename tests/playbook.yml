@@ -39,7 +39,10 @@
 
   pre_tasks:
     - name: Update the hostname
-      command: hostname "{{ inventory_hostname }}test-with-ansible"
+      raw: bash -c "(hostname | grep -x {{ inventory_hostname }}test-with-ansible) || hostname {{ inventory_hostname }}test-with-ansible"
+      register: output
+      changed_when: output.stdout != ""
+
 
   roles:
       - { role: ansible-jumpcloud }

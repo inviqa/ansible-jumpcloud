@@ -1,6 +1,6 @@
 ---
   - name: Install YUM patch on CentOS images
-    raw: bash -c "yum install -qy yum-plugin-ovl"
+    raw: bash -c "test -e /etc/yum/pluginconf.d/ovl.conf || yum install -qy yum-plugin-ovl"
     register: output
     changed_when: output.stdout != ""
     when:  '"centos" in inventory_hostname'

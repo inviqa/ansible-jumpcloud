@@ -3,23 +3,78 @@ at https://github.com/geerlingguy/ansible-role-test-vms
 
 # Multi-Platform Ansible Role and Playbook Test VMs
 
-Use Vagrant and some VirtualBox boxes that I build to follow the latest releases of the OSes. Currently, you can find the boxes on [Atlas](https://atlas.hashicorp.com/geerlingguy) (they are hosted at [files.midwesternmac.com](http://files.midwesternmac.com/)), and this project runs a playbook against the following OSes:
+Use Docker+Vagrant and some VirtualBox boxes to follow the latest releases of the OSes, and this project runs a playbook against the following OSes:
 
-  - Ubuntu 12.04.x (192.168.3.4)
-  - Ubuntu 14.04.x (192.168.3.3)
-  - Ubuntu 16.04.x (192.168.3.2)
+  - Debian Stable
+  - Ubuntu 12.04.x
+  - Ubuntu 14.04.x
+  - Ubuntu 16.04.x
+  - Ubuntu 18.04.x
   - CentOS 6.x (192.168.3.6)
   - CentOS 7.x (192.168.3.5)
 
-The project is extremely simple, and simply requires [Vagrant](https://www.vagrantup.com/), [VirtualBox](https://www.virtualbox.org/), and [Ansible](http://docs.ansible.com/intro_installation.html) to be installed on your host machine.
+## Requirements
+Install Docker
+
+set local Environment Variables that will be read by Ansible
+```
+JUMPCLOUD_X_CONNECT_KEY=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
+JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
+```
+
+Make sure that on you JumpCloud account you have the following System Groups:
+```
+ansible_test_1
+ansible_test_2
+```
 
 ## Testing a Role
+The testing process works as follows:
+There are an Ansible Playbook and Inventory configured to spin a bunch of Docker containers via Vagrant.
+Ansible will install JumpCloud's agent in the containers.
 
-To test a role, the role must be installed on your host machine (you can install galaxy roles via `$ ansible-galaxy install [rolename]`, but this project is more focused on testing roles you'd be working on locally). Just add the role to `playbook.yml` and run `vagrant up`.
+At the end of the provisioning Ansible will run a few test-tasks that will verify if the JumpCloud agent has been istalled and if the hosts have been regitered again JC portal, including an idempotence test (the privisioning will be run twice on the same containers without rebuilding or restarting them)
 
-It should take a few minutes to download each of the base boxes the first time, but after that, it takes about a minute to boot each VM, then run the playbook with your role(s).
+This is the command to start the testing process
 
-After testing a role, you can destroy the four VMs with `vagrant destroy -f`. You can also just build one particular VM with `vagrant up ubuntu1204` (as an example), or re-run the ansible playbook with `vagrant provision ubuntu1204`.
+```
+cd  ./tests
+ansible-playbook -i inventory playbook.yml
+```
+
+To run the test on a specific containers you will need tocreate additional inventory files, i.e:
+
+
+```
+# *inventory-centos*
+
+[centos]
+centos7 image=chrismeyers/centos7
+centos6 image=chrismeyers/centos6
+
+[docker_containers:children]
+centos
+
+[docker_containers:vars]
+# needed for idempotence test
+restart=False
+
+```
+
+This command is to to run a playbook which will instruct Docker to destroy the testing containers.
+```
+cd  ./tests
+ansible-playbook -i inventory playbook_delete_containers.yml
+
+```
+
+### Travis CI Testing
+For the testing to work set up in the Travis CI project's settings the following `Environment Variables` that will be read by Ansible
+
+```
+JUMPCLOUD_X_CONNECT_KEY=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
+JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
+```
 
 ## License
 

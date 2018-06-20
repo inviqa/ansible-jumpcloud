@@ -1,20 +1,50 @@
 ---
-- hosts: all
-  gather_facts: yes
-  become: yes
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_tasks: tasks/check_docker.yml
 
-  vars_files:
-    - ./test_variables.yml
+- name: Bring up docker containers
+  hosts: localhost
+  roles:
+    - role: provision-docker
+      provision_docker_network: host
+      provision_docker_inventory_group: "{{ groups['docker_containers']}}"
+
+- hosts: docker_containers
+  gather_facts: false
+  become: true
   vars:
+    jumpcloud_use_sudo: true
+
+  tasks:
+  - name: Install Python for Ansible requirements
+    import_tasks: tasks/install_python.yml
+  - import_tasks: tasks/install_yum_patch.yml
+  - name: Fix Apt-Show-Versions for APT based systems
+    include_tasks: tasks/fix_apt_show_versions.yml
+    when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+
+- hosts: docker_containers
+  gather_facts: true
+  become: true
+  vars:
+    enc_jumpcloud_x_connect_key: "{{ lookup('env','JUMPCLOUD_X_CONNECT_KEY') }}"
+    jumpcloud_api_key: "{{ lookup('env','JUMPCLOUD_API_KEY') }}"
     jumpcloud_system_groups:
       - 'ansible_test_1'
       - 'ansible_test_2'
     jumpcloud_use_sudo: true
     jumpcloud_displayName: "ansible-jc-role-{{ ansible_hostname }}"
 
-  pre_tasks: []
+  pre_tasks:
+    - name: Update the hostname
+      raw: bash -c "(hostname | grep -x {{ inventory_hostname }}test-with-ansible) || hostname {{ inventory_hostname }}test-with-ansible"
+      register: output
+      changed_when: output.stdout == ""
 
   roles:
       - { role: ansible-jumpcloud }
+
   tasks:
       - include_tasks: tasks/test_tasks.yml

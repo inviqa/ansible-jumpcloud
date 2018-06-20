@@ -21,25 +21,6 @@ To be stored in an Ansible Vault. It's very high-sensitivity Information.
 ## Testing
 See README file in the `tests` directory
 
-### Requirements
-create the file tests/test_variables.yml that must include your private jumpcloud_x_connect_key as follow:
-```
----
-enc_jumpcloud_x_connect_key: "xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz"
-...
-```
-
-Make sure that on you JumpCloud account you have the following System Groups:
-```
-ansible_test_1
-ansible_test_2
-```
-
-Run
-```
-cd tests/
-ansible-playbook main.yml
-```
 
 #### [`jumpcloud_x_connect_key`][jumpcloud-x-connect-key]
 Default: none
@@ -71,7 +52,8 @@ Default: `no`
 
 Whether or not to use sudo during installation.
 
-#### [`jumpcloud_tags`]
+#### [`jumpcloud_tags`][jumpcloud-tagsh]
+
 The list of JC tags you want a host or a group of hosts to be part of
   - 'tag_one'
   - 'tag_two'

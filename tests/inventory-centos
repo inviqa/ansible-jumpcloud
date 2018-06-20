@@ -1,0 +1,10 @@
+[centos]
+centos7 image=chrismeyers/centos7
+centos6 image=chrismeyers/centos6
+
+[docker_containers:children]
+centos
+
+[docker_containers:vars]
+# needed for idempotence test
+restart=False

@@ -1,0 +1,12 @@
+[ubuntu]
+ubuntu1804 image=ubuntu:18.04
+ubuntu1604 image=ubuntu:16.04
+ubuntu1404 image=ubuntu:14.04
+ubuntu1204 image=chrismeyers/ubuntu12.04
+
+[docker_containers:children]
+ubuntu
+
+[docker_containers:vars]
+# needed for idempotence test
+restart=False

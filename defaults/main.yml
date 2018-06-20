@@ -1,6 +1,9 @@
 ---
 
 jumpcloud_directory: /opt/jc
+jumpcloud_ca_cert: "{{ jumpcloud_directory }}/ca.crt"
+jumpcloud_client_cert: "{{ jumpcloud_directory }}/client.crt"
+jumpcloud_client_key: "{{ jumpcloud_directory }}/client.key"
 jumpcloud_agent_config: "{{ jumpcloud_directory }}/jcagent.conf"
 jumpcloud_x_connect_key: "{{ enc_jumpcloud_x_connect_key }}"
 #store enc_jumpcloud_x_connect_key in an ansible vault
@@ -17,4 +20,88 @@ jumpcloud_allowPublicKeyAuthentication: 'true'
 jumpcloud_allowSshPasswordAuthentication: 'true'
 jumpcloud_allowSshRootLogin: 'true'
 jumpcloud_allowMultiFactorAuthentication: 'false'
+jumpcloud_rhel_dependencies:
+  - chkconfig
+  - openssl
+  - coreutils
+  - curl
+  - findutils
+  - gawk
+  - glibc-common
+  - grep
+  - initscripts
+  - lsof
+  - net-tools
+  - rpm
+  - shadow-utils
+  - tar
+  - util-linux
+  - which
+  - yum
+  - sudo
+  - psmisc
+  - redhat-lsb-core
+
+jumpcloud_centos_dependencies:
+  - chkconfig
+  - openssl
+  - coreutils
+  - curl
+  - findutils
+  - gawk
+  - glibc-common
+  - grep
+  - initscripts
+  - lsof
+  - net-tools
+  - rpm
+  - shadow-utils
+  - tar
+  - util-linux
+  - which
+  - yum
+  - sudo
+  - policycoreutils
+  - psmisc
+  - redhat-lsb-core
+jumpcloud_debian_dependencies:
+  - apt-show-versions
+  - apt-rdepends
+  - openssl
+  - coreutils
+  - curl
+  - dpkg
+  - grep
+  - hostname
+  - libc-bin
+  - lsb-release
+  - lsof
+  - mawk
+  - passwd
+  - procps
+  - sysv-rc
+  - sysvinit-utils
+  - tar
+  - libpam-runtime
+  - libpam-modules
+  - sudo
+  - psmisc
+jumpcloud_ubuntu_dependencies:
+  - apt-show-versions
+  - apt-rdepends
+  - openssl
+  - coreutils
+  - curl
+  - dpkg
+  - grep
+  - hostname
+  - libc-bin
+  - lsb-release
+  - lsof
+  - mawk
+  - passwd
+  - procps
+  - sysvinit-utils
+  - tar
+  - sudo
 ...

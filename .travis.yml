@@ -1,0 +1,42 @@
+sudo: required
+dist: trusty
+language: python
+python:
+  - "2.7"
+services:
+  - docker
+env:
+  global:
+    - PATH="/usr/bin:$PATH"
+
+before_install:
+    # Ansible doesn't play well with virtualenv
+  - deactivate
+  - sudo apt-get update -qq
+  - sudo apt-get install -y -o Dpkg::Options::="--force-confnew" docker-ce
+
+install:
+  - sudo pip install docker-py
+    # software-properties-common for ubuntu 14.04
+    # python-software-properties for ubuntu 12.04
+  - sudo apt-get install -y sshpass software-properties-common python-software-properties
+  - sudo apt-add-repository -y ppa:ansible/ansible
+  - sudo apt-get update -qq
+  - sudo apt-get install -y ansible
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+  - ansible --version
+  - ansible-galaxy install -v -f -r tests/requirements.yml
+
+
+script:
+  - ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
+  - ansible-playbook -i tests/inventory tests/playbook.yml --list-tasks
+  - ansible-playbook -i tests/inventory tests/playbook.yml --connection=local --become
+  - 'ansible-playbook -i tests/inventory tests/playbook.yml --connection=local --become | grep -q "changed=0.*failed=0" &&
+    (echo "Idempotence test: pass" && exit 0) || (echo "Idempotence test: fail" && exit 1)'
+
+after_script:
+  - ansible-playbook -i tests/inventory tests/playbook_delete_containers.yml --connection=local --become
+
+# notifications:
+#   webhooks: https://galaxy.ansible.com/api/v1/notifications/

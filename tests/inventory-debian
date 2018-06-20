@@ -1,0 +1,9 @@
+[debian]
+debian-stable image=debian:stable
+
+[docker_containers:children]
+debian
+
+[docker_containers:vars]
+# needed for idempotence test
+restart=False

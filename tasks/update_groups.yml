@@ -13,7 +13,7 @@
   delegate_to: localhost
   register:  jc_system_groups_json_response
   ignore_errors: yes
-  when: jumpcloud_system_key is defined and jumpcloud_system_groups is defined
+  when: jumpcloud_system_groups is defined
 
 - name: Create the list of System Groups attributes
   set_fact: jc_system_groups={{ jc_system_groups|default([]) | union(item.json) }}
@@ -30,7 +30,7 @@
       "Accept":       "application/json"
       "x-api-key":    "{{ jumpcloud_api_key }}"
     body_format:  json
-    body: '{ "op": "add","type": "system", "id": "{{ jumpcloud_system_key.stdout }}" }'
+    body: '{ "op": "add","type": "system", "id": "{{ jumpcloud_system_key }}" }'
     follow_redirects: all
     return_content: yes
     # 204 = Successfully added, 409 = Already member

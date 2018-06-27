@@ -76,6 +76,7 @@
   with_items: "{{ jc_system_memberof_json_response.json}}"
   delegate_to: localhost
   when: jumpcloud_system_groups is defined
+  no_log: true
 
 - name: Check that the host is member of the required groups
   assert:

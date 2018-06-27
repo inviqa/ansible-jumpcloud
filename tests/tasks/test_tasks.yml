@@ -1,4 +1,40 @@
 ---
+# - name: Retrive host information from JumpCloud
+#   uri:
+#     url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
+#     method: GET
+#     headers:
+#       "Content-Type": "application/json"
+#       "Accept":       "application/json"
+#       "x-api-key":    "{{ jumpcloud_api_key }}"
+#     body_format:  json
+#     body: '{ "displayName" : "{{ jumpcloud_displayName }}",
+#     "allowPublicKeyAuthentication" : "{{ jumpcloud_allowPublicKeyAuthentication }}",
+#     "allowSshPasswordAuthentication" : "{{ jumpcloud_allowSshPasswordAuthentication }}",
+#     "allowSshRootLogin" : "{{ jumpcloud_allowSshRootLogin }}",
+#     "allowMultiFactorAuthentication" : "{{ jumpcloud_allowMultiFactorAuthentication }}" }'
+#     follow_redirects: all
+#     return_content: yes
+#     status_code: 200
+#   delegate_to: localhost
+#   register: jc_system_json_response
+#   when: jumpcloud_system_key is defined
+#   ignore_errors: yes
+#
+# - debug:
+#     var: jc_system_json_response
+#
+# - name: Check that the host has been added to JumpCloud
+#   assert:
+#     that:
+#       - "jumpcloud_displayName in jc_system_json_response.json.displayName"
+#     msg: "The host should be named {{jumpcloud_displayName}} but is present in JumpCloud as {{jc_system_json_response.json.displayName}}"
+#   delegate_to: localhost
+
+- include_role:
+    name: ansible-jumpcloud
+    tasks_from: check_system_registration
+
 - name: Check that the host has been added to JumpCloud
   assert:
     that:
@@ -40,7 +76,6 @@
   with_items: "{{ jc_system_memberof_json_response.json}}"
   delegate_to: localhost
   when: jumpcloud_system_groups is defined
-  no_log: True
 
 - name: Check that the host is member of the required groups
   assert:

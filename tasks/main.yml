@@ -26,9 +26,15 @@
     jumpcloud_system_key: "{{ jumpcloud_system_key_result.stdout }}"
   when:       jumpcloud_is_installed
 
+- debug:
+    var: jumpcloud_system_key
+    
 - name:       Check System Registration
   import_tasks:    check_system_registration.yml
   when:       jumpcloud_system_key is defined
+
+- name:       Find Registered Systems with the same name
+  import_tasks: find_registered_systems.yml
 
 - name:       Update System Attributes if the System is registered in JumpCloud
   import_tasks:    update_system.yml

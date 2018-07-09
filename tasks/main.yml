@@ -1,11 +1,10 @@
 ---
-- name:       check JumpCloud agent config
+- name:       find JumpCloud agent config to define if JumpCloud is installed
   stat:
     path:     "{{ jumpcloud_agent_config }}"
   register:   jumpcloud_agent_config_status
 
-- name:       check if JumpCloud is installed
-  set_fact:
+- set_fact:
     jumpcloud_is_installed: "{{ (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
 
 - name:       Install JumpCloud dependencies if required
@@ -16,19 +15,27 @@
   import_tasks: install.yml
   when:       not jumpcloud_is_installed or jumpcloud_force_install
 
-- name:        Get JumpCloud SystemKey
-  command:     grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
-  register:    jumpcloud_system_key
-  become:      "{{ jumpcloud_use_sudo }}"
-  when:        jumpcloud_is_installed
-  changed_when: "not jumpcloud_system_key.stdout"
+- name:       Get JumpCloud SystemKey
+  command:    grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
+  register:   jumpcloud_system_key_result
+  become:     "{{ jumpcloud_use_sudo }}"
+  when:       jumpcloud_is_installed
+  changed_when: "not jumpcloud_system_key_result.stdout"
 
-- name:       Update System Attributes if JumpCloud is insalled
-  import_tasks:    update_system.yml
+- set_fact:
+    jumpcloud_system_key: "{{ jumpcloud_system_key_result.stdout }}"
   when:       jumpcloud_is_installed
 
-- name:       Add System to Groups if Groups are defined
+- name:       Check System Registration
+  import_tasks:    check_system_registration.yml
+  when:       jumpcloud_system_key is defined
+
+- name:       Update System Attributes if the System is registered in JumpCloud
+  import_tasks:    update_system.yml
+  when:       jc_system_is_registered
+
+- name:       Add System to Groups if Groups are defined and the System is registered in JumpCloud
   import_tasks:    update_groups.yml
-  when:       jumpcloud_is_installed and jumpcloud_system_groups is defined
+  when:       jc_system_is_registered and jumpcloud_system_groups is defined
 
 ...

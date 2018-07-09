@@ -1,9 +1,8 @@
 ---
-
-- name: Update System Information
+- name: retrive System attributes based on the System ID
   uri:
     url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
-    method: PUT
+    method: GET
     headers:
       "Content-Type": "application/json"
       "Accept":       "application/json"
@@ -18,6 +17,17 @@
     return_content: yes
     status_code: 200
   delegate_to: localhost
-  register: http_outcome
+  register:  jc_system_attributes_json_response
+  ignore_errors: yes
   when: jumpcloud_system_key is defined
+
+- name: Define if System is registered in JumpCloud
+  set_fact:
+    jc_system_is_registered: "{{ not jc_system_attributes_json_response.failed }}"
+  when: jc_system_attributes_json_response is defined
+  delegate_to: localhost
+
+- debug:
+    msg: "Warning ==> the System is not registered in JumpCloud"
+  when: not jc_system_is_registered
 ...

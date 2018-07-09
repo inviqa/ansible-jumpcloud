@@ -13,16 +13,16 @@ before_install:
     # Ansible doesn't play well with virtualenv
   - deactivate
   - sudo apt-get update -qq
-  - sudo apt-get install -y -o Dpkg::Options::="--force-confnew" docker-ce
+  - sudo apt-get install -y --allow-unauthenticated -o Dpkg::Options::="--force-confnew" docker-ce
 
 install:
   - sudo pip install docker-py
     # software-properties-common for ubuntu 14.04
     # python-software-properties for ubuntu 12.04
-  - sudo apt-get install -y sshpass software-properties-common python-software-properties
+  - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
   - sudo apt-add-repository -y ppa:ansible/ansible
   - sudo apt-get update -qq
-  - sudo apt-get install -y ansible
+  - sudo apt-get install -y --allow-unauthenticated ansible
   - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
   - ansible --version
   - ansible-galaxy install -v -f -r tests/requirements.yml

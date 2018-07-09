@@ -29,17 +29,18 @@
   gather_facts: true
   become: true
   vars:
+    test_hostname: "{{ inventory_hostname }}-test-with-ansible"
     enc_jumpcloud_x_connect_key: "{{ lookup('env','JUMPCLOUD_X_CONNECT_KEY') }}"
     jumpcloud_api_key: "{{ lookup('env','JUMPCLOUD_API_KEY') }}"
     jumpcloud_system_groups:
       - 'ansible_test_1'
       - 'ansible_test_2'
     jumpcloud_use_sudo: true
-    jumpcloud_displayName: "ansible-jc-role-{{ ansible_hostname }}"
+    jumpcloud_displayName: "ansible-jc-role-{{ test_hostname }}"
 
   pre_tasks:
     - name: Update the hostname
-      raw: bash -c "(hostname | grep -x {{ inventory_hostname }}-test-with-ansible) || hostname {{ inventory_hostname }}-test-with-ansible"
+      raw: bash -c "(hostname | grep -x {{ test_hostname }}) || hostname {{ test_hostname }}"
       register: output
       changed_when: output.stdout == ""
 

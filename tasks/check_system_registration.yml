@@ -1,5 +1,5 @@
 ---
-- name: retrive System attributes based on the System ID
+- name: Retrive System attributes based on the System ID
   uri:
     url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
     method: GET

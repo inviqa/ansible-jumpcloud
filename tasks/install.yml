@@ -10,7 +10,7 @@
   when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and (not jumpcloud_is_installed or jumpcloud_force_install)
   register:   line_infile_result
 
-- name:       saving the position of the `/etc/issue` backup
+- name:       Saving the position of the `/etc/issue` backup
   set_fact:
     issue_backup_file: "{{ line_infile_result.backup}}"
   when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and line_infile_result is defined and (not jumpcloud_is_installed or jumpcloud_force_install)
@@ -30,12 +30,12 @@
   become:     "{{ jumpcloud_use_sudo }}"
 
 
-- name:       check JumpCloud agent config again
+- name:       Check JumpCloud agent config again
   stat:
     path:     "{{ jumpcloud_agent_config }}"
   register:   jumpcloud_agent_config_status
 
-- name:       check again if JumpCloud has been initialised
+- name:       Check again if JumpCloud has been initialised
   set_fact:
     jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
 
@@ -43,7 +43,7 @@
   import_tasks: reset_jumpcloud.yml
   when:       not jumpcloud_is_installed
 
-- name:       restore '/etc/issue' backup if present
+- name:       Restore '/etc/issue' backup if present
   file:
     src:      "{{issue_backup_file}}"
     path:     /etc/issue
@@ -51,13 +51,9 @@
     force:    yes
   when:       issue_backup_file is defined
 
-- name:       removes '/etc/issue' backup file if present
+- name:       Removes '/etc/issue' backup file if present
   file:
     path:     "{{issue_backup_file}}"
     state:    absent
   when:       issue_backup_file is defined
-
-
-
-
 ...

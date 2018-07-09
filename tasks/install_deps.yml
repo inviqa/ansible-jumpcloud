@@ -1,7 +1,4 @@
 ---
-- debug:
-    msg: "Distribution {{ ansible_distribution }}"
-
 - name: Install dependencies in CentOS systems
   yum:
     update_cache: true

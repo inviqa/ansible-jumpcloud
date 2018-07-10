@@ -14,14 +14,13 @@ before_install:
   - deactivate
   - sudo apt-get update -qq
   - sudo apt-get install -y --allow-unauthenticated -o Dpkg::Options::="--force-confnew" docker-ce
+  - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
 
 install:
-  - sudo apt-get update -qq
   - sudo pip install docker
   - sudo pip install ansible
     # software-properties-common for ubuntu 14.04
     # python-software-properties for ubuntu 12.04
-  - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
   - ansible --version
   - ansible-galaxy install -v -f -r tests/requirements.yml
 

@@ -22,7 +22,7 @@ install:
     # software-properties-common for ubuntu 14.04
     # python-software-properties for ubuntu 12.04
   - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
-  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python3.6 /usr/bin/python
+  #- sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
   - ansible --version
   - ansible-galaxy install -v -f -r tests/requirements.yml
 

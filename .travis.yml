@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: xenial
 language: python
 python:
   - "2.7"
@@ -23,9 +23,8 @@ install:
     # python-software-properties for ubuntu 12.04
   - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
   - sudo apt-get install -y --allow-unauthenticated ansible
-  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
   - ansible --version
-  - ansible-galaxy install -c -v -f -r tests/requirements.yml
+  - ansible-galaxy install -v -f -r tests/requirements.yml
 
 
 script:

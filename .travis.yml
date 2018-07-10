@@ -18,7 +18,7 @@ before_install:
 install:
   - sudo apt-add-repository -y ppa:ansible/ansible
   - sudo apt-get update -qq
-  - sudo pip install docker
+  - sudo pip3 install docker
     # software-properties-common for ubuntu 14.04
     # python-software-properties for ubuntu 12.04
   - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties

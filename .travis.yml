@@ -16,25 +16,80 @@ before_install:
   - sudo apt-get install -y --allow-unauthenticated -o Dpkg::Options::="--force-confnew" docker-ce
 
 install:
+<<<<<<< HEAD
+<<<<<<< HEAD
   - sudo apt-get update -qq
   - sudo pip install docker
   - sudo pip install ansible
     # software-properties-common for ubuntu 14.04
     # python-software-properties for ubuntu 12.04
   - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+  - sudo apt-add-repository -y ppa:ansible/ansible
+  - sudo apt-get update -qq
+  - sudo apt-get install -y --allow-unauthenticated ansible
+<<<<<<< HEAD
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+  - sudo apt-get install -y --allow-unauthenticated urllib3 pyOpenSSL ndg-httpsclient pyasn1
+>>>>>>> f1f2092... add `urllib3`, `pyOpenSSL`, `ndg-httpsclient`, and `pyasn1` for Travis'
+=======
+#  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+>>>>>>> 039fbab... ammends
+=======
+  - sudo apt-add-repository -y ppa:ansible/ansible
+=======
+>>>>>>> 170f552... evet to trusty and Python 3.6
+  - sudo apt-get update -qq
+  - sudo pip install docker
+  - sudo pip install ansible
+    # software-properties-common for ubuntu 14.04
+    # python-software-properties for ubuntu 12.04
+<<<<<<< HEAD
+<<<<<<< HEAD
+  - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
+  - sudo apt-get install -y --allow-unauthenticated ansible
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+>>>>>>> c986ab4... add epo for Python 2.7.14
+=======
+>>>>>>> bd88e6b... test python 3.3 again
+=======
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+>>>>>>> a48b3f2... restore python 2.7
+=======
+>>>>>>> a1af8ac... testing Xenial again for TravisCI
+=======
+  # - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
+  # - sudo apt-get install -y --allow-unauthenticated ansible
+>>>>>>> 8912d00... install Ansible via pip on TravisCI
+=======
+  - sudo apt-get install -y --allow-unauthenticated sshpass software-properties-common python-software-properties
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python3.6 /usr/bin/python
+>>>>>>> 170f552... evet to trusty and Python 3.6
+=======
+  #- sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+>>>>>>> 4c0792d... fix Pythn linking in TravisCI
+=======
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+>>>>>>> 4edd8b1... new test
   - ansible --version
   - ansible-galaxy install -v -f -r tests/requirements.yml
 
 
 script:
-  - ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
-  - ansible-playbook -i tests/inventory tests/playbook.yml --list-tasks
-  - ansible-playbook -i tests/inventory tests/playbook.yml --connection=local --become
-  - 'ansible-playbook -i tests/inventory tests/playbook.yml --connection=local --become | grep -q "changed=0.*failed=0" &&
+  - ansible-playbook -i tests/inventory-centos tests/playbook.yml --syntax-check
+  - ansible-playbook -i tests/inventory-centos tests/playbook.yml --list-tasks
+  - ansible-playbook -i tests/inventory-centos tests/playbook.yml --connection=local --become
+  - 'ansible-playbook -i tests/inventory-centos tests/playbook.yml --connection=local --become | grep -q "changed=0.*failed=0" &&
     (echo "Idempotence test: pass" && exit 0) || (echo "Idempotence test: fail" && exit 1)'
 
 after_script:
-  - ansible-playbook -i tests/inventory tests/playbook_delete_containers.yml --connection=local --become
+  - ansible-playbook -i tests/inventory-centos tests/playbook_delete_containers.yml --connection=local --become
 
 # notifications:
 #   webhooks: https://galaxy.ansible.com/api/v1/notifications/

@@ -2,7 +2,17 @@
 
 - hosts: all
   gather_facts: false
+  vars:
+    test_hostname: "{{ inventory_hostname }}-test-with-ansible"
+    jumpcloud_api_key: "{{ lookup('env','JUMPCLOUD_API_KEY') }}"
+    jumpcloud_use_sudo: true
+    jumpcloud_displayName: "ansible-jc-role-{{ test_hostname }}"
+    
   tasks:
+    - include_role:
+        name: ansible-jumpcloud
+        tasks_from: remove_registered_systems
+
     - name: Remove Docker containers
       docker_container:
         name: "{{ inventory_hostname }}"

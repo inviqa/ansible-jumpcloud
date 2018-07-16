@@ -1,7 +1,9 @@
 # JumpCloud Role for Ansible
 ------------
 This role installs the [JumpCloud][jumpcloud] agent and restarts the JumpCloud agent service as required.
-It also make use of JumpCloud API to set JumpCloud System attributes.
+It also:
+- make use of JumpCloud API to set JumpCloud System attributes.
+- delete any system registered in JumpCloud with the same `displayName`
 
 ## Requirements
 ------------
@@ -52,7 +54,7 @@ Default: `no`
 
 Whether or not to use sudo during installation.
 
-#### [`jumpcloud_tags`][jumpcloud-tagsh]
+#### [`jumpcloud_tags`][jumpcloud-tags]
 
 The list of JC tags you want a host or a group of hosts to be part of
   - 'tag_one'

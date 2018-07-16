@@ -1,5 +1,5 @@
 ---
-- name: retrive System attributes based on the System ID
+- name: Retrieve System attributes based on the System ID
   uri:
     url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
     method: GET
@@ -7,12 +7,6 @@
       "Content-Type": "application/json"
       "Accept":       "application/json"
       "x-api-key":    "{{ jumpcloud_api_key }}"
-    body_format:  json
-    body: '{ "displayName" : "{{ jumpcloud_displayName }}",
-    "allowPublicKeyAuthentication" : "{{ jumpcloud_allowPublicKeyAuthentication }}",
-    "allowSshPasswordAuthentication" : "{{ jumpcloud_allowSshPasswordAuthentication }}",
-    "allowSshRootLogin" : "{{ jumpcloud_allowSshRootLogin }}",
-    "allowMultiFactorAuthentication" : "{{ jumpcloud_allowMultiFactorAuthentication }}" }'
     follow_redirects: all
     return_content: yes
     status_code: 200

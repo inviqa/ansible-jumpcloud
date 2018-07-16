@@ -1,0 +1,44 @@
+---
+- name: Retrieve the list of the registered systems with the same displayName from JumpCloud
+  uri:
+    url: "{{ jumpcloud_api_v1_url }}/search/systems"
+    method: POST
+    headers:
+      "Content-Type": "application/json"
+      "Accept":       "application/json"
+      "x-api-key":    "{{ jumpcloud_api_key }}"
+    body_format:  json
+    body: '{ "filter" :
+    {"and" :
+    [{ "displayName" : "{{ jumpcloud_displayName }}" }]
+    },
+    "fields": "displayName _id" }'
+    follow_redirects: all
+    return_content: yes
+    status_code: 200
+  delegate_to: localhost
+  register: jc_registered_systems_json_response
+  when: jumpcloud_displayName is defined
+  ignore_errors: yes
+
+- set_fact:
+    jc_count_of_inactive_registered_systems: "{{ jc_registered_systems_json_response.json.totalCount }}"
+
+- name: Delete the registered systems with the same name from JumpCloud
+  uri:
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{item.id}}"
+    method: DELETE
+    headers:
+      "Content-Type": "application/json"
+      "Accept":       "application/json"
+      "x-api-key":    "{{ jumpcloud_api_key }}"
+    follow_redirects: all
+    return_content: yes
+    status_code: 200
+  with_items: "{{ jc_registered_systems_json_response.json.results }}"
+  delegate_to: localhost
+  register: jc_deleted_systems_json_response
+  when: jc_count_of_inactive_registered_systems != "0"
+  ignore_errors: yes
+
+...

@@ -1,5 +1,5 @@
 ---
-- name: Retrive the list of the registered systems with the same displayName from JumpCloud
+- name: Retrieve the list of the registered systems with the same displayName from JumpCloud
   uri:
     url: "{{ jumpcloud_api_v1_url }}/search/systems"
     method: POST

@@ -1,5 +1,5 @@
 ---
-- name: retrive System Groups attributes based on the System Group name
+- name: retrieve System Groups attributes based on the System Group name
   uri:
     url: "{{ jumpcloud_api_v2_url }}/systemgroups?filter=name:eq:{{ item }}"
     method: GET

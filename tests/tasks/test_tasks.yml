@@ -19,7 +19,7 @@
   when: jc_system_is_registered
   delegate_to: localhost
 
-- name: Retrive the list of System Groups the host is member of
+- name: Retrieve the list of System Groups the host is member of
   uri:
     url: "{{ jumpcloud_api_v2_url }}/systems/{{ jumpcloud_system_key }}/memberof"
     method: GET

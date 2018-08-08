@@ -6,7 +6,6 @@ at https://github.com/geerlingguy/ansible-role-test-vms
 Use Docker+Vagrant and some VirtualBox boxes to follow the latest releases of the OSes, and this project runs a playbook against the following OSes:
 
   - Debian Stable
-  - Ubuntu 12.04.x
   - Ubuntu 14.04.x
   - Ubuntu 16.04.x
   - Ubuntu 18.04.x
@@ -64,7 +63,7 @@ restart=False
 This command is to to run a playbook which will instruct Docker to destroy the testing containers.
 ```
 cd  ./tests
-ansible-playbook -i inventory playbook_delete_containers.yml
+ansible-playbook -i inventory playbook_cleanup.yml
 
 ```
 

@@ -40,6 +40,7 @@
   stat:
     path:     "{{ jumpcloud_agent_config }}"
   register:   jumpcloud_agent_config_status
+  become:     "{{ jumpcloud_use_sudo }}"
 
 - name:       check again if JumpCloud is installed
   set_fact:

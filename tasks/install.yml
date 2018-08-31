@@ -20,7 +20,8 @@
     url:      "{{ jumpcloud_x_connect_url }}"
     dest:     "{{ jumpcloud_kickstart_script }}"
     mode:     0755
-    headers:  "x-connect-key: {{ jumpcloud_x_connect_key }}"
+    headers:
+      x-connect-key: {{ jumpcloud_x_connect_key }}"
   become:     "{{ jumpcloud_use_sudo }}"
 
 - name:       Install JumpCloud Agent

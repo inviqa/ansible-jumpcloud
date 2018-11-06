@@ -35,6 +35,7 @@
     state: present
     timeout: 60
     msg: Timeout to find file "{{ jumpcloud_agent_config}}"
+  become:     "{{ jumpcloud_use_sudo }}"
 
 - name:       check JumpCloud agent config again
   stat:

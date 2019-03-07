@@ -30,7 +30,6 @@
     creates:  "{{ jumpcloud_agent_config}}"
   become:     "{{ jumpcloud_use_sudo }}"
 
-
 - name:       Check JumpCloud agent config again
   stat:
     path:     "{{ jumpcloud_agent_config }}"

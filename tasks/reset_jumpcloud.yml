@@ -36,15 +36,6 @@
     timeout:                60
     msg:                    Timeout to find file "{{ jumpcloud_agent_config}}"
   become:                   "{{ jumpcloud_use_sudo }}"
-#
-# - pause:
-#     minutes: 1
-#
-# - name:                     Restrat JumpCloud
-#   service:
-#     name:                   "{{ jumpcloud_agent_service }}"
-#     state:                  restarted
-#   become:                   "{{ jumpcloud_use_sudo }}"
 
 - name:                     check JumpCloud agent config again
   stat:

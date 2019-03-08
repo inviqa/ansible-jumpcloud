@@ -26,7 +26,7 @@
 
 - name: Delete the registered systems with the same name from JumpCloud
   uri:
-    url: "{{ jumpcloud_api_v1_url }}/systems/{{item.id}}"
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{item._id}}"
     method: DELETE
     headers:
       "Content-Type": "application/json"

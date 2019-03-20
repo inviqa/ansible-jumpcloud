@@ -3,7 +3,7 @@ at https://github.com/geerlingguy/ansible-role-test-vms
 
 # Multi-Platform Ansible Role and Playbook Test VMs
 
-Use Docker+Vagrant and some VirtualBox boxes to follow the latest releases of the OSes, and this project runs a playbook against the following OSes:
+Use Docker+Vagrant and some VirtualBox boxes to follow the latest releases of the OSes, and this project runs a playbook against the following OSs:
 
   - Debian Stable
   - Ubuntu 12.04.x
@@ -33,7 +33,7 @@ The testing process works as follows:
 There are an Ansible Playbook and Inventory configured to spin a bunch of Docker containers via Vagrant.
 Ansible will install JumpCloud's agent in the containers.
 
-At the end of the provisioning Ansible will run a few test-tasks that will verify if the JumpCloud agent has been istalled and if the hosts have been regitered again JC portal, including an idempotence test (the privisioning will be run twice on the same containers without rebuilding or restarting them)
+At the end of the provisioning Ansible will run a few test-tasks that will verify if the JumpCloud agent has been installed and if the hosts have been registered again JC portal, including an idempotence test (the provisioning will be run twice on the same containers without rebuilding or restarting them)
 
 This is the command to start the testing process
 
@@ -42,7 +42,7 @@ cd  ./tests
 ansible-playbook -i inventory playbook.yml
 ```
 
-To run the test on a specific containers you will need tocreate additional inventory files, i.e:
+To run the test on a specific containers you will need to create additional inventory files, i.e:
 
 
 ```

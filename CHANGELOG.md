@@ -1,4 +1,8 @@
 # CHANGELOG
+V2.3
+- Ansible requirements pinning for testing environment
+- remove packages installation loops
+- make the Jumpcloud dependencies organisation more organic
 
 V2.2
 - verify if a system is correctly registered in JC

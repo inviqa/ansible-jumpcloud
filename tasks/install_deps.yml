@@ -1,32 +1,42 @@
 ---
-- name: Install dependencies in CentOS systems
-  yum:
-    update_cache: true
-    name: "{{ jumpcloud_centos_dependencies }}"
-    state: present
-  when: ansible_distribution == "CentOS"
-  become: "{{ jumpcloud_use_sudo }}"
-  # ignore_errors: true
+- name: Define Jumpcloud dependencies according to the platform
+  set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_all_dependencies }}"
 
-- name: Install dependencies in RHEL systems
-  yum:
-    name: "{{ jumpcloud_rhel_dependencies }}"
-    state: present
+- name: Define YUM based systems dependencies
+  set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_yum_dependencies }}"
+  when: ansible_pkg_mgr == "yum"
+
+- name: Define APT based systems dependencies
+  set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_apt_dependencies }}"
+  when: ansible_pkg_mgr == "apt"
+
+- name: Define RedHat Enterprise systems dependencies
+  set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_rhel_dependencies }}"
   when: ansible_distribution == "Red Hat Enterprise Linux"
-  become: "{{ jumpcloud_use_sudo }}"
 
-- name: Install JumpCloud depenedencies for Debian systems
-  apt:
-    name: "{{ jumpcloud_debian_dependencies }}"
-    state: present
+- name: Define CentOS systems dependencies
+  set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_centos_dependencies }}"
+  when: ansible_distribution == "CentOS"
+
+- name: Define Debian systems dependencies
+  set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_debian_dependencies }}"
   when: ansible_distribution == "Debian"
-  become: "{{ jumpcloud_use_sudo }}"
 
-- name: Install JumpCloud depenedencies for Ubuntu systems
-  apt:
-    name: "{{ jumpcloud_ubuntu_dependencies }}"
-    state: present
+- name: Define Ubuntu systems dependencies
+  set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_ubuntu_dependencies }}"
   when: ansible_distribution == "Ubuntu"
+
+- name: Install Jumpcloud dependencies
+  package:
+    name: "{{ jumpcloud_dependencies }}"
+    state: present
   become: "{{ jumpcloud_use_sudo }}"
 
 ...

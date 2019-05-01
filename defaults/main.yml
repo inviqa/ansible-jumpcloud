@@ -20,88 +20,49 @@ jumpcloud_allowPublicKeyAuthentication: 'true'
 jumpcloud_allowSshPasswordAuthentication: 'true'
 jumpcloud_allowSshRootLogin: 'true'
 jumpcloud_allowMultiFactorAuthentication: 'false'
-jumpcloud_rhel_dependencies:
-  - chkconfig
+jumpcloud_dependencies: []
+jumpcloud_all_dependencies:
   - openssl
   - coreutils
   - curl
-  - findutils
-  - gawk
-  - glibc-common
   - grep
-  - initscripts
   - lsof
-  - net-tools
-  - rpm
-  - shadow-utils
   - tar
-  - util-linux
-  - which
-  - yum
   - sudo
-  - psmisc
-  - redhat-lsb-core
-
-jumpcloud_centos_dependencies:
+jumpcloud_yum_dependencies:
   - chkconfig
-  - openssl
-  - coreutils
-  - curl
+  - chkconfig
   - findutils
   - gawk
   - glibc-common
-  - grep
   - initscripts
-  - lsof
   - net-tools
   - rpm
   - shadow-utils
-  - tar
   - util-linux
   - which
   - yum
-  - sudo
-  - policycoreutils
-  - psmisc
   - redhat-lsb-core
-jumpcloud_debian_dependencies:
+  - psmisc
+jumpcloud_apt_dependencies:
   - apt-show-versions
   - apt-rdepends
-  - openssl
-  - coreutils
-  - curl
   - dpkg
-  - grep
   - hostname
   - libc-bin
   - lsb-release
-  - lsof
   - mawk
   - passwd
   - procps
-  - sysv-rc
   - sysvinit-utils
-  - tar
+jumpcloud_redhat6_dependencies:
+  - psmisc
+jumpcloud_redhat7_dependencies:
+  - policycoreutils
+jumpcloud_debian_dependencies:
+  - sysv-rc
   - libpam-runtime
   - libpam-modules
-  - sudo
   - psmisc
-jumpcloud_ubuntu_dependencies:
-  - apt-show-versions
-  - apt-rdepends
-  - openssl
-  - coreutils
-  - curl
-  - dpkg
-  - grep
-  - hostname
-  - libc-bin
-  - lsb-release
-  - lsof
-  - mawk
-  - passwd
-  - procps
-  - sysvinit-utils
-  - tar
-  - sudo
+jumpcloud_ubuntu_dependencies: []
 ...

@@ -1,1 +1,2 @@
 - src: chrismeyersfsu.provision_docker
+  version: "d68ce0a"

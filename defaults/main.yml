@@ -55,9 +55,9 @@ jumpcloud_apt_dependencies:
   - passwd
   - procps
   - sysvinit-utils
-jumpcloud_rhel_dependencies:
+jumpcloud_redhat6_dependencies:
   - psmisc
-jumpcloud_centos_dependencies:
+jumpcloud_redhat7_dependencies:
   - policycoreutils
 jumpcloud_debian_dependencies:
   - sysv-rc

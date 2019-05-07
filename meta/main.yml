@@ -1,11 +1,16 @@
 ---
 galaxy_info:
-  author: "inviqa"
+  role_name: jumpcloud
+  author: "marcomc"
   description: "Install and Configure JumpCloud (https://jumpcloud.com) AD and LDAP agent"
   company: "Inviqa UK Ltd"
   license: MIT
-  min_ansible_version: 1.5
+  min_ansible_version: 2
   platforms:
+    - name: Centos
+      versions:
+        - 6
+        - 7
     - name: EL
       versions:
         - 6
@@ -18,17 +23,13 @@ galaxy_info:
         - all
     - name: Ubuntu
       versions:
-        - precise
-        - quantal
-        - raring
-        - saucy
         - trusty
-  categories:
+        - xenial
+        - bionic
+  galaxy_tags::
     - authentication
     - monitoring
     - networking
 
 dependencies: []
-
-
 ...

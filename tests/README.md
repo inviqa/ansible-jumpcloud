@@ -64,7 +64,7 @@ restart=False
 This command is to to run a playbook which will instruct Docker to destroy the testing containers.
 ```
 cd  ./tests
-ansible-playbook -i inventory playbook_delete_containers.yml
+ansible-playbook -i inventory playbook_cleanup.yml
 
 ```
 

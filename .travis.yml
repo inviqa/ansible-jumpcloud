@@ -33,7 +33,7 @@ script:
     (echo "Idempotence test: pass" && exit 0) || (echo "Idempotence test: fail" && exit 1)'
 
 after_script:
-  - ansible-playbook -i tests/inventory tests/playbook_delete_containers.yml --connection=local --become
+  - ansible-playbook -i tests/inventory tests/playbook_cleanup.yml --connection=local --become
 
 # notifications:
 #   webhooks: https://galaxy.ansible.com/api/v1/notifications/

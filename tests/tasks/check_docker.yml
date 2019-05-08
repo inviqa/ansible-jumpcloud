@@ -1,7 +1,7 @@
 ---
 
 - name: Get `docker` status
-  command: type docker
+  shell: type docker
   register: docker_status
   ignore_errors: true
   run_once: true

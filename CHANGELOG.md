@@ -1,28 +1,28 @@
 # CHANGELOG
 
-v2.4
+v2.4.0
 - Ansible-lint adjustments
 - Ansible requirements pinning for testing environment
 - remove packages installation loops
 - make the Jumpcloud dependencies organisation more organic
 
-v2.3
+v2.3.0
 - Ansible requirements pinning for testing environment
 - remove packages installation loops
 - make the Jumpcloud dependencies organisation more organic
 
-v2.2
+v2.2.0
 - verify if a system is correctly registered in JC
 - automate the deletion of previously registered servers with the same name in JC
 - automate the deletion of the registered servers in JC for testing purposes at the end of the test process
 - remove support for Ubuntu 12.04 testing
 
-v2.1
+v2.1.0
 - replace Vagrant testing with Docker testing
 - add test tasks and playbook to test on Debian stable, Ubuntu 12.04, 14.04, 16.04, 18.04, Centos 6 and Centos 7
 - add TravisCI testing
 
-v2.0
+v2.0.0
 - implemented APIv2 task to handle System Groups
 - removed support for TAGS (as they have been converted in Groups)
 - added conditional check to add system to groups only when system groups are defined in `jumpcloud_system_groups`

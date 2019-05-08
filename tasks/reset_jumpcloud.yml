@@ -7,19 +7,19 @@
 
 - name:                     remove JumpCloud CA certificate
   file:
-    path:                   "{{jumpcloud_ca_cert}}"
+    path:                   "{{ jumpcloud_ca_cert }}"
     state:                  absent
   become:                   "{{ jumpcloud_use_sudo }}"
 
 - name:                     remove JumpCloud Client certificate
   file:
-    path:                   "{{jumpcloud_client_cert}}"
+    path:                   "{{ jumpcloud_client_cert }}"
     state:                  absent
   become:                   "{{ jumpcloud_use_sudo }}"
 
 - name:                     remove JumpCloud Client Key
   file:
-    path:                   "{{jumpcloud_client_key}}"
+    path:                   "{{ jumpcloud_client_key }}"
     state:                  absent
   become:                   "{{ jumpcloud_use_sudo }}"
 
@@ -34,7 +34,7 @@
     path:                   "{{ jumpcloud_agent_config }}"
     state:                  present
     timeout:                60
-    msg:                    Timeout to find file "{{ jumpcloud_agent_config}}"
+    msg:                    Timeout to find file "{{ jumpcloud_agent_config }}"
   become:                   "{{ jumpcloud_use_sudo }}"
 
 - name:                     check JumpCloud agent config again
@@ -45,5 +45,5 @@
 
 - name:                     check again if JumpCloud is installed
   set_fact:
-    jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
+    jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg }}"
 ...

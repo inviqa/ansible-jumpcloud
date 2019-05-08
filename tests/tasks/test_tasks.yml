@@ -8,14 +8,14 @@
   assert:
     that:
       - "jc_system_is_registered"
-    msg: "The host {{jumpcloud_displayName}} has not been registered to Jumpcloud"
+    msg: "The host {{ jumpcloud_displayName }} has not been registered to Jumpcloud"
   delegate_to: localhost
 
 - name: Check that the registered host name correspond to the System hostname
   assert:
     that:
       - "jumpcloud_displayName in jc_system_attributes_json_response.json.displayName"
-    msg: "The host should be named {{jumpcloud_displayName}} but is present in JumpCloud as {{jc_system_attributes_json_response.json.displayName}}"
+    msg: "The host should be named {{ jumpcloud_displayName }} but is present in JumpCloud as {{ jc_system_attributes_json_response.json.displayName }}"
   when: jc_system_is_registered
   delegate_to: localhost
 
@@ -41,8 +41,9 @@
   when: jumpcloud_system_key is defined and jumpcloud_system_groups is defined
   ignore_errors: yes
 
-- set_fact: jc_system_memberof={{ jc_system_memberof|default([]) | union([item.id]) }}
-  with_items: "{{ jc_system_memberof_json_response.json}}"
+- name: Set the system membership to groups
+  set_fact: jc_system_memberof={{ jc_system_memberof|default([]) | union([item.id]) }}
+  with_items: "{{ jc_system_memberof_json_response.json }}"
   delegate_to: localhost
   when: jumpcloud_system_groups is defined
   no_log: true
@@ -51,8 +52,8 @@
   assert:
     that:
       - "item.id in jc_system_memberof"
-    msg: "The host seems not to be member of the required System Groups {{jumpcloud_system_groups}}"
-  with_items: "{{jc_system_groups}}"
+    msg: "The host seems not to be member of the required System Groups {{ jumpcloud_system_groups }}"
+  with_items: "{{ jc_system_groups }}"
   delegate_to: localhost
   when: jumpcloud_system_groups is defined
 ...

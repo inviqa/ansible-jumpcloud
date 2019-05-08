@@ -7,7 +7,7 @@
     jumpcloud_api_key: "{{ lookup('env','JUMPCLOUD_API_KEY') }}"
     jumpcloud_use_sudo: true
     jumpcloud_displayName: "ansible-jc-role-{{ test_hostname }}"
-    
+
   tasks:
     - include_role:
         name: ansible-jumpcloud

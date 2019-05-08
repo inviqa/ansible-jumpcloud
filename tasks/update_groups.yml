@@ -17,7 +17,7 @@
 
 - name: Create the list of System Groups attributes
   set_fact: jc_system_groups={{ jc_system_groups|default([]) | union(item.json) }}
-  with_items: "{{ jc_system_groups_json_response.results}}"
+  with_items: "{{ jc_system_groups_json_response.results }}"
   delegate_to: localhost
   no_log: True
 

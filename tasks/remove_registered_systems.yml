@@ -21,12 +21,13 @@
   when: jumpcloud_displayName is defined
   ignore_errors: yes
 
-- set_fact:
+- name: Set count of inactive registere systems
+  set_fact:
     jc_count_of_inactive_registered_systems: "{{ jc_registered_systems_json_response.json.totalCount }}"
 
 - name: Delete the registered systems with the same name from JumpCloud
   uri:
-    url: "{{ jumpcloud_api_v1_url }}/systems/{{item._id}}"
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{ item._id }}"
     method: DELETE
     headers:
       "Content-Type": "application/json"

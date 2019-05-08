@@ -7,10 +7,6 @@ galaxy_info:
   license: MIT
   min_ansible_version: 2
   platforms:
-    - name: Centos
-      versions:
-        - 6
-        - 7
     - name: EL
       versions:
         - 6

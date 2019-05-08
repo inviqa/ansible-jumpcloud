@@ -5,7 +5,8 @@
   register:   jumpcloud_agent_config_status
   become:     "{{ jumpcloud_use_sudo }}"
 
-- set_fact:
+- name: Set whether Jumpcloud is already installed
+  set_fact:
     jumpcloud_is_installed: "{{ (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
 
 - name:       Remove registered systems with the same displayName from JumpCloud

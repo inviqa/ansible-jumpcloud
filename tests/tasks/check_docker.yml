@@ -1,11 +1,12 @@
 ---
 
 - name: Get `docker` status
-  local_action: shell type docker
+  command: type docker
   register: docker_status
   ignore_errors: true
   run_once: true
   changed_when: false
+  delegate_to: localhost
 
 - name: Check if `docker` is installed
   set_fact:

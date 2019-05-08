@@ -61,7 +61,7 @@ The list of JC tags you want a host or a group of hosts to be part of
   - 'tag_two'
 
 #### [`jumpcloud_displayName`][jumpcloud-displayName]
-Default: `{{ inventory_hostname }}``
+Default: ` {{ inventory_hostname }}``
 
 #### [`jumpcloud_allowPublicKeyAuthentication`][jumpcloud-allowPublicKeyAuthentication]
 Default: `'true'`

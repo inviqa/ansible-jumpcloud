@@ -9,7 +9,7 @@
   roles:
     - role: provision-docker
       provision_docker_network: host
-      provision_docker_inventory_group: "{{ groups['docker_containers']}}"
+      provision_docker_inventory_group: "{{ groups['docker_containers'] }}"
 
 - hosts: docker_containers
   gather_facts: false
@@ -42,7 +42,7 @@
     - name: Update the hostname
       raw: bash -c "(hostname | grep -x {{ test_hostname }}) || hostname {{ test_hostname }}"
       register: output
-      changed_when: output.stdout == ""
+      changed_when: output.stdout | length == 0
 
   roles:
       - { role: ansible-jumpcloud }

@@ -12,7 +12,7 @@
 
 - name:       Saving the position of the `/etc/issue` backup
   set_fact:
-    issue_backup_file: "{{ line_infile_result.backup}}"
+    issue_backup_file: "{{ line_infile_result.backup }}"
   when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and line_infile_result is defined and (not jumpcloud_is_installed or jumpcloud_force_install)
 
 - name:       Download JumpCloud Kickstart script
@@ -25,9 +25,9 @@
   become:     "{{ jumpcloud_use_sudo }}"
 
 - name:       Install JumpCloud Agent
-  shell:      "{{ jumpcloud_kickstart_script }}"
+  command:      "{{ jumpcloud_kickstart_script }}"
   args:
-    creates:  "{{ jumpcloud_agent_config}}"
+    creates:  "{{ jumpcloud_agent_config }}"
   become:     "{{ jumpcloud_use_sudo }}"
 
 - name:       Check JumpCloud agent config again
@@ -38,7 +38,7 @@
 
 - name:       Check again if JumpCloud has been initialised
   set_fact:
-    jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
+    jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg }}"
 
 - name:       Reset JumpCloud if `jcagent.conf` has not been created
   import_tasks: reset_jumpcloud.yml
@@ -46,7 +46,7 @@
 
 - name:       Restore '/etc/issue' backup if present
   file:
-    src:      "{{issue_backup_file}}"
+    src:      "{{ issue_backup_file }}"
     path:     /etc/issue
     state:    hard
     force:    yes
@@ -54,7 +54,7 @@
 
 - name:       Removes '/etc/issue' backup file if present
   file:
-    path:     "{{issue_backup_file}}"
+    path:     "{{ issue_backup_file }}"
     state:    absent
   when:       issue_backup_file is defined
 ...

@@ -3,8 +3,8 @@
   command:    grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
   register:   jumpcloud_system_key_result
   become:     "{{ jumpcloud_use_sudo }}"
-  retries: 3
-  delay: 1
+  retries: 5
+  delay: 3
   until: jumpcloud_system_key_result.rc == 0
   changed_when: "not jumpcloud_system_key_result.stdout"
 

@@ -18,12 +18,15 @@
     status_code: 200
   delegate_to: localhost
   register: jc_registered_systems_json_response
-  when: jumpcloud_displayName is defined
-  ignore_errors: yes
+  when: jumpcloud_api_key is defined
+        and not jumpcloud_api_key == ""
+        and jumpcloud_displayName is defined
+  ignore_errors: true
 
 - name: Set count of inactive registere systems
-  set_fact:
-    jc_count_of_inactive_registered_systems: "{{ jc_registered_systems_json_response.json.totalCount }}"
+  ansible.builtin.set_fact:
+    jc_count_of_inactive_registered_systems: "{{jc_registered_systems_json_response.json.totalCount}}"
+  when: jc_registered_systems_json_response.json.totalCount is defined
 
 - name: Delete the registered systems with the same name from JumpCloud
   uri:

@@ -11,6 +11,7 @@ centos6 image=chrismeyers/centos6
 
 [debian]
 debian-stable image=debian:stable
+debian-oldstable image=debian:oldstable
 
 [docker_containers:children]
 centos

@@ -22,10 +22,9 @@ galaxy_info:
         - trusty
         - xenial
         - bionic
-  galaxy_tags::
+  galaxy_tags:
     - authentication
     - monitoring
     - networking
 
 dependencies: []
-...

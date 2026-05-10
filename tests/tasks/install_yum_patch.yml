@@ -4,6 +4,5 @@
     register: output
     changed_when: output.stdout | length > 0
     when:  '"centos" in inventory_hostname'
-    become: "{{ jumpcloud_use_sudo }}"
+    become: "{{jumpcloud_use_sudo}}"
     ignore_errors: true
-...

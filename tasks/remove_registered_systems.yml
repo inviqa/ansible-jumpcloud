@@ -1,20 +1,25 @@
 ---
+- name: Debug info
+  ansible.builtin.debug:
+    msg: "Jumpcloud API Key: {{jumpcloud_api_key}}"
+  when: debug == true
+
 - name: Retrieve the list of the registered systems with the same displayName from JumpCloud
   uri:
-    url: "{{ jumpcloud_api_v1_url }}/search/systems"
+    url: "{{jumpcloud_api_v1_url }}/search/systems"
     method: POST
     headers:
       "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{ jumpcloud_api_key }}"
-    body_format:  json
+      "Accept": "application/json"
+      "x-api-key": "{{jumpcloud_api_key}}"
+    body_format: json
     body: '{ "filter" :
     {"and" :
-    [{ "displayName" : "{{ jumpcloud_displayName }}" }]
+    [{ "displayName" : "{{jumpcloud_displayName}}" }]
     },
     "fields": "displayName _id" }'
     follow_redirects: all
-    return_content: yes
+    return_content: true
     status_code: 200
   delegate_to: localhost
   register: jc_registered_systems_json_response
@@ -30,19 +35,19 @@
 
 - name: Delete the registered systems with the same name from JumpCloud
   uri:
-    url: "{{ jumpcloud_api_v1_url }}/systems/{{ item._id }}"
+    url: "{{jumpcloud_api_v1_url }}/systems/{{ item._id}}"
     method: DELETE
     headers:
       "Content-Type": "application/json"
       "Accept":       "application/json"
-      "x-api-key":    "{{ jumpcloud_api_key }}"
+      "x-api-key":    "{{jumpcloud_api_key}}"
     follow_redirects: all
     return_content: yes
     status_code: 200
-  with_items: "{{ jc_registered_systems_json_response.json.results }}"
+  with_items: "{{jc_registered_systems_json_response.json.results}}"
   delegate_to: localhost
   register: jc_deleted_systems_json_response
-  when: jc_count_of_inactive_registered_systems != "0"
+  when: jc_count_of_inactive_registered_systems is defined
+        and jc_count_of_inactive_registered_systems != "0"
   ignore_errors: yes
 
-...

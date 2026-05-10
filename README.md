@@ -96,7 +96,6 @@ This value must be contained in single quotes "\'"
     jumpcloud_allowSshPasswordAuthentication: 'false'
     jumpcloud_allowSshRootLogin: 'true'
     jumpcloud_allowMultiFactorAuthentication: 'false'
-...
 ```
 
 

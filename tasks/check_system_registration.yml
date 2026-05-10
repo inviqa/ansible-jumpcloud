@@ -1,27 +1,26 @@
 ---
 - name: Retrieve System attributes based on the System ID
   uri:
-    url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
+    url: "{{jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key}}"
     method: GET
     headers:
       "Content-Type": "application/json"
       "Accept":       "application/json"
-      "x-api-key":    "{{ jumpcloud_api_key }}"
+      "x-api-key":    "{{jumpcloud_api_key}}"
     follow_redirects: all
-    return_content: yes
+    return_content:
     status_code: 200
-  delegate_to: localhost
+  delegate_to: localhos true
   register:  jc_system_attributes_json_response
-  ignore_errors: yes
+  ignore_errors: true
   when: jumpcloud_system_key is defined
 
 - name: Define if System is registered in JumpCloud
-  set_fact:
-    jc_system_is_registered: "{{ not jc_system_attributes_json_response.failed }}"
+  ansible.builtin.set_fact:
+    jc_system_is_registered: "{{not jc_system_attributes_json_response.failed}}"
   when: jc_system_attributes_json_response is defined
   delegate_to: localhost
 
-- debug:
+- ansible.builtin.debug:
     msg: "Warning ==> the System is not registered in JumpCloud"
   when: not jc_system_is_registered
-...

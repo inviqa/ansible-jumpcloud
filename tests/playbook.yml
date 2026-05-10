@@ -1,51 +1,57 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars:
+    debug: true
   tasks:
     - include_tasks: tasks/check_docker.yml
 
 - name: Bring up docker containers
   hosts: localhost
+  vars:
+    debug: true
   roles:
     - role: provision-docker
       provision_docker_network: host
-      provision_docker_inventory_group: "{{ groups['docker_containers'] }}"
+      provision_docker_inventory_group: "{{groups['docker_containers']}}"
 
 - hosts: docker_containers
   gather_facts: false
   become: true
   vars:
     jumpcloud_use_sudo: true
+    debug: true
 
   tasks:
-  - name: Install Python for Ansible requirements
-    import_tasks: tasks/install_python.yml
-  - import_tasks: tasks/install_yum_patch.yml
-  - name: Fix Apt-Show-Versions for APT based systems
-    include_tasks: tasks/fix_apt_show_versions.yml
-    when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+    - name: Install Python for Ansible requirements
+      import_tasks: tasks/install_python.yml
+    - import_tasks: tasks/install_yum_patch.yml
+    - name: Fix Apt-Show-Versions for APT based systems
+      include_tasks: tasks/fix_apt_show_versions.yml
+      when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
 
 - hosts: docker_containers
   gather_facts: true
   become: true
   vars:
-    test_hostname: "{{ inventory_hostname }}-test-with-ansible"
-    enc_jumpcloud_x_connect_key: "{{ lookup('env','JUMPCLOUD_X_CONNECT_KEY') }}"
-    jumpcloud_api_key: "{{ lookup('env','JUMPCLOUD_API_KEY') }}"
+    debug: true
+    test_hostname: "{{inventory_hostname}}-test-with-ansible"
+    enc_jumpcloud_x_connect_key: "{{lookup('env','JUMPCLOUD_X_CONNECT_KEY')}}"
+    jumpcloud_api_key: "{{lookup('env','JUMPCLOUD_API_KEY')}}"
     jumpcloud_system_groups:
       - 'ansible_test_1'
       - 'ansible_test_2'
     jumpcloud_use_sudo: true
-    jumpcloud_displayName: "ansible-jc-role-{{ test_hostname }}"
+    jumpcloud_displayName: "ansible-jc-role-{{test_hostname}}"
 
   pre_tasks:
     - name: Update the hostname
-      raw: bash -c "(hostname | grep -x {{ test_hostname }}) || hostname {{ test_hostname }}"
+      raw: bash -c "(hostname | grep -x {{ test_hostname }}) || hostname {{test_hostname}}"
       register: output
       changed_when: output.stdout | length == 0
 
   roles:
-      - { role: ansible-jumpcloud }
+    - {role: ansible-jumpcloud}
 
   tasks:
-      - include_tasks: tasks/test_tasks.yml
+    - include_tasks: tasks/test_tasks.yml

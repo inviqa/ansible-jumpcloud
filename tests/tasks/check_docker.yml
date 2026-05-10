@@ -9,12 +9,11 @@
   delegate_to: localhost
 
 - name: Check if `docker` is installed
-  set_fact:
-    docker_is_installed: "{{ not 'not found' in docker_status.stdout }}"
+  ansible.builtin.set_fact:
+    docker_is_installed: "{{not 'not found' in docker_status.stdout}}"
   run_once: true
 
-- debug:
+- ansible.builtin.debug:
     msg: "Warning ==> docker is not installed"
-  when: not docker_is_installed
+  when: not docker_is_installed and debug == true
   run_once: true
-...

@@ -1,3 +1,0 @@
----
-dependencies:
-  - { role: chrismeyersfsu.provision_docker }

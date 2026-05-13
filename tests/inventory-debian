@@ -1,10 +1,13 @@
-[debian]
-# debian-stable image=debian:stable
-debian-oldstable image=debian:oldstable
+[local]
+localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
 
-[docker_containers:children]
-debian
+[jumpcloud_debian]
+jumpcloud-debian12 ansible_host=jumpcloud-debian12 ansible_connection=docker jumpcloud_container_image=geerlingguy/docker-debian12-ansible:latest
 
-[docker_containers:vars]
-# needed for idempotence test
-restart=False
+[jumpcloud_test_hosts:children]
+jumpcloud_debian
+
+[jumpcloud_test_hosts:vars]
+ansible_python_interpreter=/usr/bin/python3
+jumpcloud_test_provision_containers=true
+jumpcloud_test_run_agent_install=false

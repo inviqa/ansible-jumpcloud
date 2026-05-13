@@ -1,57 +1,108 @@
 ---
-- hosts: localhost
-  gather_facts: false
-  vars:
-    debug: true
-  tasks:
-    - include_tasks: tasks/check_docker.yml
-
-- name: Bring up docker containers
+- name: Provision local JumpCloud test containers
   hosts: localhost
-  vars:
-    debug: true
-  roles:
-    - role: provision-docker
-      provision_docker_network: host
-      provision_docker_inventory_group: "{{groups['docker_containers']}}"
-
-- hosts: docker_containers
   gather_facts: false
-  become: true
-  vars:
-    jumpcloud_use_sudo: true
-    debug: true
-
   tasks:
-    - name: Install Python for Ansible requirements
-      import_tasks: tasks/install_python.yml
-    - import_tasks: tasks/install_yum_patch.yml
-    - name: Fix Apt-Show-Versions for APT based systems
-      include_tasks: tasks/fix_apt_show_versions.yml
-      when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+    - name: Install test containers when inventory requests them
+      ansible.builtin.include_tasks: tasks/provision_containers.yml
+      when: groups.get('jumpcloud_test_hosts', []) | length > 0
 
-- hosts: docker_containers
-  gather_facts: true
+- name: Validate JumpCloud role on supported Linux targets
+  hosts: jumpcloud_test_hosts
   become: true
   vars:
-    debug: true
-    test_hostname: "{{inventory_hostname}}-test-with-ansible"
-    enc_jumpcloud_x_connect_key: "{{lookup('env','JUMPCLOUD_X_CONNECT_KEY')}}"
-    jumpcloud_api_key: "{{lookup('env','JUMPCLOUD_API_KEY')}}"
-    jumpcloud_system_groups:
-      - 'ansible_test_1'
-      - 'ansible_test_2'
-    jumpcloud_use_sudo: true
-    jumpcloud_displayName: "ansible-jc-role-{{test_hostname}}"
-
+    jumpcloud_test_x_connect_key_from_env: "{{ lookup('env', 'JUMPCLOUD_X_CONNECT_KEY') }}"
+    jumpcloud_test_api_key_from_env: "{{ lookup('env', 'JUMPCLOUD_API_KEY') }}"
   pre_tasks:
-    - name: Update the hostname
-      raw: bash -c "(hostname | grep -x {{ test_hostname }}) || hostname {{test_hostname}}"
-      register: output
-      changed_when: output.stdout | length == 0
+    - name: Check whether local test overrides exist
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/test_variables.yml"
+      register: local_test_variables_file
+      delegate_to: localhost
+      become: false
 
-  roles:
-    - {role: ansible-jumpcloud}
+    - name: Load local test overrides
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/test_variables.yml"
+      when: local_test_variables_file.stat.exists
+      no_log: true
 
+    - name: Resolve live test credentials
+      ansible.builtin.set_fact:
+        jumpcloud_x_connect_key: >-
+          {{
+            jumpcloud_test_x_connect_key_from_env
+            | default(jumpcloud_test_x_connect_key | default(''), true)
+          }}
+        jumpcloud_api_key: >-
+          {{
+            jumpcloud_test_api_key_from_env
+            | default(jumpcloud_test_api_key | default(''), true)
+          }}
+      no_log: true
+
+    - name: Check whether JumpCloud live test credentials are available
+      ansible.builtin.assert:
+        that:
+          - jumpcloud_x_connect_key | length > 0
+          - jumpcloud_api_key | length > 0
+        fail_msg: >-
+          Set JUMPCLOUD_X_CONNECT_KEY and JUMPCLOUD_API_KEY, or copy
+          tests/test_variables.example.yml to tests/test_variables.yml and fill
+          the local values before running the live test harness.
+      no_log: true
+      when: jumpcloud_test_run_agent_install | default(false) | bool
+
+    - name: Set live test role variables
+      ansible.builtin.set_fact:
+        jumpcloud_use_sudo: true
+        jumpcloud_display_name: "ansible-jumpcloud-{{ inventory_hostname }}-test"
+        jumpcloud_system_groups: "{{ jumpcloud_test_system_groups | default([]) }}"
+        jumpcloud_create_missing_system_groups: >-
+          {{ jumpcloud_test_create_missing_system_groups | default(false) }}
+        jumpcloud_delete_duplicate_systems: >-
+          {{ jumpcloud_test_delete_duplicate_systems | default(true) }}
+
+    - name: Validate the JumpCloud API key for live tests
+      ansible.builtin.uri:
+        url: "{{ jumpcloud_api_v1_url }}/systems"
+        headers:
+          Content-Type: application/json
+          Accept: application/json
+          x-api-key: "{{ jumpcloud_api_key }}"
+        method: GET
+        status_code:
+          - 200
+          - 401
+        return_content: true
+        timeout: 60
+      delegate_to: localhost
+      become: false
+      register: jumpcloud_test_account_auth_check
+      no_log: true
+      failed_when: false
+      when: jumpcloud_test_run_agent_install | default(false) | bool
+
+    - name: Check whether the JumpCloud API key can authenticate tests
+      ansible.builtin.assert:
+        that:
+          - jumpcloud_test_account_auth_check.status == 200
+        fail_msg: >-
+          The configured JumpCloud API key could not authenticate. Update
+          tests/test_variables.yml or export a valid JUMPCLOUD_API_KEY before
+          running the live test harness.
+      no_log: true
+      when: jumpcloud_test_run_agent_install | default(false) | bool
   tasks:
-    - include_tasks: tasks/test_tasks.yml
+    - name: Run live JumpCloud role
+      ansible.builtin.include_role:
+        name: ansible-jumpcloud
+      when: jumpcloud_test_run_agent_install | default(false) | bool
+
+    - name: Run container-safe validation tasks
+      ansible.builtin.include_tasks: tasks/container_preflight.yml
+      when: not jumpcloud_test_run_agent_install | default(false) | bool
+
+    - name: Run live validation tasks
+      ansible.builtin.include_tasks: tasks/test_tasks.yml
+      when: jumpcloud_test_run_agent_install | default(false) | bool

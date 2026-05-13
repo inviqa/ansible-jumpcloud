@@ -1,128 +1,197 @@
-# JumpCloud Role for Ansible
-------------
-This role installs the [JumpCloud][jumpcloud] agent and restarts the JumpCloud agent service as required.
-It also:
-- make use of JumpCloud API to set JumpCloud System attributes.
-- delete any system registered in JumpCloud with the same `displayName`
+# Ansible Role: JumpCloud
+
+Install and configure the JumpCloud Linux agent on supported Linux systems.
+
+This role installs the agent, registers the host with JumpCloud, updates core
+system SSH attributes, and optionally adds the system to JumpCloud system
+groups.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Current Behavior Notes](#current-behavior-notes)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Variables](#variables)
+- [Supported Linux Matrix](#supported-linux-matrix)
+- [Examples](#examples)
+- [Testing](#testing)
+- [Development Notes](#development-notes)
+- [Maintainer](#maintainer)
+- [Support](#support)
+- [Repository](#repository)
+- [License](#license)
+
+## Overview
+
+The role is intentionally focused on Linux agent lifecycle tasks:
+
+- install current JumpCloud Linux agent dependencies
+- download the official JumpCloud kickstart installer
+- register the target host with a JumpCloud connect key
+- remove duplicate JumpCloud system records with the same display name when
+  enabled
+- update system SSH authentication attributes through the JumpCloud API
+- add the system to existing JumpCloud system groups, or create missing groups
+  when explicitly enabled
+
+## Current Behavior Notes
+
+- Preferred terminology in this repo is **system groups**. JumpCloud's older
+  tag terminology is no longer used by the role.
+- JumpCloud API keys and connect keys are high-sensitivity secrets and should be
+  provided through Ansible Vault, environment variables, or the gitignored test
+  variables file.
+- The role validates the target host against JumpCloud's current Linux support
+  matrix by default. Set `jumpcloud_validate_supported_distribution: false`
+  only when deliberately testing outside the supported matrix.
+- CentOS is not currently listed in JumpCloud's Linux agent support matrix.
+  For Enterprise Linux testing, use supported RHEL or Rocky Linux releases.
 
 ## Requirements
-------------
-[cURL][curl] and NTP should be installed as prerequisites.
 
-## Role Variables
-------------
-#### [`jumpcloud_api_key`][jumpcloud-api-key]
-Default: none
-Used to modify the attribute of a System on JC portal.
+- Ansible Core 2.16 or newer
+- a supported Linux target host with administrator or sudo access
+- outbound HTTPS access to JumpCloud agent endpoints
+- a JumpCloud connect key for agent registration
+- a JumpCloud API key for duplicate cleanup, attribute updates, registration
+  checks, and system group membership
+- the `community.docker` collection and local Docker service for the default
+  container-backed test harness
 
-The API key as shown in the JumpCloud's API Settings.
-To be retrieved from JumpCloud portal by a JC Admin account
+The role follows the current JumpCloud Linux agent documentation:
 
-To be stored in an Ansible Vault. It's very high-sensitivity Information.
+- [Install the Linux Agent](https://jumpcloud.com/support/install-the-linux-agent)
+- [Agent Compatibility, System Requirements, and Impacts](https://jumpcloud.com/support/agent-compatibility-system-requirements-and-impacts)
 
-## Testing
-See README file in the `tests` directory
+## Installation
 
+Current local development role name:
 
-#### [`jumpcloud_x_connect_key`][jumpcloud-x-connect-key]
-Default: none
-
-The X_Connect key as displayed on the `Servers > Add` screen. **Mandatory**.
-
-#### [`jumpcloud_directory`][jumpcloud-directory]
-Default: `/opt/jc`
-
-Path to check if JumpCloud has been previously installed.
-
-#### [`jumpcloud_x_connect_url`][jumpcloud-x-connect-url]
-Default: 'https://kickstart.jumpcloud.com/Kickstart'
-
-URL for the install script.
-
-#### [`jumpcloud_force_install`][jumpcloud-force-install]
-Default: `no`
-
-Used to determine whether or not to force installation of the client if it has been previously installed.
-
-#### [`jumpcloud_agent_service`][jumpcloud-agent-service]
-Default: `jcagent`
-
-Name of the service to restart.
-
-#### [`jumpcloud_use_sudo`][jumpcloud-use-sudo]
-Default: `no`
-
-Whether or not to use sudo during installation.
-
-#### [`jumpcloud_tags`][jumpcloud-tags]
-
-The list of JC tags you want a host or a group of hosts to be part of
-  - 'tag_one'
-  - 'tag_two'
-
-#### [`jumpcloud_displayName`][jumpcloud-displayName]
-Default: ` {{ inventory_hostname }}``
-
-#### [`jumpcloud_allowPublicKeyAuthentication`][jumpcloud-allowPublicKeyAuthentication]
-Default: `'true'`
-This value must be contained in single quotes "\'"
-
-#### [`jumpcloud_allowSshPasswordAuthentication`][jumpcloud-allowSshPasswordAuthentication]
-Default: `'true'`
-This value must be contained in single quotes "\'"
-
-#### [`jumpcloud_allowSshRootLogin`][jumpcloud-allowSshRootLogin]
-Default: `'true'`
-This value must be contained in single quotes "\'"
-
-#### [`jumpcloud_allowMultiFactorAuthentication`][jumpcloud-allowMultiFactorAuthentication]
-Default: `'false'`
-This value must be contained in single quotes "\'"
-
-## Example Playbook
-----------------
-
-```YAML
----
-- hosts: production
-  roles:
-     - { role: inviqa.jumpcloud, jumpcloud_x_connect_key: 'abcdef012234343' }
-  vars:
-    jumpcloud_tags:
-      - 'tag_one'
-      - 'tag_two'
-    jumpcloud_displayName: "a new displayName"
-    jumpcloud_allowPublicKeyAuthentication: 'true'
-    jumpcloud_allowSshPasswordAuthentication: 'false'
-    jumpcloud_allowSshRootLogin: 'true'
-    jumpcloud_allowMultiFactorAuthentication: 'false'
+```text
+ansible-jumpcloud
 ```
 
+Intended Ansible Galaxy role name:
+
+```text
+inviqa.jumpcloud
+```
+
+The repository is being prepared for refreshed Ansible Galaxy publication. Until
+that release exists, consume it from a local checkout or a pinned Git reference.
+
+## Variables
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `jumpcloud_x_connect_key` | `{{ enc_jumpcloud_x_connect_key \| default('') }}` | JumpCloud connect key used by the kickstart installer. |
+| `jumpcloud_api_key` | `{{ enc_jumpcloud_api_key \| default('') }}` | JumpCloud API key used for system API operations. |
+| `jumpcloud_directory` | `/opt/jc` | JumpCloud agent installation directory. |
+| `jumpcloud_x_connect_url` | `https://kickstart.jumpcloud.com/Kickstart` | Official JumpCloud Linux kickstart URL. |
+| `jumpcloud_install_timeout_seconds` | `300` | Maximum runtime for the JumpCloud kickstart script. |
+| `jumpcloud_agent_service` | `jcagent` | JumpCloud agent service name. |
+| `jumpcloud_force_install` | `false` | Force the install path even when the agent config exists. |
+| `jumpcloud_use_sudo` | `false` | Run system-level tasks with privilege escalation. |
+| `jumpcloud_validate_supported_distribution` | `true` | Fail early on Linux releases outside the role's current JumpCloud support matrix. |
+| `jumpcloud_delete_duplicate_systems` | `true` | Remove existing JumpCloud systems with the same `displayName` before install. |
+| `jumpcloud_display_name` | `{{ inventory_hostname }}` | Display name to set for the JumpCloud system. |
+| `jumpcloud_allow_public_key_authentication` | `true` | JumpCloud SSH public key authentication setting. |
+| `jumpcloud_allow_ssh_password_authentication` | `true` | JumpCloud SSH password authentication setting. |
+| `jumpcloud_allow_ssh_root_login` | `true` | JumpCloud SSH root login setting. |
+| `jumpcloud_allow_multi_factor_authentication` | `false` | JumpCloud SSH MFA setting. |
+| `jumpcloud_system_groups` | undefined | Optional list of JumpCloud system group names. |
+| `jumpcloud_create_missing_system_groups` | `false` | Create missing requested system groups before membership updates. |
+
+## Supported Linux Matrix
+
+This role's defaults track the current JumpCloud Linux agent compatibility
+documentation for supported distributions. The practical focus for current
+testing is:
+
+| Family | Current supported targets |
+| --- | --- |
+| Debian | Debian 11, Debian 12 |
+| Ubuntu | Ubuntu 18.04, 20.04, 22.04, 24.04, 26.04 |
+| Enterprise Linux | RHEL 8, RHEL 9, Rocky Linux 8, Rocky Linux 9 |
+| Fedora | Fedora 40, 41, 42 |
+| Amazon Linux | Amazon Linux 2, 2023 |
+| Oracle Linux | Oracle Linux 9 |
+
+CentOS 6 and 7 are intentionally no longer advertised because JumpCloud has
+ended support for those releases. CentOS Stream is not listed in JumpCloud's
+current Linux support matrix, so this role does not claim CentOS Stream support.
+Use RHEL or Rocky Linux for current Enterprise Linux validation.
+
+## Examples
+
+```yaml
+---
+- name: Install JumpCloud on supported Linux hosts
+  hosts: linux_devices
+  become: true
+  roles:
+    - role: inviqa.jumpcloud
+      vars:
+        jumpcloud_use_sudo: true
+        jumpcloud_x_connect_key: "{{ vault_jumpcloud_x_connect_key }}"
+        jumpcloud_api_key: "{{ vault_jumpcloud_api_key }}"
+        jumpcloud_display_name: "{{ inventory_hostname }}"
+        jumpcloud_system_groups:
+          - production-linux
+        jumpcloud_allow_public_key_authentication: true
+        jumpcloud_allow_ssh_password_authentication: false
+        jumpcloud_allow_ssh_root_login: false
+        jumpcloud_allow_multi_factor_authentication: true
+```
+
+For local checkout testing before Galaxy publication, use the local role name
+`ansible-jumpcloud`.
+
+## Testing
+
+[tests/README.md](tests/README.md) documents the current test workflow. The
+default inventory provisions local Docker containers with `community.docker` to
+validate support-matrix and dependency-install behavior. For release confidence,
+run the same playbook against real supported Linux hosts with
+`tests/inventory-live.example` because the agent registration path depends on
+the JumpCloud service and should not be exercised inside Docker containers.
+
+Fast local validation before live testing:
+
+```text
+ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
+ansible-galaxy collection install -r tests/requirements.yml
+ansible-lint .
+yamllint .
+markdownlint -c /Users/mmassari/.markdownlint.json AGENTS.md README.md CHANGELOG.md TODO.md tests/README.md
+```
+
+## Development Notes
+
+- `AGENTS.md` defines strict repository linting and documentation rules for AI
+  coding agents.
+- `.ansible/` is generated dependency/cache output and should not be committed.
+- `tests/test_variables.yml` is gitignored and may hold local live-test secrets.
+- Keep the role support matrix aligned with JumpCloud's published Linux agent
+  compatibility list before publishing a new Galaxy release.
+
+## Maintainer
+
+- Author: Marco Massari Calderone `<marco@marcoctu.com>`
+- Copyright holder: Inviqa UK Ltd
+
+## Support
+
+For current maintenance and publication work, contact the maintainer above. If
+the role is published publicly, issue-tracking and support paths should be
+documented alongside the published source.
+
+## Repository
+
+- Public repository URL: pending refreshed publication metadata
+- Publication status: pending Ansible Galaxy refresh
 
 ## License
--------
 
-[MIT][licence]
-
-## Author Information
-------------------
-Author Marco Massari Calderone at Inviqa UK Ltd
-
-Inspired by Barney Hanlon "shrikeh"'s Galaxy role [ansible-jumpcloud](https://github.com/shrikeh/ansible-jumpcloud)
-
-[github]: https://github.com/inviqa/ansible-jumpcloud "Github location of this role"
-[curl]: https://galaxy.ansible.com/list#/roles/4384
-[jumpcloud]: https://jumpcloud.com "JumpCloud website"
-[jumpcloud-x-connect-key]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L4 "Link to variable on master"
-[jumpcloud-directory]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L12 "Link to variable on master"
-[jumpcloud-x-connect-url]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L6 "Link to variable on master"
-[jumpcloud-agent-service]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L8 "Link to variable on master"
-[jumpcloud-force-install]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L9 "Link to variable on master"
-[jumpcloud-use-sudo]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L10 "Link to variable on master"
-[jumpcloud-displayName]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L11 "Link to variable on master"
-[jumpcloud-allowPublicKeyAuthentication]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L12 "Link to variable on master"
-[jumpcloud-allowSshPasswordAuthentication]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L13 "Link to variable on master"
-[jumpcloud-allowSshRootLogin]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L14 "Link to variable on master"
-[jumpcloud-allowMultiFactorAuthentication]: https://github.com/inviqa/ansible-jumpcloud/blob/master/defaults/main.yml#L15 "Link to variable on master"
-
-[licence]: https://raw.githubusercontent.com/inviqa/ansible-jumpcloud/master/LICENSE
+MIT

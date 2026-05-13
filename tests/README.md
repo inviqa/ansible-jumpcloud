@@ -1,85 +1,162 @@
-Testing based on the work by @geerlingguy
-at https://github.com/geerlingguy/ansible-role-test-vms
+# Test Harness
 
-# Multi-Platform Ansible Role and Playbook Test VMs
+This directory contains the integration harness for the JumpCloud Linux agent
+role. The default workflow provisions local Docker containers with
+`community.docker`, replacing the old `chrismeyersfsu.provision_docker` role
+dependency. A live-host inventory is also provided for final validation on real
+supported Linux systems.
 
-Use Docker+Vagrant and some VirtualBox boxes to follow the latest releases of the OSes, and this project runs a playbook against the following OSs:
+## Contents
 
-  - Debian Stable
-  - Ubuntu 12.04.x
-  - Ubuntu 14.04.x
-  - Ubuntu 16.04.x
-  - Ubuntu 18.04.x
-  - CentOS 6.x (192.168.3.6)
-  - CentOS 7.x (192.168.3.5)
+- [Coverage](#coverage)
+- [Setup](#setup)
+- [Run the Tests](#run-the-tests)
+- [Clean Up](#clean-up)
+- [Notes](#notes)
 
-## Requirements
-Install Docker
+## Coverage
 
-set local Environment Variables that will be read by Ansible
-```
-JUMPCLOUD_X_CONNECT_KEY=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
-JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
-```
+The default inventory exercises systemd-enabled container images:
 
-Make sure that on you JumpCloud account you have the following System Groups:
-```
-ansible_test_1
-ansible_test_2
-```
+| Family | Default image |
+| --- | --- |
+| Debian | `geerlingguy/docker-debian12-ansible:latest` |
+| Enterprise Linux | `geerlingguy/docker-rockylinux9-ansible:latest` |
+| Ubuntu | `geerlingguy/docker-ubuntu2404-ansible:latest` |
 
-## Testing a Role
-The testing process works as follows:
-There are an Ansible Playbook and Inventory configured to spin a bunch of Docker containers via Vagrant.
-Ansible will install JumpCloud's agent in the containers.
+The container harness is useful for repeatable role testing, support-matrix
+checks, and package-path validation. It intentionally does not run the real
+JumpCloud agent installer because that device-management agent is not supported
+inside local Docker containers and can hang the container runtime. Final release
+validation should run against real hosts using `tests/inventory-live.example` as
+the template.
 
-At the end of the provisioning Ansible will run a few test-tasks that will verify if the JumpCloud agent has been installed and if the hosts have been registered again JC portal, including an idempotence test (the provisioning will be run twice on the same containers without rebuilding or restarting them)
+Current recommended live-test targets:
 
-This is the command to start the testing process
+| Family | Recommended host versions |
+| --- | --- |
+| Debian | Debian 12 |
+| Enterprise Linux | RHEL 9 or Rocky Linux 9 |
+| Ubuntu | Ubuntu 24.04 or Ubuntu 26.04 |
 
-```
-cd  ./tests
-ansible-playbook -i inventory playbook.yml
-```
+CentOS-specific inventories are intentionally removed. Use
+`tests/inventory-redhat` for supported Enterprise Linux testing.
 
-To run the test on a specific containers you will need to create additional inventory files, i.e:
+## Setup
 
+Install test collection dependencies:
 
-```
-# *inventory-centos*
-
-[centos]
-centos7 image=chrismeyers/centos7
-centos6 image=chrismeyers/centos6
-
-[docker_containers:children]
-centos
-
-[docker_containers:vars]
-# needed for idempotence test
-restart=False
-
+```text
+ansible-galaxy collection install -r tests/requirements.yml
 ```
 
-This command is to to run a playbook which will instruct Docker to destroy the testing containers.
-```
-cd  ./tests
-ansible-playbook -i inventory playbook_cleanup.yml
+The default inventory provisions local containers through Docker. For live-host
+testing, copy the example inventory and populate it with reachable hosts:
 
-```
-
-### Travis CI Testing
-For the testing to work set up in the Travis CI project's settings the following `Environment Variables` that will be read by Ansible
-
-```
-JUMPCLOUD_X_CONNECT_KEY=yyyyyyyyyyyyyyzzzzzzzzzzxxxxxxxxxxxxx
-JUMPCLOUD_API_KEY=xxxxxxxxxxxxxyyyyyyyyyyyyyyzzzzzzzzzz
+```text
+cp tests/inventory-live.example tests/inventory-live
 ```
 
-## License
+```ini
+[jumpcloud_debian]
+debian12 ansible_host=203.0.113.10 ansible_user=root
 
-MIT
+[jumpcloud_test_hosts:vars]
+jumpcloud_test_provision_containers=false
+jumpcloud_test_run_agent_install=true
+```
 
-## Author Information
+Copy the local variables example and edit it:
 
-Created in 2014 by [Jeff Geerling](http://jeffgeerling.com/), author of [Ansible for DevOps](http://ansiblefordevops.com/).
+```text
+cp tests/test_variables.example.yml tests/test_variables.yml
+```
+
+Set the JumpCloud credentials:
+
+```yaml
+jumpcloud_test_x_connect_key: "your-jumpcloud-connect-key"
+jumpcloud_test_api_key: "your-jumpcloud-api-key"
+```
+
+Environment variables take precedence for CI or one-off local runs:
+
+```text
+export JUMPCLOUD_X_CONNECT_KEY="your-jumpcloud-connect-key"
+export JUMPCLOUD_API_KEY="your-jumpcloud-api-key"
+```
+
+Optional system groups can be configured in `tests/test_variables.yml`:
+
+```yaml
+jumpcloud_test_system_groups:
+  - ansible_test_1
+  - ansible_test_2
+jumpcloud_test_create_missing_system_groups: false
+```
+
+## Run the Tests
+
+From the repository root, run the default container-backed validation:
+
+```text
+ansible-playbook -i tests/inventory tests/playbook.yml
+```
+
+Run one container-backed family only:
+
+```text
+ansible-playbook -i tests/inventory-debian tests/playbook.yml
+ansible-playbook -i tests/inventory-redhat tests/playbook.yml
+ansible-playbook -i tests/inventory-ubuntu tests/playbook.yml
+```
+
+Run against live hosts:
+
+```text
+ansible-playbook -i tests/inventory-live tests/playbook.yml
+```
+
+The live-host run installs the JumpCloud agent and validates registration,
+display-name update, and optional system-group membership. The container run
+validates the supported-distribution and dependency-install paths without
+registering a Docker container as a JumpCloud device.
+
+Run syntax-only validation:
+
+```text
+ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
+```
+
+## Clean Up
+
+Remove matching JumpCloud test system records and any local test containers:
+
+```text
+ansible-playbook -i tests/inventory tests/playbook_cleanup.yml
+```
+
+If a single-family run fails mid-flight, clean up with the matching inventory
+before retrying:
+
+```text
+ansible-playbook -i tests/inventory-debian tests/playbook_cleanup.yml
+```
+
+If no JumpCloud API key is configured, cleanup skips API record removal and
+still removes local test containers. Deleting an active system record through
+JumpCloud should also remove the agent and policies from the active device. If
+a host is inactive, follow JumpCloud's manual agent removal documentation for
+the target distribution.
+
+## Notes
+
+- The live-host harness registers real systems in JumpCloud.
+- The default container harness does not register containers in JumpCloud.
+- The Docker replacement for the old `chrismeyersfsu.provision_docker` role is
+  the maintained `community.docker.docker_container` module.
+- `tests/test_variables.yml` is gitignored and may contain local secrets.
+- The playbook validates the JumpCloud API key before changing target hosts.
+- Test display names use `ansible-jumpcloud-<inventory_hostname>-test`.
+- The role fails early for distributions outside the current JumpCloud support
+  matrix unless `jumpcloud_validate_supported_distribution` is disabled.

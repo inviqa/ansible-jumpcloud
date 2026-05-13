@@ -1,58 +1,70 @@
 ---
+- name: Check that the JumpCloud agent config exists
+  ansible.builtin.stat:
+    path: "{{ jumpcloud_agent_config }}"
+  register: jumpcloud_test_agent_config
+  become: "{{ jumpcloud_use_sudo }}"
 
-- ansible.builtin.include_role:
+- name: Assert that the JumpCloud agent config exists
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_test_agent_config.stat.exists
+    msg: "The JumpCloud agent config was not created at {{ jumpcloud_agent_config }}"
+
+- name: Refresh JumpCloud registration status
+  ansible.builtin.include_role:
     name: ansible-jumpcloud
     tasks_from: check_system_registration
 
 - name: Check that the host has been added to JumpCloud
-  assert:
+  ansible.builtin.assert:
     that:
-      - "jc_system_is_registered"
-    msg: "The host {{ jumpcloud_displayName }} has not been registered to Jumpcloud"
+      - jc_system_is_registered | bool
+    msg: "The host {{ jumpcloud_effective_display_name }} has not been registered to JumpCloud"
   delegate_to: localhost
 
-- name: Check that the registered host name correspond to the System hostname
-  assert:
+- name: Check that the registered host name matches the requested display name
+  ansible.builtin.assert:
     that:
-      - "jumpcloud_displayName in jc_system_attributes_json_response.json.displayName"
-    msg: "The host should be named {{ jumpcloud_displayName }} but is present in JumpCloud as {{ jc_system_attributes_json_response.json.displayName}}"
-  when: jc_system_is_registered
+      - jc_system_attributes_json_response.json.displayName == jumpcloud_effective_display_name
+    msg: >-
+      The host should be named {{ jumpcloud_effective_display_name }} but is present in
+      JumpCloud as {{ jc_system_attributes_json_response.json.displayName }}.
+  when: jc_system_is_registered | bool
   delegate_to: localhost
 
-- name: Retrieve the list of System Groups the host is member of
-  uri:
-    url: "{{jumpcloud_api_v2_url }}/systems/{{ jumpcloud_system_key }}/memberof"
+- name: Retrieve the list of system groups the host is member of
+  ansible.builtin.uri:
+    url: "{{ jumpcloud_api_v2_url }}/systems/{{ jumpcloud_system_key }}/memberof"
     method: GET
     headers:
-      "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{jumpcloud_api_key}}"
-    body_format:  json
-    body: '{ "displayName" : "{{jumpcloud_displayName}}",
-    "allowPublicKeyAuthentication" : "{{jumpcloud_allowPublicKeyAuthentication}}",
-    "allowSshPasswordAuthentication" : "{{jumpcloud_allowSshPasswordAuthentication}}",
-    "allowSshRootLogin" : "{{jumpcloud_allowSshRootLogin}}",
-    "allowMultiFactorAuthentication" : "{{jumpcloud_allowMultiFactorAuthentication}}" }'
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
     follow_redirects: all
-    return_content: yes
+    return_content: true
     status_code: 200
   delegate_to: localhost
   register: jc_system_memberof_json_response
-  when: jumpcloud_system_key is defined and jumpcloud_system_groups is defined
-  ignore_errors: yes
-
-- name: Set the system membership to groups
-  ansible.builtin.set_fact: jc_system_memberof={{ jc_system_memberof|default([]) | union([item.id]) }}
-  with_items: "{{jc_system_memberof_json_response.json}}"
-  delegate_to: localhost
-  when: jumpcloud_system_groups is defined
   no_log: true
+  when:
+    - jumpcloud_system_key is defined
+    - jumpcloud_system_groups | default([]) | length > 0
+
+- name: Set system membership group IDs
+  ansible.builtin.set_fact:
+    jc_system_memberof: "{{ jc_system_memberof_json_response.json | map(attribute='id') | list }}"
+  delegate_to: localhost
+  no_log: true
+  when: jc_system_memberof_json_response is defined
 
 - name: Check that the host is member of the required groups
-  assert:
+  ansible.builtin.assert:
     that:
-      - "item.id in jc_system_memberof"
-    msg: "The host seems not to be member of the required System Groups {{ jumpcloud_system_groups}}"
-  with_items: "{{jc_system_groups}}"
+      - item.id in jc_system_memberof
+    msg: "The host is not a member of required JumpCloud system groups."
+  loop: "{{ jc_system_groups }}"
   delegate_to: localhost
-  when: jumpcloud_system_groups is defined
+  when:
+    - jumpcloud_system_groups | default([]) | length > 0
+    - jc_system_groups is defined

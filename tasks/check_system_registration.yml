@@ -1,26 +1,38 @@
 ---
-- name: Retrieve System attributes based on the System ID
-  uri:
-    url: "{{jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key}}"
+- name: Validate JumpCloud API key for registration checks
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_api_key | length > 0
+    fail_msg: >-
+      Set jumpcloud_api_key or enc_jumpcloud_api_key before checking JumpCloud
+      system registration.
+  no_log: true
+
+- name: Retrieve system attributes based on the system ID
+  ansible.builtin.uri:
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
     method: GET
     headers:
-      "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{jumpcloud_api_key}}"
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
     follow_redirects: all
-    return_content:
-    status_code: 200
-  delegate_to: localhos true
-  register:  jc_system_attributes_json_response
-  ignore_errors: true
+    return_content: true
+    status_code:
+      - 200
+      - 404
+  delegate_to: localhost
+  register: jc_system_attributes_json_response
+  no_log: true
   when: jumpcloud_system_key is defined
 
-- name: Define if System is registered in JumpCloud
+- name: Define if system is registered in JumpCloud
   ansible.builtin.set_fact:
-    jc_system_is_registered: "{{not jc_system_attributes_json_response.failed}}"
+    jc_system_is_registered: "{{ jc_system_attributes_json_response.status == 200 }}"
   when: jc_system_attributes_json_response is defined
   delegate_to: localhost
 
-- ansible.builtin.debug:
-    msg: "Warning ==> the System is not registered in JumpCloud"
-  when: not jc_system_is_registered
+- name: Warn when system is not registered in JumpCloud
+  ansible.builtin.debug:
+    msg: "Warning: the system is not registered in JumpCloud"
+  when: not jc_system_is_registered | default(false) | bool

@@ -1,0 +1,13 @@
+---
+# Copy this file to tests/test_variables.yml before running the live tests.
+# tests/test_variables.yml is gitignored.
+
+jumpcloud_test_x_connect_key: "your-jumpcloud-connect-key"
+jumpcloud_test_api_key: "your-jumpcloud-api-key"
+
+# Optional live-test settings.
+jumpcloud_test_system_groups:
+  - ansible_test_1
+  - ansible_test_2
+jumpcloud_test_create_missing_system_groups: false
+jumpcloud_test_delete_duplicate_systems: true

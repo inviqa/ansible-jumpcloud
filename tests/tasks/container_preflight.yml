@@ -1,0 +1,31 @@
+---
+- name: Load role defaults for container validation
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../defaults/main.yml"
+
+- name: Validate container target is in the supported role matrix
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.system == "Linux"
+      - ansible_facts.distribution in jumpcloud_supported_linux_versions
+      - ansible_facts.distribution_major_version in jumpcloud_supported_linux_versions[ansible_facts.distribution]
+    fail_msg: >-
+      The container target is not in the current JumpCloud support matrix used
+      by this role.
+
+- name: Validate dependency installation path in container
+  ansible.builtin.include_role:
+    name: ansible-jumpcloud
+    tasks_from: install_deps
+  vars:
+    jumpcloud_use_sudo: true
+
+- name: Check that required command dependencies are available
+  ansible.builtin.command:
+    cmd: "sh -lc 'command -v {{ item }}'"
+  loop:
+    - grep
+    - lsof
+    - openssl
+    - tar
+  changed_when: false

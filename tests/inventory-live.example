@@ -1,0 +1,22 @@
+[local]
+localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
+
+[jumpcloud_debian]
+# debian12 ansible_host=203.0.113.10 ansible_user=root
+
+[jumpcloud_redhat]
+# rhel9 ansible_host=203.0.113.11 ansible_user=root
+# rocky9 ansible_host=203.0.113.12 ansible_user=root
+
+[jumpcloud_ubuntu]
+# ubuntu2404 ansible_host=203.0.113.13 ansible_user=root
+
+[jumpcloud_test_hosts:children]
+jumpcloud_debian
+jumpcloud_redhat
+jumpcloud_ubuntu
+
+[jumpcloud_test_hosts:vars]
+ansible_python_interpreter=/usr/bin/python3
+jumpcloud_test_provision_containers=false
+jumpcloud_test_run_agent_install=true

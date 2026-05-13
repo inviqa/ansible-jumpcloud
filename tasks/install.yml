@@ -1,64 +1,45 @@
 ---
-
-- name:        If the system is a Ubuntu 12.xx then tricks the temporary the version for the Kickstarter to work
-  lineinfile:
-    path:      /etc/issue
-    regexp:   '^Ubuntu 12'
-    line:     'Ubuntu 14.04.5 LTS \n \l'
-    state:    present
-    backup:   yes
-  when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and (not jumpcloud_is_installed or jumpcloud_force_install)
-  register:   line_infile_result
-
-- name:       Saving the position of the `/etc/issue` backup
-  ansible.builtin.set_fact:
-    issue_backup_file: "{{line_infile_result.backup}}"
-  when:       ansible_distribution == "Ubuntu" and "12" in ansible_distribution_version and line_infile_result is defined and (not jumpcloud_is_installed or jumpcloud_force_install)
-
-- name: Download JumpCloud Kickstart script
-  get_url:
-    url: "{{jumpcloud_x_connect_url}}"
-    dest: "{{jumpcloud_kickstart_script}}"
-    mode: 0755
+- name: Download JumpCloud kickstart script
+  ansible.builtin.get_url:
+    url: "{{ jumpcloud_x_connect_url }}"
+    dest: "{{ jumpcloud_kickstart_script }}"
+    mode: "0755"
     headers:
-      x-connect-key: "{{jumpcloud_x_connect_key}}"
-  become: "{{jumpcloud_use_sudo}}"
+      x-connect-key: "{{ jumpcloud_x_connect_key }}"
+  become: "{{ jumpcloud_use_sudo }}"
+  no_log: true
 
-- name: Install JumpCloud Agent
-  command: "{{jumpcloud_kickstart_script}}"
+- name: Install JumpCloud agent
+  ansible.builtin.command: >-
+    /usr/bin/env timeout
+    {{ jumpcloud_install_timeout_seconds | int }}
+    /bin/bash
+    {{ jumpcloud_kickstart_script }}
   args:
-    creates: "{{jumpcloud_agent_config}}"
-  become: "{{jumpcloud_use_sudo}}"
+    creates: "{{ jumpcloud_agent_config }}"
+  become: "{{ jumpcloud_use_sudo }}"
+  register: jumpcloud_install_result
+  changed_when: jumpcloud_install_result.rc == 0
 
 - name: Check JumpCloud agent config again
-  stat:
-    path: "{{jumpcloud_agent_config}}"
+  ansible.builtin.stat:
+    path: "{{ jumpcloud_agent_config }}"
   register: jumpcloud_agent_config_status
-  become: "{{jumpcloud_use_sudo}}"
+  become: "{{ jumpcloud_use_sudo }}"
 
-- name: Debug info
+- name: Report JumpCloud agent config status
   ansible.builtin.debug:
-    msg: "{{jumpcloud_agent_config_status}}"
-  when: debug == true
+    var: jumpcloud_agent_config_status
+  when: debug | default(false) | bool
 
-- name: Check again if JumpCloud has been initialised
+- name: Check again if JumpCloud has been initialized
   ansible.builtin.set_fact:
-    jumpcloud_is_installed: "{{jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg}}"
+    jumpcloud_is_installed: >-
+      {{
+        jumpcloud_agent_config_status.stat.isreg is defined
+        and jumpcloud_agent_config_status.stat.isreg
+      }}
 
-- name:       Reset JumpCloud if `jcagent.conf` has not been created
-  import_tasks: reset_jumpcloud.yml
-  when:       not jumpcloud_is_installed
-
-- name:       Restore '/etc/issue' backup if present
-  file:
-    src:      "{{issue_backup_file}}"
-    path:     /etc/issue
-    state:    hard
-    force:    yes
-  when:       issue_backup_file is defined
-
-- name:       Removes '/etc/issue' backup file if present
-  file:
-    path:     "{{issue_backup_file}}"
-    state:    absent
-  when:       issue_backup_file is defined
+- name: Reset JumpCloud if jcagent.conf has not been created
+  ansible.builtin.import_tasks: reset_jumpcloud.yml
+  when: not jumpcloud_is_installed

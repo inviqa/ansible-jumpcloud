@@ -1,5 +1,7 @@
 tests/.vagrant
 tests/test_variables
+tests/test_variables.yml
+tests/inventory-live
 !.gitignore
 *.retry
 .ansible

@@ -1,20 +1,59 @@
 ---
-
-- hosts: all
+- name: Clean up JumpCloud live test records
+  hosts: jumpcloud_test_hosts
   gather_facts: false
   vars:
-    test_hostname: "{{inventory_hostname }}-test-with-ansible"
-    jumpcloud_api_key: "{{lookup('env','JUMPCLOUD_API_KEY')}}"
-    jumpcloud_use_sudo: true
-    jumpcloud_displayName: "ansible-jc-role-{{ test_hostname}}"
+    jumpcloud_test_api_key_from_env: "{{ lookup('env', 'JUMPCLOUD_API_KEY') }}"
+  pre_tasks:
+    - name: Check whether local test overrides exist
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/test_variables.yml"
+      register: local_test_variables_file
+      delegate_to: localhost
 
+    - name: Load local test overrides
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/test_variables.yml"
+      when: local_test_variables_file.stat.exists
+      no_log: true
+
+    - name: Resolve cleanup credentials and display name
+      ansible.builtin.set_fact:
+        jumpcloud_api_key: >-
+          {{
+            jumpcloud_test_api_key_from_env
+            | default(jumpcloud_test_api_key | default(''), true)
+          }}
+        jumpcloud_effective_display_name: "ansible-jumpcloud-{{ inventory_hostname }}-test"
+      no_log: true
+
+    - name: Check whether JumpCloud API cleanup should run
+      ansible.builtin.set_fact:
+        jumpcloud_test_run_api_cleanup: >-
+          {{
+            jumpcloud_test_run_agent_install | default(false) | bool
+            and jumpcloud_api_key | length > 0
+          }}
+      no_log: true
+
+    - name: Report when JumpCloud API cleanup is skipped
+      ansible.builtin.debug:
+        msg: >-
+          JumpCloud API cleanup is skipped because no API key is configured.
+          Local test containers will still be removed when enabled.
+      when: not jumpcloud_test_run_api_cleanup | bool
+      no_log: true
   tasks:
-    - ansible.builtin.include_role:
+    - name: Remove matching JumpCloud test records
+      ansible.builtin.include_role:
         name: ansible-jumpcloud
         tasks_from: remove_registered_systems
+      when: jumpcloud_test_run_api_cleanup | bool
 
-    - name: Remove Docker containers
-      docker_container:
-        name: "{{inventory_hostname}}"
-        state: absent
-      delegate_to: localhost
+- name: Remove local JumpCloud test containers
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Remove test containers when inventory requests them
+      ansible.builtin.include_tasks: tasks/remove_containers.yml
+      when: groups.get('jumpcloud_test_hosts', []) | length > 0

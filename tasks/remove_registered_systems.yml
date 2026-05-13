@@ -1,53 +1,60 @@
 ---
-- name: Debug info
-  ansible.builtin.debug:
-    msg: "Jumpcloud API Key: {{jumpcloud_api_key}}"
-  when: debug == true
+- name: Check whether duplicate system removal can use the JumpCloud API
+  ansible.builtin.set_fact:
+    jumpcloud_can_remove_duplicate_systems: >-
+      {{
+        jumpcloud_api_key is defined
+        and jumpcloud_api_key | length > 0
+        and jumpcloud_effective_display_name is defined
+      }}
+  no_log: true
 
-- name: Retrieve the list of the registered systems with the same displayName from JumpCloud
-  uri:
-    url: "{{jumpcloud_api_v1_url }}/search/systems"
+- name: Retrieve systems with the same displayName from JumpCloud
+  ansible.builtin.uri:
+    url: "{{ jumpcloud_api_v1_url }}/search/systems"
     method: POST
     headers:
-      "Content-Type": "application/json"
-      "Accept": "application/json"
-      "x-api-key": "{{jumpcloud_api_key}}"
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
     body_format: json
-    body: '{ "filter" :
-    {"and" :
-    [{ "displayName" : "{{jumpcloud_displayName}}" }]
-    },
-    "fields": "displayName _id" }'
+    body:
+      filter:
+        and:
+          - displayName: "{{ jumpcloud_effective_display_name }}"
+      fields: "displayName _id"
     follow_redirects: all
     return_content: true
     status_code: 200
   delegate_to: localhost
   register: jc_registered_systems_json_response
-  when: jumpcloud_api_key is defined
-        and not jumpcloud_api_key == ""
-        and jumpcloud_displayName is defined
-  ignore_errors: true
+  no_log: true
+  when: jumpcloud_can_remove_duplicate_systems | bool
 
-- name: Set count of inactive registere systems
+- name: Set count of duplicate registered systems
   ansible.builtin.set_fact:
-    jc_count_of_inactive_registered_systems: "{{jc_registered_systems_json_response.json.totalCount}}"
-  when: jc_registered_systems_json_response.json.totalCount is defined
+    jc_count_of_duplicate_registered_systems: >-
+      {{ jc_registered_systems_json_response.json.totalCount | default(0) | int }}
+  when: jc_registered_systems_json_response is defined
 
-- name: Delete the registered systems with the same name from JumpCloud
-  uri:
-    url: "{{jumpcloud_api_v1_url }}/systems/{{ item._id}}"
+- name: Delete registered systems with the same displayName from JumpCloud
+  ansible.builtin.uri:
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{ item._id }}"
     method: DELETE
     headers:
-      "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{jumpcloud_api_key}}"
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
     follow_redirects: all
-    return_content: yes
-    status_code: 200
-  with_items: "{{jc_registered_systems_json_response.json.results}}"
+    return_content: true
+    status_code:
+      - 200
+      - 204
+      - 404
+  loop: "{{ jc_registered_systems_json_response.json.results }}"
   delegate_to: localhost
   register: jc_deleted_systems_json_response
-  when: jc_count_of_inactive_registered_systems is defined
-        and jc_count_of_inactive_registered_systems != "0"
-  ignore_errors: yes
-
+  no_log: true
+  when:
+    - jc_count_of_duplicate_registered_systems | default(0) | int > 0
+    - jc_registered_systems_json_response is defined

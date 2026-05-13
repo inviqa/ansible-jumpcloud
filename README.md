@@ -16,6 +16,7 @@ groups.
 - [Supported Linux Matrix](#supported-linux-matrix)
 - [Examples](#examples)
 - [Testing](#testing)
+- [Jenkins CI](#jenkins-ci)
 - [Development Notes](#development-notes)
 - [Maintainer](#maintainer)
 - [Support](#support)
@@ -58,7 +59,7 @@ The role is intentionally focused on Linux agent lifecycle tasks:
   checks, and system group membership
 - the `community.docker` collection and local Docker service for the default
   container-backed test harness
-- the `community.digitalocean` collection, a DigitalOcean API token, and a
+- the `digitalocean.cloud` collection, a DigitalOcean API token, and a
   DigitalOcean SSH key for the end-to-end cloud test harness
 
 The role follows the current JumpCloud Linux agent documentation:
@@ -176,6 +177,11 @@ End-to-end cloud validation:
 ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook.yml
 ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook_cleanup.yml
 ```
+
+## Jenkins CI
+
+[docs/jenkins-ci.md](docs/jenkins-ci.md) documents the private Jenkins pipeline,
+required credential placeholders, and live-test command sequence.
 
 ## Development Notes
 

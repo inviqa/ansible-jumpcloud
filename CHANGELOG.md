@@ -19,6 +19,9 @@
   scoped `community.docker` validation path and a `digitalocean.cloud`
   integration path that provisions real droplets, applies the role, verifies
   JumpCloud state, and cleans up test resources.
+- Added a Jenkins pipeline, matching the DigitalOcean reserved IP role style,
+  for dependency installation, syntax checks, live DigitalOcean JumpCloud tests,
+  cleanup, and failure-only Slack notifications.
 - Renamed test inventories and normalized DigitalOcean droplet names so Docker
   and DigitalOcean targets are explicit and the `ansible-jumpcloud` prefix is
   applied only once.

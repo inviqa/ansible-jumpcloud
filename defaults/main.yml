@@ -10,6 +10,8 @@ jumpcloud_x_connect_url: "https://kickstart.jumpcloud.com/Kickstart"
 jumpcloud_kickstart_script: "/tmp/Kickstart.sh"
 jumpcloud_install_timeout_seconds: 300
 jumpcloud_registration_timeout_seconds: 180
+jumpcloud_registration_check_retries: 18
+jumpcloud_registration_check_delay_seconds: 10
 jumpcloud_api_v1_url: "https://console.jumpcloud.com/api"
 jumpcloud_api_v2_url: "https://console.jumpcloud.com/api/v2"
 jumpcloud_agent_service: jcagent

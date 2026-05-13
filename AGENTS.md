@@ -71,7 +71,7 @@ Applies to:
 
 Required:
 
-- `markdownlint -c /Users/mmassari/.markdownlint.json <file>`
+- `markdownlint -c ~/.markdownlint.json <file>`
 
 ### Python files
 

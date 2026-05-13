@@ -24,9 +24,17 @@
   delegate_to: localhost
   register: jc_system_attributes_json_response
   no_log: true
-  retries: 18
-  delay: 10
-  until: jc_system_attributes_json_response.status == 200
+  retries: "{{ jumpcloud_registration_check_retries | int }}"
+  delay: "{{ jumpcloud_registration_check_delay_seconds | int }}"
+  until: >-
+    jc_system_attributes_json_response.status == 200
+    or (
+      jc_system_attributes_json_response.status == 404
+      and jc_system_attributes_json_response.attempts | default(1) | int
+        >= jumpcloud_registration_check_retries | int
+    )
+  failed_when: jc_system_attributes_json_response.status not in [200, 404]
+  changed_when: false
   when: jumpcloud_system_key is defined
 
 - name: Define if system is registered in JumpCloud

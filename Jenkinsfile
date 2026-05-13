@@ -41,9 +41,9 @@ pipeline {
             defaultValue: true,
             description: 'Run the DigitalOcean-backed JumpCloud live integration test matrix.'
         )
-        string(
+        choice(
             name: 'TEST_INVENTORY',
-            defaultValue: 'tests/inventory-digitalocean-droplets',
+            choices: ['tests/inventory-digitalocean-droplets'],
             description: 'Inventory used for the live test and cleanup playbooks.'
         )
     }
@@ -80,6 +80,10 @@ pipeline {
             }
             steps {
                 script {
+                    if (!['tests/inventory-digitalocean-droplets'].contains(params.TEST_INVENTORY)) {
+                        error 'Unsupported TEST_INVENTORY parameter.'
+                    }
+
                     withCredentials([
                         string(credentialsId: DO_TOKEN_CREDENTIAL_ID, variable: 'DIGITAL_OCEAN_API_TOKEN'),
                         string(credentialsId: DO_SSH_KEYS_CREDENTIAL_ID, variable: 'DO_SSH_KEYS'),

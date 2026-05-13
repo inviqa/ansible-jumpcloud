@@ -69,7 +69,7 @@ The credential ID placeholders are defined at the top of `Jenkinsfile`:
 | Parameter | Default | Purpose |
 | --- | --- | --- |
 | `RUN_LIVE_TESTS` | `true` | Enables the DigitalOcean-backed JumpCloud integration test stage. |
-| `TEST_INVENTORY` | `tests/inventory-digitalocean-droplets` | Inventory used by the live test and cleanup playbooks. |
+| `TEST_INVENTORY` | `tests/inventory-digitalocean-droplets` | Fixed inventory choice used by the live test and cleanup playbooks. |
 
 When `RUN_LIVE_TESTS` is enabled, all non-Slack credentials above must exist.
 

@@ -94,6 +94,8 @@ that release exists, consume it from a local checkout or a pinned Git reference.
 | `jumpcloud_x_connect_url` | `https://kickstart.jumpcloud.com/Kickstart` | Official JumpCloud Linux kickstart URL. |
 | `jumpcloud_install_timeout_seconds` | `300` | Maximum runtime for the JumpCloud kickstart script. |
 | `jumpcloud_registration_timeout_seconds` | `180` | Maximum wait for the agent config after starting `jcagent`. |
+| `jumpcloud_registration_check_retries` | `18` | Maximum JumpCloud API registration lookup attempts before treating a missing system as unregistered. |
+| `jumpcloud_registration_check_delay_seconds` | `10` | Delay between JumpCloud API registration lookup attempts. |
 | `jumpcloud_agent_service` | `jcagent` | JumpCloud agent service name. |
 | `jumpcloud_force_install` | `false` | Force the install path even when the agent config exists. |
 | `jumpcloud_use_sudo` | `false` | Run system-level tasks with privilege escalation. |
@@ -168,7 +170,7 @@ ansible-playbook -i tests/inventory-docker tests/playbook.yml --syntax-check
 ansible-galaxy collection install -r tests/requirements.yml
 ansible-lint .
 yamllint .
-markdownlint -c /Users/mmassari/.markdownlint.json AGENTS.md README.md CHANGELOG.md TODO.md tests/README.md
+markdownlint -c ~/.markdownlint.json AGENTS.md README.md CHANGELOG.md TODO.md tests/README.md
 ```
 
 End-to-end cloud validation:

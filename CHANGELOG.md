@@ -34,6 +34,8 @@
 
 - Fixed JumpCloud registration delegation and added role-level system-group
   membership verification immediately after group synchronization.
+- Kept registration checks bounded while allowing a persistent missing system
+  record to be reported as unregistered instead of failing before reconciliation.
 - Removed obsolete Ubuntu 12 and CentOS 6/7 behavior and terminology in favor
   of the current supported platform matrix and RedHat-family naming.
 - Hardened secret handling so JumpCloud API keys, connect keys, API response

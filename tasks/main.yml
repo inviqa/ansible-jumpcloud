@@ -1,112 +1,18 @@
 ---
-- name: Validate JumpCloud role prerequisites
-  ansible.builtin.assert:
-    that:
-      - ansible_facts.system == "Linux"
-      - not jumpcloud_validate_supported_distribution | bool
-        or ansible_facts.distribution in jumpcloud_supported_linux_versions
-      - not jumpcloud_validate_supported_distribution | bool
-        or ansible_facts.distribution_major_version in jumpcloud_supported_linux_versions.get(ansible_facts.distribution, [])
-    fail_msg: >-
-      This host is not in the current JumpCloud Linux support matrix for this
-      role. Check JumpCloud Agent Compatibility, System Requirements, and
-      Impacts before installing the agent.
+- name: Validate target host support
+  ansible.builtin.import_tasks: validate_prerequisites.yml
 
-- name: Find JumpCloud agent config to determine whether JumpCloud is installed
-  ansible.builtin.stat:
-    path: "{{ jumpcloud_agent_config }}"
-  register: jumpcloud_agent_config_status
-  become: "{{ jumpcloud_use_sudo }}"
+- name: Detect current JumpCloud installation state
+  ansible.builtin.import_tasks: detect_install_state.yml
 
-- name: Set whether JumpCloud is already installed
-  ansible.builtin.set_fact:
-    jumpcloud_is_installed: >-
-      {{
-        jumpcloud_agent_config_status.stat.isreg is defined
-        and jumpcloud_agent_config_status.stat.isreg
-      }}
-
-- name: Resolve JumpCloud system attribute variables
-  ansible.builtin.set_fact:
-    jumpcloud_effective_display_name: >-
-      {{ lookup('ansible.builtin.vars', 'jumpcloud_displayName', default=jumpcloud_display_name) }}
-    jumpcloud_effective_allow_public_key_authentication: >-
-      {{
-        lookup(
-          'ansible.builtin.vars',
-          'jumpcloud_allowPublicKeyAuthentication',
-          default=jumpcloud_allow_public_key_authentication
-        )
-      }}
-    jumpcloud_effective_allow_ssh_password_authentication: >-
-      {{
-        lookup(
-          'ansible.builtin.vars',
-          'jumpcloud_allowSshPasswordAuthentication',
-          default=jumpcloud_allow_ssh_password_authentication
-        )
-      }}
-    jumpcloud_effective_allow_ssh_root_login: >-
-      {{
-        lookup(
-          'ansible.builtin.vars',
-          'jumpcloud_allowSshRootLogin',
-          default=jumpcloud_allow_ssh_root_login
-        )
-      }}
-    jumpcloud_effective_allow_multi_factor_authentication: >-
-      {{
-        lookup(
-          'ansible.builtin.vars',
-          'jumpcloud_allowMultiFactorAuthentication',
-          default=jumpcloud_allow_multi_factor_authentication
-        )
-      }}
-
-- name: Report JumpCloud install state
-  ansible.builtin.debug:
-    msg: "Is JumpCloud installed: {{ jumpcloud_is_installed }}"
-  when: debug | default(false) | bool
+- name: Resolve requested JumpCloud system attributes
+  ansible.builtin.import_tasks: resolve_system_attributes.yml
 
 - name: Install JumpCloud when required
+  ansible.builtin.import_tasks: install_agent.yml
   when:
     - not jumpcloud_is_installed or jumpcloud_force_install | bool
-  block:
-    - name: Validate JumpCloud connect key for installation
-      ansible.builtin.assert:
-        that:
-          - jumpcloud_x_connect_key | length > 0
-        fail_msg: >-
-          Set jumpcloud_x_connect_key, enc_jumpcloud_x_connect_key, or the test
-          harness variable before installing the JumpCloud agent.
-      no_log: true
 
-    - name: Remove registered systems with the same displayName from JumpCloud
-      ansible.builtin.import_tasks: remove_registered_systems.yml
-      when: jumpcloud_delete_duplicate_systems | bool
-
-    - name: Install JumpCloud dependencies
-      ansible.builtin.import_tasks: install_deps.yml
-
-    - name: Install JumpCloud agent
-      ansible.builtin.import_tasks: install.yml
-
-- name: Query and update registered JumpCloud system
+- name: Configure registered JumpCloud system
+  ansible.builtin.import_tasks: configure_registered_system.yml
   when: jumpcloud_is_installed or jumpcloud_force_install | bool
-  block:
-    - name: Get JumpCloud system key
-      ansible.builtin.import_tasks: get_system_key.yml
-
-    - name: Check JumpCloud system registration
-      ansible.builtin.import_tasks: check_system_registration.yml
-      when: jumpcloud_system_key is defined
-
-    - name: Update system attributes if registered in JumpCloud
-      ansible.builtin.import_tasks: update_system.yml
-      when: jc_system_is_registered | default(false) | bool
-
-    - name: Add system to groups if groups are defined
-      ansible.builtin.import_tasks: update_groups.yml
-      when:
-        - jc_system_is_registered | default(false) | bool
-        - jumpcloud_system_groups is defined

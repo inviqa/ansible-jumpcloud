@@ -1,3 +1,5 @@
 ---
 collections:
   - name: community.docker
+  - name: digitalocean.cloud
+    version: 1.9.0

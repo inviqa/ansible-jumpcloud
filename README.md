@@ -58,6 +58,8 @@ The role is intentionally focused on Linux agent lifecycle tasks:
   checks, and system group membership
 - the `community.docker` collection and local Docker service for the default
   container-backed test harness
+- the `community.digitalocean` collection, a DigitalOcean API token, and a
+  DigitalOcean SSH key for the end-to-end cloud test harness
 
 The role follows the current JumpCloud Linux agent documentation:
 
@@ -90,6 +92,7 @@ that release exists, consume it from a local checkout or a pinned Git reference.
 | `jumpcloud_directory` | `/opt/jc` | JumpCloud agent installation directory. |
 | `jumpcloud_x_connect_url` | `https://kickstart.jumpcloud.com/Kickstart` | Official JumpCloud Linux kickstart URL. |
 | `jumpcloud_install_timeout_seconds` | `300` | Maximum runtime for the JumpCloud kickstart script. |
+| `jumpcloud_registration_timeout_seconds` | `180` | Maximum wait for the agent config after starting `jcagent`. |
 | `jumpcloud_agent_service` | `jcagent` | JumpCloud agent service name. |
 | `jumpcloud_force_install` | `false` | Force the install path even when the agent config exists. |
 | `jumpcloud_use_sudo` | `false` | Run system-level tasks with privilege escalation. |
@@ -153,18 +156,25 @@ For local checkout testing before Galaxy publication, use the local role name
 [tests/README.md](tests/README.md) documents the current test workflow. The
 default inventory provisions local Docker containers with `community.docker` to
 validate support-matrix and dependency-install behavior. For release confidence,
-run the same playbook against real supported Linux hosts with
-`tests/inventory-live.example` because the agent registration path depends on
-the JumpCloud service and should not be exercised inside Docker containers.
+run the same playbook against real supported Linux hosts or the
+DigitalOcean-backed inventory. DigitalOcean provisioning uses the maintained
+`digitalocean.cloud` collection, matching the newer Frontdoor Base pattern.
 
 Fast local validation before live testing:
 
 ```text
-ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
+ansible-playbook -i tests/inventory-docker tests/playbook.yml --syntax-check
 ansible-galaxy collection install -r tests/requirements.yml
 ansible-lint .
 yamllint .
 markdownlint -c /Users/mmassari/.markdownlint.json AGENTS.md README.md CHANGELOG.md TODO.md tests/README.md
+```
+
+End-to-end cloud validation:
+
+```text
+ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook.yml
+ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook_cleanup.yml
 ```
 
 ## Development Notes

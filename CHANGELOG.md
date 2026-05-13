@@ -13,12 +13,30 @@
   options do not block the downloaded installer.
 - Added a bounded installer timeout so unsupported or unhealthy environments
   fail diagnostically instead of hanging the harness.
+- Kept JumpCloud installer execution bounded and sensitive because JumpCloud
+  prints the connect key, and made Debian-family kickstart execution
+  non-interactive.
 - Split container validation from live-host agent registration so Docker tests
   no longer attempt to register unsupported container targets as JumpCloud
   devices.
 - Replaced the legacy Docker, Vagrant, and Travis-era test harness dependency
   with a maintained `community.docker` container harness plus live-host
   inventory support.
+- Added a DigitalOcean-backed integration harness that provisions real droplets,
+  applies the JumpCloud role, verifies local agent state and JumpCloud API
+  attributes, then deletes the droplets during cleanup.
+- Switched DigitalOcean live-test provisioning to the maintained
+  `digitalocean.cloud` collection and documented its Python runtime
+  dependencies.
+- Normalized DigitalOcean test droplet names so the `ansible-jumpcloud` prefix
+  is applied only once.
+- Renamed test inventories so Docker and DigitalOcean droplet targets are
+  explicit in the filename.
+- Refactored the role entrypoint into smaller task files so `tasks/main.yml`
+  reads as an orchestration sequence.
+- Added a post-package service-start recovery path for Debian-family installs
+  where the JumpCloud package is installed but the agent service is not started
+  before the kickstart command times out.
 - Updated role defaults and dependency lists to track JumpCloud's current Linux
   agent compatibility documentation.
 - Renamed public role variables to Ansible-lint-compatible snake case while
@@ -32,6 +50,8 @@
 - Removed legacy Ubuntu 12 install workaround and obsolete CentOS 6/7 support
   claims.
 - Stopped exposing JumpCloud API keys and connect keys through debug output.
+- Marked JumpCloud group-validation assertions as sensitive so failed live tests
+  cannot print API response bodies or request headers.
 - Modernized YAML and Ansible task structure for linting and publication
   readiness.
 - Renamed the CentOS-specific test inventory to Enterprise Linux/RedHat

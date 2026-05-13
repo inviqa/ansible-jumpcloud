@@ -11,6 +11,16 @@
       - jumpcloud_test_agent_config.stat.exists
     msg: "The JumpCloud agent config was not created at {{ jumpcloud_agent_config }}"
 
+- name: Collect service facts
+  ansible.builtin.service_facts:
+
+- name: Check that the JumpCloud agent service exists
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_agent_service + '.service' in ansible_facts.services
+        or jumpcloud_agent_service in ansible_facts.services
+    msg: "The JumpCloud agent service is not present."
+
 - name: Refresh JumpCloud registration status
   ansible.builtin.include_role:
     name: ansible-jumpcloud
@@ -30,6 +40,21 @@
     msg: >-
       The host should be named {{ jumpcloud_effective_display_name }} but is present in
       JumpCloud as {{ jc_system_attributes_json_response.json.displayName }}.
+  when: jc_system_is_registered | bool
+  delegate_to: localhost
+
+- name: Check that JumpCloud SSH attributes match the requested values
+  ansible.builtin.assert:
+    that:
+      - jc_system_attributes_json_response.json.allowPublicKeyAuthentication
+        == (jumpcloud_effective_allow_public_key_authentication | bool)
+      - jc_system_attributes_json_response.json.allowSshPasswordAuthentication
+        == (jumpcloud_effective_allow_ssh_password_authentication | bool)
+      - jc_system_attributes_json_response.json.allowSshRootLogin
+        == (jumpcloud_effective_allow_ssh_root_login | bool)
+      - jc_system_attributes_json_response.json.allowMultiFactorAuthentication
+        == (jumpcloud_effective_allow_multi_factor_authentication | bool)
+    msg: "JumpCloud SSH attributes do not match the requested role variables."
   when: jc_system_is_registered | bool
   delegate_to: localhost
 
@@ -65,6 +90,7 @@
     msg: "The host is not a member of required JumpCloud system groups."
   loop: "{{ jc_system_groups }}"
   delegate_to: localhost
+  no_log: true
   when:
     - jumpcloud_system_groups | default([]) | length > 0
     - jc_system_groups is defined

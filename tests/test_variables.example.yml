@@ -5,9 +5,21 @@
 jumpcloud_test_x_connect_key: "your-jumpcloud-connect-key"
 jumpcloud_test_api_key: "your-jumpcloud-api-key"
 
+# Required for tests/inventory-digitalocean-droplets.
+do_test_api_token: "dop_v1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+do_ssh_keys:
+  - "12345678"
+# Optional but recommended when your SSH agent has many keys loaded.
+# do_ssh_private_key_file: "~/.ssh/id_ed25519"
+
 # Optional live-test settings.
 jumpcloud_test_system_groups:
   - ansible_test_1
   - ansible_test_2
 jumpcloud_test_create_missing_system_groups: false
 jumpcloud_test_delete_duplicate_systems: true
+
+# Optional DigitalOcean settings.
+# do_region_id: "lon1"
+# do_size_id: "s-1vcpu-1gb"
+# jumpcloud_test_do_tag: "ANSIBLE-JUMPCLOUD-TEST"

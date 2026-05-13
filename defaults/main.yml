@@ -9,6 +9,7 @@ jumpcloud_api_key: "{{ enc_jumpcloud_api_key | default('') }}"
 jumpcloud_x_connect_url: "https://kickstart.jumpcloud.com/Kickstart"
 jumpcloud_kickstart_script: "/tmp/Kickstart.sh"
 jumpcloud_install_timeout_seconds: 300
+jumpcloud_registration_timeout_seconds: 180
 jumpcloud_api_v1_url: "https://console.jumpcloud.com/api"
 jumpcloud_api_v2_url: "https://console.jumpcloud.com/api/v2"
 jumpcloud_agent_service: jcagent
@@ -93,7 +94,7 @@ jumpcloud_yum_dependencies:
   - util-linux
   - which
 jumpcloud_dnf_dependencies:
-  - curl-minimal
+  - curl
   - dnf
   - findutils
   - gawk

@@ -12,6 +12,7 @@ supported Linux systems.
 - [Setup](#setup)
 - [Run the Tests](#run-the-tests)
 - [Clean Up](#clean-up)
+- [DigitalOcean Live Tests](#digitalocean-live-tests)
 - [Notes](#notes)
 
 ## Coverage
@@ -40,7 +41,16 @@ Current recommended live-test targets:
 | Ubuntu | Ubuntu 24.04 or Ubuntu 26.04 |
 
 CentOS-specific inventories are intentionally removed. Use
-`tests/inventory-redhat` for supported Enterprise Linux testing.
+`tests/inventory-docker-redhat` for supported Enterprise Linux container
+testing.
+
+The DigitalOcean harness provisions real droplets for end-to-end validation:
+
+| Family | DigitalOcean image slug |
+| --- | --- |
+| Debian | `debian-12-x64` |
+| Enterprise Linux | `rockylinux-9-x64` |
+| Ubuntu | `ubuntu-24-04-x64` |
 
 ## Setup
 
@@ -48,6 +58,13 @@ Install test collection dependencies:
 
 ```text
 ansible-galaxy collection install -r tests/requirements.yml
+```
+
+Install Python dependencies required by the DigitalOcean collection in the
+Python runtime used by Ansible:
+
+```text
+python -m pip install -r tests/requirements.txt
 ```
 
 The default inventory provisions local containers through Docker. For live-host
@@ -79,6 +96,16 @@ jumpcloud_test_x_connect_key: "your-jumpcloud-connect-key"
 jumpcloud_test_api_key: "your-jumpcloud-api-key"
 ```
 
+For DigitalOcean live tests, also set:
+
+```yaml
+do_test_api_token: "dop_v1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+do_ssh_keys:
+  - "12345678"
+# Optional but recommended when your SSH agent has many keys loaded.
+# do_ssh_private_key_file: "~/.ssh/id_ed25519"
+```
+
 Environment variables take precedence for CI or one-off local runs:
 
 ```text
@@ -100,15 +127,15 @@ jumpcloud_test_create_missing_system_groups: false
 From the repository root, run the default container-backed validation:
 
 ```text
-ansible-playbook -i tests/inventory tests/playbook.yml
+ansible-playbook -i tests/inventory-docker tests/playbook.yml
 ```
 
 Run one container-backed family only:
 
 ```text
-ansible-playbook -i tests/inventory-debian tests/playbook.yml
-ansible-playbook -i tests/inventory-redhat tests/playbook.yml
-ansible-playbook -i tests/inventory-ubuntu tests/playbook.yml
+ansible-playbook -i tests/inventory-docker-debian tests/playbook.yml
+ansible-playbook -i tests/inventory-docker-redhat tests/playbook.yml
+ansible-playbook -i tests/inventory-docker-ubuntu tests/playbook.yml
 ```
 
 Run against live hosts:
@@ -122,10 +149,34 @@ display-name update, and optional system-group membership. The container run
 validates the supported-distribution and dependency-install paths without
 registering a Docker container as a JumpCloud device.
 
+## DigitalOcean Live Tests
+
+Run the DigitalOcean-backed end-to-end harness:
+
+```text
+ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook.yml
+```
+
+This playbook:
+
+- creates one small DigitalOcean droplet for each target OS
+- waits for SSH
+- installs Python if the image needs it
+- runs the JumpCloud role
+- verifies the local agent config and service
+- verifies JumpCloud registration, display name, SSH attributes, and optional
+  system-group membership through the JumpCloud API
+
+Always run cleanup after a DigitalOcean test:
+
+```text
+ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook_cleanup.yml
+```
+
 Run syntax-only validation:
 
 ```text
-ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
+ansible-playbook -i tests/inventory-docker tests/playbook.yml --syntax-check
 ```
 
 ## Clean Up
@@ -133,14 +184,14 @@ ansible-playbook -i tests/inventory tests/playbook.yml --syntax-check
 Remove matching JumpCloud test system records and any local test containers:
 
 ```text
-ansible-playbook -i tests/inventory tests/playbook_cleanup.yml
+ansible-playbook -i tests/inventory-docker tests/playbook_cleanup.yml
 ```
 
 If a single-family run fails mid-flight, clean up with the matching inventory
 before retrying:
 
 ```text
-ansible-playbook -i tests/inventory-debian tests/playbook_cleanup.yml
+ansible-playbook -i tests/inventory-docker-debian tests/playbook_cleanup.yml
 ```
 
 If no JumpCloud API key is configured, cleanup skips API record removal and
@@ -153,10 +204,16 @@ the target distribution.
 
 - The live-host harness registers real systems in JumpCloud.
 - The default container harness does not register containers in JumpCloud.
+- The DigitalOcean harness creates billable droplets and deletes droplets tagged
+  with `ANSIBLE-JUMPCLOUD-TEST` during cleanup.
 - The Docker replacement for the old `chrismeyersfsu.provision_docker` role is
   the maintained `community.docker.docker_container` module.
+- DigitalOcean droplet provisioning uses the maintained `digitalocean.cloud`
+  collection, matching the newer Frontdoor Base test infrastructure.
 - `tests/test_variables.yml` is gitignored and may contain local secrets.
 - The playbook validates the JumpCloud API key before changing target hosts.
-- Test display names use `ansible-jumpcloud-<inventory_hostname>-test`.
+- Test display names and droplets use `ansible-jumpcloud-<target>-test`; if an
+  inventory host starts with `jumpcloud-`, that prefix is removed from the
+  target suffix.
 - The role fails early for distributions outside the current JumpCloud support
   matrix unless `jumpcloud_validate_supported_distribution` is disabled.

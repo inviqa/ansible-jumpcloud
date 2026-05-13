@@ -1,0 +1,8 @@
+---
+digital_ocean_api_token: "{{ jumpcloud_test_do_api_token }}"
+digital_ocean_size_id: "{{ do_size_id | default('s-1vcpu-1gb') }}"
+digital_ocean_image_id: "{{ do_image_id | mandatory }}"
+digital_ocean_name: "{{ jumpcloud_test_droplet_name }}"
+digital_ocean_region_id: "{{ do_region_id | default('lon1') }}"
+digital_ocean_unique_name: true
+digital_ocean_ssh_keys: "{{ do_ssh_keys | default([], true) }}"

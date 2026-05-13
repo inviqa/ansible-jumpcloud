@@ -1,0 +1,24 @@
+[local]
+localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
+
+[jumpcloud_debian]
+jumpcloud-debian12 do_image_id=debian-12-x64
+
+[jumpcloud_redhat]
+jumpcloud-rocky9 do_image_id=rockylinux-9-x64
+
+[jumpcloud_ubuntu]
+jumpcloud-ubuntu2404 do_image_id=ubuntu-24-04-x64
+
+[jumpcloud_test_hosts:children]
+jumpcloud_debian
+jumpcloud_redhat
+jumpcloud_ubuntu
+
+[jumpcloud_test_hosts:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=root
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes'
+jumpcloud_test_provision_containers=false
+jumpcloud_test_provision_droplets=true
+jumpcloud_test_run_agent_install=true

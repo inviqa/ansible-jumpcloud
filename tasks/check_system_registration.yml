@@ -24,6 +24,9 @@
   delegate_to: localhost
   register: jc_system_attributes_json_response
   no_log: true
+  retries: 18
+  delay: 10
+  until: jc_system_attributes_json_response.status == 200
   when: jumpcloud_system_key is defined
 
 - name: Define if system is registered in JumpCloud

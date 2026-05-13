@@ -24,7 +24,9 @@
             jumpcloud_test_api_key_from_env
             | default(jumpcloud_test_api_key | default(''), true)
           }}
-        jumpcloud_effective_display_name: "ansible-jumpcloud-{{ inventory_hostname }}-test"
+        jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
+        jumpcloud_effective_display_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
+        jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
       no_log: true
 
     - name: Check whether JumpCloud API cleanup should run
@@ -49,6 +51,19 @@
         name: ansible-jumpcloud
         tasks_from: remove_registered_systems
       when: jumpcloud_test_run_api_cleanup | bool
+
+- name: Remove DigitalOcean JumpCloud test droplets
+  hosts: jumpcloud_test_hosts
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Remove provisioned DigitalOcean test resources
+      ansible.builtin.include_tasks: tasks/delete_test_resources.yml
+      when:
+        - jumpcloud_test_provision_droplets | default(false) | bool
+        - jumpcloud_test_do_api_token | default('') | length > 0
 
 - name: Remove local JumpCloud test containers
   hosts: localhost

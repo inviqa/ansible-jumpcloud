@@ -1,0 +1,17 @@
+---
+- name: Get JumpCloud system key
+  ansible.builtin.import_tasks: get_system_key.yml
+
+- name: Check JumpCloud system registration
+  ansible.builtin.import_tasks: check_system_registration.yml
+  when: jumpcloud_system_key is defined
+
+- name: Configure JumpCloud system when registered
+  when: jc_system_is_registered | default(false) | bool
+  block:
+    - name: Update registered system attributes
+      ansible.builtin.import_tasks: update_system.yml
+
+    - name: Add registered system to groups if groups are defined
+      ansible.builtin.import_tasks: update_groups.yml
+      when: jumpcloud_system_groups is defined

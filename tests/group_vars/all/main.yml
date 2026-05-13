@@ -1,0 +1,17 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+ansible_user: root
+jumpcloud_test_do_api_token_from_env: >-
+  {{
+    lookup('env', 'DIGITAL_OCEAN_API_TOKEN')
+    | default(lookup('env', 'DO_OAUTH_TOKEN'), true)
+  }}
+jumpcloud_test_do_api_token: >-
+  {{
+    jumpcloud_test_do_api_token_from_env
+    | default(do_test_api_token | default(''), true)
+  }}
+jumpcloud_test_do_api_base_url: "https://api.digitalocean.com/v2"
+jumpcloud_test_do_tag: "{{ do_test_tag | default('ANSIBLE-JUMPCLOUD-TEST') }}"
+jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
+jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"

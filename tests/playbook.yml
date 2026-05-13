@@ -7,9 +7,81 @@
       ansible.builtin.include_tasks: tasks/provision_containers.yml
       when: groups.get('jumpcloud_test_hosts', []) | length > 0
 
+- name: Resolve DigitalOcean test credentials
+  hosts: jumpcloud_test_hosts
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  pre_tasks:
+    - name: Check whether local test overrides exist
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/test_variables.yml"
+      register: local_test_variables_file
+      delegate_to: localhost
+
+    - name: Load local test overrides
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/test_variables.yml"
+      when: local_test_variables_file.stat.exists
+      no_log: true
+
+    - name: Resolve DigitalOcean test variables
+      ansible.builtin.set_fact:
+        jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
+        jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
+      no_log: true
+  tasks:
+    - name: Check whether DigitalOcean credentials are available
+      ansible.builtin.assert:
+        that:
+          - jumpcloud_test_do_api_token | length > 0
+        fail_msg: >-
+          Set do_test_api_token in tests/test_variables.yml or export
+          DIGITAL_OCEAN_API_TOKEN / DO_OAUTH_TOKEN before running the
+          DigitalOcean test harness.
+      no_log: true
+      when: jumpcloud_test_provision_droplets | default(false) | bool
+
+    - name: Validate the DigitalOcean API token for tests
+      digitalocean.cloud.account_info:
+        token: "{{ jumpcloud_test_do_api_token }}"
+        timeout: 60
+      delegate_to: localhost
+      register: jumpcloud_test_do_auth_check
+      no_log: true
+      failed_when: false
+      when: jumpcloud_test_provision_droplets | default(false) | bool
+
+    - name: Check whether the DigitalOcean API token can authenticate tests
+      ansible.builtin.assert:
+        that:
+          - jumpcloud_test_do_auth_check.msg == 'Current account information'
+        fail_msg: >-
+          The configured DigitalOcean token could not authenticate. Update
+          tests/test_variables.yml or export a valid DIGITAL_OCEAN_API_TOKEN /
+          DO_OAUTH_TOKEN before running the DigitalOcean test harness.
+      no_log: true
+      when: jumpcloud_test_provision_droplets | default(false) | bool
+
+    - name: Provision DigitalOcean test droplet
+      ansible.builtin.include_role:
+        name: digital-ocean
+      when: jumpcloud_test_provision_droplets | default(false) | bool
+
+- name: Install Python on DigitalOcean test droplets
+  hosts: jumpcloud_test_hosts
+  gather_facts: false
+  tasks:
+    - name: Install Python for Ansible on provisioned droplets
+      ansible.builtin.include_tasks: tasks/install_python.yml
+      when: jumpcloud_test_provision_droplets | default(false) | bool
+
 - name: Validate JumpCloud role on supported Linux targets
   hosts: jumpcloud_test_hosts
   become: true
+  vars_files:
+    - ../defaults/main.yml
   vars:
     jumpcloud_test_x_connect_key_from_env: "{{ lookup('env', 'JUMPCLOUD_X_CONNECT_KEY') }}"
     jumpcloud_test_api_key_from_env: "{{ lookup('env', 'JUMPCLOUD_API_KEY') }}"
@@ -56,7 +128,8 @@
     - name: Set live test role variables
       ansible.builtin.set_fact:
         jumpcloud_use_sudo: true
-        jumpcloud_display_name: "ansible-jumpcloud-{{ inventory_hostname }}-test"
+        jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
+        jumpcloud_display_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
         jumpcloud_system_groups: "{{ jumpcloud_test_system_groups | default([]) }}"
         jumpcloud_create_missing_system_groups: >-
           {{ jumpcloud_test_create_missing_system_groups | default(false) }}

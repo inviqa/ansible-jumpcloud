@@ -48,6 +48,7 @@
       JumpCloud system group {{ item.item }} does not exist. Create it in
       JumpCloud or set jumpcloud_create_missing_system_groups to true.
   loop: "{{ jc_system_groups_json_response.results }}"
+  no_log: true
   when:
     - not jumpcloud_create_missing_system_groups | bool
     - item.json | length == 0

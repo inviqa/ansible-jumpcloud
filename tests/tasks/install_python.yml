@@ -1,0 +1,16 @@
+---
+- name: Install Python on Debian and Ubuntu test droplets
+  ansible.builtin.raw: >-
+    test -e /usr/bin/python3 ||
+    (apt-get -qq update && apt-get install -qqy python3)
+  register: jumpcloud_test_install_python
+  changed_when: jumpcloud_test_install_python.stdout | length > 0
+  when: "'debian' in inventory_hostname or 'ubuntu' in inventory_hostname"
+
+- name: Install Python on RedHat-family test droplets
+  ansible.builtin.raw: >-
+    test -e /usr/bin/python3 ||
+    (dnf -qy install python3 || yum -qy install python3)
+  register: jumpcloud_test_install_python
+  changed_when: jumpcloud_test_install_python.stdout | length > 0
+  when: "'rocky' in inventory_hostname or 'rhel' in inventory_hostname"

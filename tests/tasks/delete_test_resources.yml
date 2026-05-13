@@ -1,0 +1,30 @@
+---
+- name: Retrieve DigitalOcean droplets with the JumpCloud test tag
+  digitalocean.cloud.droplets_info:
+    token: "{{ jumpcloud_test_do_api_token }}"
+    tag_name: "{{ jumpcloud_test_do_tag }}"
+  delegate_to: localhost
+  register: jumpcloud_test_do_tagged_droplets
+  no_log: true
+
+- name: Resolve matching DigitalOcean test droplets
+  ansible.builtin.set_fact:
+    jumpcloud_test_droplets_to_delete: >-
+      {{
+        jumpcloud_test_do_tagged_droplets.droplets
+        | selectattr('name', 'equalto', jumpcloud_test_droplet_name)
+        | list
+      }}
+  no_log: true
+
+- name: Delete matching DigitalOcean test droplets
+  digitalocean.cloud.droplet:
+    token: "{{ jumpcloud_test_do_api_token }}"
+    droplet_id: "{{ item.id }}"
+    name: "{{ item.name }}"
+    region: "{{ item.region.slug }}"
+    state: absent
+  loop: "{{ jumpcloud_test_droplets_to_delete }}"
+  delegate_to: localhost
+  no_log: true
+  when: jumpcloud_test_droplets_to_delete | length > 0

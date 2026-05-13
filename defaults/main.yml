@@ -94,7 +94,6 @@ jumpcloud_yum_dependencies:
   - util-linux
   - which
 jumpcloud_dnf_dependencies:
-  - curl
   - dnf
   - findutils
   - gawk

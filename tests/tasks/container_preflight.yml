@@ -20,12 +20,33 @@
   vars:
     jumpcloud_use_sudo: true
 
-- name: Check that required command dependencies are available
-  ansible.builtin.command:
-    cmd: "sh -lc 'command -v {{ item }}'"
+- name: Check that required dependency executables are available
+  ansible.builtin.stat:
+    path: "/usr/bin/{{ item }}"
+    get_checksum: false
+    get_mime: false
   loop:
+    - curl
     - grep
     - lsof
     - openssl
     - tar
-  changed_when: false
+  register: jumpcloud_test_dependency_executables
+
+- name: Resolve missing dependency executables
+  ansible.builtin.set_fact:
+    jumpcloud_test_missing_dependency_executables: >-
+      {{
+        jumpcloud_test_dependency_executables.results
+        | rejectattr('stat.exists')
+        | map(attribute='item')
+        | list
+      }}
+
+- name: Validate required dependency executables are available
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_test_missing_dependency_executables | length == 0
+    fail_msg: >-
+      Required executables are missing after dependency installation:
+      {{ jumpcloud_test_missing_dependency_executables | join(', ') }}

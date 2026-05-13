@@ -13,6 +13,6 @@
   when:
     - not jumpcloud_is_installed or jumpcloud_force_install | bool
 
-- name: Configure registered JumpCloud system
-  ansible.builtin.import_tasks: configure_registered_system.yml
+- name: Reconcile registered JumpCloud system state
+  ansible.builtin.import_tasks: reconcile_registered_system.yml
   when: jumpcloud_is_installed or jumpcloud_force_install | bool

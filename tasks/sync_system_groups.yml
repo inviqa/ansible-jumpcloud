@@ -1,0 +1,96 @@
+---
+- name: Resolve requested JumpCloud system groups
+  delegate_to: localhost
+  no_log: true
+  block:
+    - name: Retrieve system groups by name
+      ansible.builtin.uri:
+        url: "{{ jumpcloud_api_v2_url }}/systemgroups?filter=name:eq:{{ item | urlencode }}"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Accept: application/json
+          x-api-key: "{{ jumpcloud_api_key }}"
+        follow_redirects: all
+        return_content: true
+        status_code: 200
+      loop: "{{ jumpcloud_system_groups }}"
+      register: jc_system_groups_json_response
+
+    - name: Create missing JumpCloud system groups when enabled
+      ansible.builtin.uri:
+        url: "{{ jumpcloud_api_v2_url }}/systemgroups"
+        method: POST
+        headers:
+          Content-Type: application/json
+          Accept: application/json
+          x-api-key: "{{ jumpcloud_api_key }}"
+        body_format: json
+        body:
+          name: "{{ item.item }}"
+        follow_redirects: all
+        return_content: true
+        status_code:
+          - 200
+          - 201
+      loop: "{{ jc_system_groups_json_response.results }}"
+      register: jc_created_system_groups_json_response
+      when:
+        - jumpcloud_create_missing_system_groups | bool
+        - item.json | length == 0
+
+    - name: Fail when requested JumpCloud system groups are missing
+      ansible.builtin.assert:
+        that:
+          - item.json | length > 0
+        fail_msg: >-
+          JumpCloud system group {{ item.item }} does not exist. Create it in
+          JumpCloud or set jumpcloud_create_missing_system_groups to true.
+      loop: "{{ jc_system_groups_json_response.results }}"
+      when:
+        - not jumpcloud_create_missing_system_groups | bool
+        - item.json | length == 0
+
+    - name: Initialize JumpCloud system group attribute list
+      ansible.builtin.set_fact:
+        jc_system_groups: []
+
+    - name: Add existing system groups to attribute list
+      ansible.builtin.set_fact:
+        jc_system_groups: "{{ jc_system_groups + item.json }}"
+      loop: "{{ jc_system_groups_json_response.results }}"
+      when: item.json | length > 0
+
+    - name: Add newly created system groups to attribute list
+      ansible.builtin.set_fact:
+        jc_system_groups: "{{ jc_system_groups + [item.json] }}"
+      loop: "{{ jc_created_system_groups_json_response.results | default([]) }}"
+      when:
+        - item.skipped is not defined or not item.skipped
+        - item.json is defined
+
+- name: Add system to groups
+  ansible.builtin.uri:
+    url: "{{ jumpcloud_api_v2_url }}/systemgroups/{{ item.id }}/members"
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
+    body_format: json
+    body:
+      op: add
+      type: system
+      id: "{{ jumpcloud_system_key }}"
+    follow_redirects: all
+    return_content: true
+    status_code:
+      - 204
+      - 409
+  loop: "{{ jc_system_groups }}"
+  delegate_to: localhost
+  register: jumpcloud_group_membership_response
+  no_log: true
+  when:
+    - jumpcloud_system_key is defined
+    - jc_system_groups | length > 0

@@ -3,6 +3,7 @@ localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
 
 [jumpcloud_debian]
 jumpcloud-debian12 do_image_id=debian-12-x64
+jumpcloud-debian13 do_image_id=debian-13-x64 jumpcloud_test_install_on_unsupported_distribution=true
 
 [jumpcloud_redhat]
 jumpcloud-rocky9 do_image_id=rockylinux-9-x64

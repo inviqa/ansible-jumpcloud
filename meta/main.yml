@@ -14,7 +14,9 @@ galaxy_info:
         - "9"
     - name: Debian
       versions:
-        - all
+        - bullseye
+        - bookworm
+        - trixie
     - name: Fedora
       versions:
         - all

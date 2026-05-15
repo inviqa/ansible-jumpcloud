@@ -12,6 +12,11 @@
     fail_msg: >-
       The container target is not in the current JumpCloud support matrix used
       by this role.
+  when: not jumpcloud_test_validate_unsupported_release_install_identity | default(false) | bool
+
+- name: Validate unsupported-release install identity handling
+  ansible.builtin.include_tasks: unsupported_release_install_identity.yml
+  when: jumpcloud_test_validate_unsupported_release_install_identity | default(false) | bool
 
 - name: Validate dependency installation path in container
   ansible.builtin.include_role:

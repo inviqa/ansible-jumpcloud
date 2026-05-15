@@ -7,6 +7,10 @@
         or ansible_facts.distribution in jumpcloud_supported_linux_versions
       - not jumpcloud_validate_supported_distribution | bool
         or ansible_facts.distribution_major_version in jumpcloud_supported_linux_versions.get(ansible_facts.distribution, [])
+        or (
+          jumpcloud_install_on_unsupported_distribution | bool
+          and ansible_facts.distribution in jumpcloud_supported_linux_versions
+        )
     fail_msg: >-
       This host is not in the current JumpCloud Linux support matrix for this
       role. Check JumpCloud Agent Compatibility, System Requirements, and

@@ -16,6 +16,7 @@ groups.
 - [Supported Linux Matrix](#supported-linux-matrix)
 - [Examples](#examples)
 - [Testing](#testing)
+- [Maintenance](#maintenance)
 - [Jenkins CI](#jenkins-ci)
 - [Development Notes](#development-notes)
 - [Maintainer](#maintainer)
@@ -46,6 +47,14 @@ The role is intentionally focused on Linux agent lifecycle tasks:
 - The role validates the target host against JumpCloud's current Linux support
   matrix by default. Set `jumpcloud_validate_supported_distribution: false`
   only when deliberately testing outside the supported matrix.
+- For deliberate live validation of a newer release in an otherwise supported
+  distribution family, set `jumpcloud_install_on_unsupported_distribution: true`
+  so the installer temporarily uses the latest supported release identity and
+  restores the original `/etc/os-release` before continuing.
+- Debian 13 is validated by this role, but JumpCloud's installer still requires
+  `jumpcloud_install_on_unsupported_distribution: true` on that release so the
+  install can temporarily present the latest JumpCloud-supported Debian
+  identity.
 - CentOS is not currently listed in JumpCloud's Linux agent support matrix.
   For Enterprise Linux testing, use supported RHEL or Rocky Linux releases.
 
@@ -100,6 +109,7 @@ that release exists, consume it from a local checkout or a pinned Git reference.
 | `jumpcloud_force_install` | `false` | Force the install path even when the agent config exists. |
 | `jumpcloud_use_sudo` | `false` | Run system-level tasks with privilege escalation. |
 | `jumpcloud_validate_supported_distribution` | `true` | Fail early on Linux releases outside the role's current JumpCloud support matrix. |
+| `jumpcloud_install_on_unsupported_distribution` | `false` | Temporarily present unsupported releases as the latest supported release in the same distribution family during the JumpCloud kickstart install, then restore `/etc/os-release`. |
 | `jumpcloud_delete_duplicate_systems` | `true` | Remove existing JumpCloud systems with the same `displayName` before install. |
 | `jumpcloud_display_name` | `{{ inventory_hostname }}` | Display name to set for the JumpCloud system. |
 | `jumpcloud_allow_public_key_authentication` | `true` | JumpCloud SSH public key authentication setting. |
@@ -117,12 +127,17 @@ testing is:
 
 | Family | Current supported targets |
 | --- | --- |
-| Debian | Debian 11, Debian 12 |
+| Debian | Debian 11, Debian 12, Debian 13 with `jumpcloud_install_on_unsupported_distribution: true` |
 | Ubuntu | Ubuntu 18.04, 20.04, 22.04, 24.04, 26.04 |
 | Enterprise Linux | RHEL 8, RHEL 9, Rocky Linux 8, Rocky Linux 9 |
 | Fedora | Fedora 40, 41, 42 |
 | Amazon Linux | Amazon Linux 2, 2023 |
 | Oracle Linux | Oracle Linux 9 |
+
+Debian 13 is validated through the role's unsupported-release install path
+because JumpCloud's published compatibility list does not yet include it. Keep
+`jumpcloud_install_on_unsupported_distribution: true` enabled for Debian 13
+until JumpCloud publishes native support.
 
 CentOS 6 and 7 are intentionally no longer advertised because JumpCloud has
 ended support for those releases. CentOS Stream is not listed in JumpCloud's
@@ -178,6 +193,73 @@ End-to-end cloud validation:
 ```text
 ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook.yml
 ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook_cleanup.yml
+```
+
+## Maintenance
+
+`tests/tasks/unsupported_release_install_identity.yml` is a task file, not a
+playbook to run directly. It is included by `tests/playbook.yml` only when the
+selected inventory enables the Debian 13 container maintenance check. The
+current entrypoint for that check is `tests/inventory-docker-debian13`.
+
+This is a maintainer test for the Debian 13 install workaround, not an operator
+workflow. It exercises only the temporary `/etc/os-release` override and
+restore path, without contacting JumpCloud or provisioning cloud infrastructure.
+
+Use this test when changing:
+
+- `jumpcloud_install_on_unsupported_distribution`
+- `jumpcloud_supported_linux_versions`
+- `jumpcloud_supported_linux_release_identities`
+- `tasks/apply_install_os_release_identity.yml`
+- `tasks/restore_install_os_release_identity.yml`
+
+Run the isolated maintenance test from the role root through the normal test
+playbook:
+
+1. Install the test collections if they are not already available.
+
+   ```text
+   ansible-galaxy collection install -r tests/requirements.yml
+   ```
+
+2. Run the normal test playbook with the Debian 13 container inventory.
+
+   ```text
+   ansible-playbook -i tests/inventory-docker-debian13 tests/playbook.yml
+   ```
+
+   This inventory sets
+   `jumpcloud_test_validate_unsupported_release_install_identity=true`, so
+   `tests/playbook.yml` includes
+   `tests/tasks/unsupported_release_install_identity.yml` during the
+   container-safe validation phase.
+
+3. Check the expected result.
+
+   The play recap should show `jumpcloud-debian13` with `failed=0`. During the
+   run, the test applies the temporary Debian 12 identity, verifies it, restores
+   the original Debian 13 `/etc/os-release`, and verifies that the temporary
+   backup file has been removed.
+
+4. If the test fails, inspect only the unsupported-release identity tasks first.
+
+   The failing task usually points to one of these files:
+   `tasks/apply_install_os_release_identity.yml`,
+   `tasks/restore_install_os_release_identity.yml`, or
+   `tests/tasks/unsupported_release_install_identity.yml`.
+
+The normal end-to-end validation for Debian 13 remains the DigitalOcean test
+target with `jumpcloud_install_on_unsupported_distribution: true`. That live
+path verifies the full role behavior: dependencies, Kickstart execution,
+JumpCloud registration, `/etc/os-release` restoration, service state, and
+system group membership.
+
+Run the full Debian 13 live test when changing the install flow itself:
+
+```text
+ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook.yml --limit jumpcloud-debian13
+ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook_cleanup.yml --limit jumpcloud-debian13
 ```
 
 ## Jenkins CI

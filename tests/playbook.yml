@@ -122,6 +122,8 @@
           {{ jumpcloud_test_create_missing_system_groups | default(false) }}
         jumpcloud_delete_duplicate_systems: >-
           {{ jumpcloud_test_delete_duplicate_systems | default(true) }}
+        jumpcloud_install_on_unsupported_distribution: >-
+          {{ jumpcloud_test_install_on_unsupported_distribution | default(false) }}
 
     - name: Validate JumpCloud live-test credentials when requested
       when: jumpcloud_test_run_agent_install | default(false) | bool

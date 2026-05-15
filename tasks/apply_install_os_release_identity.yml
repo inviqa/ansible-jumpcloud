@@ -1,0 +1,65 @@
+---
+- name: Determine whether JumpCloud install identity override is needed
+  ansible.builtin.set_fact:
+    jumpcloud_install_os_release_identity_required: >-
+      {{
+        jumpcloud_install_on_unsupported_distribution | bool
+        and ansible_facts.distribution in jumpcloud_supported_linux_versions
+        and ansible_facts.distribution_major_version
+          not in jumpcloud_supported_linux_versions[ansible_facts.distribution]
+      }}
+
+- name: Apply temporary JumpCloud install identity
+  when: jumpcloud_install_os_release_identity_required | bool
+  block:
+    - name: Read the original OS release before temporary JumpCloud install identity
+      ansible.builtin.slurp:
+        src: /etc/os-release
+      register: jumpcloud_original_os_release
+      become: "{{ jumpcloud_use_sudo }}"
+
+    - name: Back up original OS release before temporary JumpCloud install identity
+      ansible.builtin.copy:
+        content: "{{ jumpcloud_original_os_release.content | b64decode }}"
+        dest: "{{ jumpcloud_install_os_release_backup }}"
+        owner: root
+        group: root
+        mode: "0600"
+      become: "{{ jumpcloud_use_sudo }}"
+
+    - name: Resolve latest supported JumpCloud release for this distribution
+      ansible.builtin.set_fact:
+        jumpcloud_install_supported_distribution_version: >-
+          {{ jumpcloud_supported_linux_versions[ansible_facts.distribution] | last }}
+
+    - name: Resolve temporary JumpCloud install identity values
+      ansible.builtin.set_fact:
+        jumpcloud_install_os_release_identity_values: >-
+          {{
+            jumpcloud_supported_linux_release_identities
+            .get(ansible_facts.distribution, {})
+            .get(jumpcloud_install_supported_distribution_version, {
+              'PRETTY_NAME': ansible_facts.distribution ~ ' '
+                ~ jumpcloud_install_supported_distribution_version,
+              'NAME': ansible_facts.distribution,
+              'VERSION_ID': jumpcloud_install_supported_distribution_version,
+              'VERSION': jumpcloud_install_supported_distribution_version,
+              'ID': ansible_facts.distribution | lower
+            })
+          }}
+
+    - name: Write temporary OS release identity for JumpCloud installer
+      ansible.builtin.copy:
+        content: |
+          {% for item in jumpcloud_install_os_release_identity_values | dict2items %}
+          {{ item.key }}="{{ item.value }}"
+          {% endfor %}
+        dest: /etc/os-release
+        owner: root
+        group: root
+        mode: "0644"
+      become: "{{ jumpcloud_use_sudo }}"
+
+    - name: Mark temporary JumpCloud install identity as active
+      ansible.builtin.set_fact:
+        jumpcloud_install_os_release_identity_active: true

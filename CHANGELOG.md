@@ -12,6 +12,10 @@
   compatibility, bounded Kickstart execution, non-interactive Debian-family
   installs, and recovery when the installed `jcagent` service must be started
   before `jcagent.conf` is created.
+- Added opt-in installation on newer unsupported releases in otherwise
+  supported distribution families by temporarily presenting the latest supported
+  `/etc/os-release` identity during the JumpCloud kickstart run, then restoring
+  the original file before registration checks.
 - Reworked the role task layout so `tasks/main.yml` is an orchestration entry
   point, registered-system reconciliation is separated from installation, and
   group synchronization plus verification live in focused task files.
@@ -19,6 +23,12 @@
   scoped `community.docker` validation path and a `digitalocean.cloud`
   integration path that provisions real droplets, applies the role, verifies
   JumpCloud state, and cleans up test resources.
+- Added Debian 13 container validation for the temporary install identity path
+  and a Debian 13 DigitalOcean live target for unsupported-release validation.
+- Advertised Debian 13 as a validated role target in Galaxy metadata and
+  documented the required unsupported-release install opt-in for that system.
+- Documented the isolated unsupported-release identity test as a maintainer
+  check, distinct from the Debian 13 DigitalOcean end-to-end role test.
 - Added a Jenkins pipeline, matching the DigitalOcean reserved IP role style,
   for dependency installation, syntax checks, live DigitalOcean JumpCloud tests,
   cleanup, and failure-only Slack notifications.

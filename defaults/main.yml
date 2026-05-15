@@ -10,6 +10,7 @@ jumpcloud_x_connect_url: "https://kickstart.jumpcloud.com/Kickstart"
 jumpcloud_kickstart_script: "/tmp/Kickstart.sh"
 jumpcloud_install_timeout_seconds: 300
 jumpcloud_registration_timeout_seconds: 180
+jumpcloud_install_os_release_backup: /etc/os-release.jumpcloud-install.bak
 jumpcloud_registration_check_retries: 18
 jumpcloud_registration_check_delay_seconds: 10
 jumpcloud_api_v1_url: "https://console.jumpcloud.com/api"
@@ -18,6 +19,7 @@ jumpcloud_agent_service: jcagent
 jumpcloud_force_install: false
 jumpcloud_use_sudo: false
 jumpcloud_validate_supported_distribution: true
+jumpcloud_install_on_unsupported_distribution: false
 jumpcloud_delete_duplicate_systems: true
 jumpcloud_create_missing_system_groups: false
 
@@ -55,6 +57,16 @@ jumpcloud_supported_linux_versions:
     - "22"
     - "24"
     - "26"
+
+jumpcloud_supported_linux_release_identities:
+  Debian:
+    "12":
+      PRETTY_NAME: "Debian GNU/Linux 12 (bookworm)"
+      NAME: "Debian GNU/Linux"
+      VERSION_ID: "12"
+      VERSION: "12 (bookworm)"
+      VERSION_CODENAME: "bookworm"
+      ID: "debian"
 
 jumpcloud_dependencies: []
 jumpcloud_common_dependencies:

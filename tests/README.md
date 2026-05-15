@@ -49,6 +49,7 @@ The DigitalOcean harness provisions real droplets for end-to-end validation:
 | Family | DigitalOcean image slug |
 | --- | --- |
 | Debian | `debian-12-x64` |
+| Debian unsupported-release validation | `debian-13-x64` |
 | Enterprise Linux | `rockylinux-9-x64` |
 | Ubuntu | `ubuntu-24-04-x64` |
 
@@ -134,6 +135,7 @@ Run one container-backed family only:
 
 ```text
 ansible-playbook -i tests/inventory-docker-debian tests/playbook.yml
+ansible-playbook -i tests/inventory-docker-debian13 tests/playbook.yml
 ansible-playbook -i tests/inventory-docker-redhat tests/playbook.yml
 ansible-playbook -i tests/inventory-docker-ubuntu tests/playbook.yml
 ```
@@ -217,3 +219,6 @@ the target distribution.
   target suffix.
 - The role fails early for distributions outside the current JumpCloud support
   matrix unless `jumpcloud_validate_supported_distribution` is disabled.
+- The DigitalOcean harness includes a Debian 13 target with
+  `jumpcloud_install_on_unsupported_distribution=true` to validate the
+  temporary install identity path against a real unsupported release.

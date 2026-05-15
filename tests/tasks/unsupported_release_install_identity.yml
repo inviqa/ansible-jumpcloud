@@ -1,0 +1,51 @@
+---
+- name: Read the original container OS release
+  ansible.builtin.slurp:
+    src: /etc/os-release
+  register: jumpcloud_test_original_os_release
+
+- name: Apply temporary unsupported-release install identity
+  ansible.builtin.include_role:
+    name: ansible-jumpcloud
+    tasks_from: apply_install_os_release_identity
+  vars:
+    jumpcloud_install_on_unsupported_distribution: true
+    jumpcloud_use_sudo: true
+
+- name: Read the temporary container OS release
+  ansible.builtin.slurp:
+    src: /etc/os-release
+  register: jumpcloud_test_temporary_os_release
+
+- name: Validate the temporary identity uses the latest supported Debian release
+  ansible.builtin.assert:
+    that:
+      - "'VERSION_ID=\"12\"' in (jumpcloud_test_temporary_os_release.content | b64decode)"
+      - "'VERSION=\"12 (bookworm)\"' in (jumpcloud_test_temporary_os_release.content | b64decode)"
+    fail_msg: >-
+      The temporary JumpCloud install identity did not use the latest supported
+      Debian release.
+
+- name: Restore the original container OS release
+  ansible.builtin.include_role:
+    name: ansible-jumpcloud
+    tasks_from: restore_install_os_release_identity
+  vars:
+    jumpcloud_use_sudo: true
+
+- name: Read the restored container OS release
+  ansible.builtin.slurp:
+    src: /etc/os-release
+  register: jumpcloud_test_restored_os_release
+
+- name: Check that temporary OS release backup was removed
+  ansible.builtin.stat:
+    path: "{{ jumpcloud_install_os_release_backup }}"
+  register: jumpcloud_test_os_release_backup_status
+
+- name: Validate the original OS release has been restored
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_test_restored_os_release.content == jumpcloud_test_original_os_release.content
+      - not jumpcloud_test_os_release_backup_status.stat.exists
+    fail_msg: "The temporary JumpCloud install identity was not restored."

@@ -9,7 +9,7 @@
   ansible.builtin.import_tasks: resolve_system_attributes.yml
 
 - name: Install JumpCloud when required
-  ansible.builtin.import_tasks: install_agent.yml
+  ansible.builtin.include_tasks: install_agent.yml
   when:
     - not jumpcloud_is_installed or jumpcloud_force_install | bool
 

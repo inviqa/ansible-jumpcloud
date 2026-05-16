@@ -76,6 +76,19 @@ When `RUN_LIVE_TESTS` is enabled, all non-Slack credentials above must exist.
 The pipeline sends failure notifications only. Successful builds do not post to
 Slack.
 
+## Jenkinsfile lint
+
+Validate the Jenkinsfile locally before pushing pipeline changes:
+
+```text
+tests/lint_jenkinsfile.sh
+```
+
+The helper starts a temporary Dockerized Jenkins controller, installs the
+Pipeline, Docker, credential, SSH agent, Slack, Timestamper, and workspace
+cleanup plugins needed by this pipeline, runs the official Declarative Pipeline
+linter endpoint, and removes the temporary controller.
+
 ## Local equivalent
 
 The Jenkinsfile mirrors this local sequence:

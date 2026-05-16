@@ -32,6 +32,10 @@
 - Added a Jenkins pipeline, matching the DigitalOcean reserved IP role style,
   for dependency installation, syntax checks, live DigitalOcean JumpCloud tests,
   cleanup, and failure-only Slack notifications.
+- Added a repeatable Jenkinsfile lint helper that reports its stages, clearly
+  shows Docker container startup and deletion, validates the pipeline with a
+  temporary Dockerized Jenkins controller, and uses the official Declarative
+  Pipeline linter.
 - Renamed test inventories and normalized DigitalOcean droplet names so Docker
   and DigitalOcean targets are explicit and the `ansible-jumpcloud` prefix is
   applied only once.

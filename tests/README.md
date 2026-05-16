@@ -11,6 +11,7 @@ supported Linux systems.
 - [Coverage](#coverage)
 - [Setup](#setup)
 - [Run the Tests](#run-the-tests)
+- [Jenkinsfile Lint](#jenkinsfile-lint)
 - [Clean Up](#clean-up)
 - [DigitalOcean Live Tests](#digitalocean-live-tests)
 - [Notes](#notes)
@@ -180,6 +181,19 @@ Run syntax-only validation:
 ```text
 ansible-playbook -i tests/inventory-docker tests/playbook.yml --syntax-check
 ```
+
+## Jenkinsfile Lint
+
+Validate the repository `Jenkinsfile` with a temporary Dockerized Jenkins
+controller and the Jenkins Declarative Pipeline linter:
+
+```text
+tests/lint_jenkinsfile.sh
+```
+
+The helper installs only the Jenkins plugins needed by this pipeline into an
+isolated temporary Jenkins home, runs the validation endpoint, and removes the
+temporary controller after the check finishes.
 
 ## Clean Up
 

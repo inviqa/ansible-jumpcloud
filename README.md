@@ -182,6 +182,7 @@ Fast local validation before live testing:
 
 ```text
 ansible-playbook -i tests/inventory-docker tests/playbook.yml --syntax-check
+tests/lint_jenkinsfile.sh
 ansible-galaxy collection install -r tests/requirements.yml
 ansible-lint .
 yamllint .
@@ -265,7 +266,8 @@ ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook_cleanup
 ## Jenkins CI
 
 [docs/jenkins-ci.md](docs/jenkins-ci.md) documents the private Jenkins pipeline,
-required credential placeholders, and live-test command sequence.
+required credential placeholders, Jenkinsfile lint helper, and live-test command
+sequence.
 
 ## Development Notes
 

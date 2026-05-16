@@ -4,6 +4,15 @@
     src: "{{ jumpcloud_agent_config }}"
   register: jumpcloud_agent_config_content
   become: "{{ jumpcloud_use_sudo }}"
+  retries: 5
+  delay: 3
+  until: >-
+    (
+      jumpcloud_agent_config_content.content
+      | default('')
+      | b64decode
+      | regex_search('"systemKey"\\s*:\\s*"[a-zA-Z0-9]+"')
+    ) is not none
   no_log: true
 
 - name: Set JumpCloud system key

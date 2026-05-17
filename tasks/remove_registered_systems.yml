@@ -9,62 +9,90 @@
       }}
   no_log: true
 
-- name: Retrieve systems with the same displayName from JumpCloud
-  ansible.builtin.uri:
-    url: "{{ jumpcloud_api_v1_url }}/search/systems"
-    method: POST
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      x-api-key: "{{ jumpcloud_api_key }}"
-    body_format: json
-    body:
-      filter:
-        and:
-          - displayName: "{{ jumpcloud_effective_display_name }}"
-      fields: "displayName _id"
-    follow_redirects: all
-    return_content: true
-    status_code: 200
-    timeout: 60
-  delegate_to: localhost
-  register: jc_registered_systems_json_response
-  retries: 5
-  delay: 5
-  until: jc_registered_systems_json_response.status == 200
-  throttle: 1
-  no_log: true
+- name: Query JumpCloud systems with the same displayName
   when: jumpcloud_can_remove_duplicate_systems | bool
+  block:
+    - name: Retrieve systems with the same displayName from JumpCloud
+      ansible.builtin.uri:
+        url: "{{ jumpcloud_api_v1_url }}/search/systems"
+        method: POST
+        headers:
+          Content-Type: application/json
+          Accept: application/json
+          x-api-key: "{{ jumpcloud_api_key }}"
+        body_format: json
+        body:
+          filter:
+            and:
+              - displayName: "{{ jumpcloud_effective_display_name }}"
+          fields: "displayName _id"
+        follow_redirects: all
+        return_content: true
+        status_code: 200
+        timeout: 60
+      delegate_to: localhost
+      register: jc_registered_systems_json_response
+      retries: 5
+      delay: 5
+      until: jc_registered_systems_json_response.status | default(0) | int == 200
+      failed_when: false
+      throttle: 1
+      no_log: true
 
-- name: Set count of duplicate registered systems
-  ansible.builtin.set_fact:
-    jc_count_of_duplicate_registered_systems: >-
-      {{ jc_registered_systems_json_response.json.totalCount | default(0) | int }}
-  when: jc_registered_systems_json_response is defined
+    - name: Validate JumpCloud duplicate system lookup response
+      ansible.builtin.assert:
+        that:
+          - jc_registered_systems_json_response.status | default(0) | int == 200
+        fail_msg: >-
+          JumpCloud duplicate-system lookup failed with HTTP status
+          {{ jc_registered_systems_json_response.status | default('unavailable') }}
+          after {{ jc_registered_systems_json_response.attempts | default(1) }}
+          attempt(s).
 
-- name: Delete registered systems with the same displayName from JumpCloud
-  ansible.builtin.uri:
-    url: "{{ jumpcloud_api_v1_url }}/systems/{{ item._id }}"
-    method: DELETE
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      x-api-key: "{{ jumpcloud_api_key }}"
-    follow_redirects: all
-    return_content: true
-    status_code:
-      - 200
-      - 204
-      - 404
-    timeout: 60
-  loop: "{{ jc_registered_systems_json_response.json.results }}"
-  delegate_to: localhost
-  register: jc_deleted_systems_json_response
-  retries: 5
-  delay: 5
-  until: jc_deleted_systems_json_response.status in [200, 204, 404]
-  throttle: 1
-  no_log: true
+    - name: Set count of duplicate registered systems
+      ansible.builtin.set_fact:
+        jc_count_of_duplicate_registered_systems: >-
+          {{ jc_registered_systems_json_response.json.totalCount | default(0) | int }}
+
+- name: Delete matching JumpCloud systems and validate responses
   when:
     - jc_count_of_duplicate_registered_systems | default(0) | int > 0
     - jc_registered_systems_json_response is defined
+  block:
+    - name: Delete registered systems with the same displayName from JumpCloud
+      ansible.builtin.uri:
+        url: "{{ jumpcloud_api_v1_url }}/systems/{{ item._id }}"
+        method: DELETE
+        headers:
+          Content-Type: application/json
+          Accept: application/json
+          x-api-key: "{{ jumpcloud_api_key }}"
+        follow_redirects: all
+        return_content: true
+        status_code:
+          - 200
+          - 204
+          - 404
+        timeout: 60
+      loop: "{{ jc_registered_systems_json_response.json.results }}"
+      delegate_to: localhost
+      register: jc_deleted_systems_json_response
+      retries: 5
+      delay: 5
+      until: jc_deleted_systems_json_response.status in [200, 204, 404]
+      failed_when: false
+      throttle: 1
+      no_log: true
+
+    - name: Collect JumpCloud duplicate system delete response statuses
+      ansible.builtin.set_fact:
+        jc_deleted_system_statuses: >-
+          {{ jc_deleted_systems_json_response.results | default([]) | map(attribute='status') | list }}
+
+    - name: Validate JumpCloud duplicate system delete responses
+      ansible.builtin.assert:
+        that:
+          - jc_deleted_system_statuses | default([]) | difference([200, 204, 404]) | length == 0
+        fail_msg: >-
+          JumpCloud duplicate-system deletion returned unexpected HTTP statuses:
+          {{ jc_deleted_system_statuses | default([]) | unique | sort }}.

@@ -61,6 +61,10 @@
   directory.
 - Serialized and retried duplicate-system JumpCloud API cleanup calls to avoid
   transient live-test failures while keeping API responses hidden from logs.
+- Added sanitized JumpCloud API status reporting for duplicate-system lookup
+  failures without exposing returned device data.
+- Grouped duplicate-system cleanup tasks that share the same conditions for
+  clearer live-test maintenance.
 - Temporarily disabled Jenkins failure Slack notifications while live-test
   remediation is still in progress.
 - Cleaned up YAML and Ansible task structure for linting, readability, and

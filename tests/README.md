@@ -170,6 +170,11 @@ This playbook:
 - verifies JumpCloud registration, display name, SSH attributes, and optional
   system-group membership through the JumpCloud API
 
+The DigitalOcean harness runs the role's pre-install duplicate system cleanup by
+default so reruns can replace stale records with the same display name. Set
+`jumpcloud_test_delete_duplicate_systems: false` in `tests/test_variables.yml`
+only when diagnosing the cleanup path separately.
+
 Always run cleanup after a DigitalOcean test:
 
 ```text

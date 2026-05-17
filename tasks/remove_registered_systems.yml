@@ -46,8 +46,23 @@
         fail_msg: >-
           JumpCloud duplicate-system lookup failed with HTTP status
           {{ jc_registered_systems_json_response.status | default('unavailable') }}
-          after {{ jc_registered_systems_json_response.attempts | default(1) }}
-          attempt(s).
+          after {{ jc_registered_systems_json_response.attempts | default(1) }} attempt(s).
+          Sanitized module result:
+          {{
+            {
+              'attempts': jc_registered_systems_json_response.attempts | default(1),
+              'changed': jc_registered_systems_json_response.changed | default('unavailable'),
+              'elapsed': jc_registered_systems_json_response.elapsed | default('unavailable'),
+              'exception': jc_registered_systems_json_response.exception | default('unavailable'),
+              'failed': jc_registered_systems_json_response.failed | default('unavailable'),
+              'location': jc_registered_systems_json_response.location | default('unavailable'),
+              'msg': jc_registered_systems_json_response.msg | default('unavailable'),
+              'redirected': jc_registered_systems_json_response.redirected | default('unavailable'),
+              'status': jc_registered_systems_json_response.status | default('unavailable'),
+              'unreachable': jc_registered_systems_json_response.unreachable | default('unavailable'),
+              'url': jc_registered_systems_json_response.url | default(jumpcloud_api_v1_url ~ '/search/systems')
+            } | to_json
+          }}
 
     - name: Set count of duplicate registered systems
       ansible.builtin.set_fact:

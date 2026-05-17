@@ -65,6 +65,10 @@
   failures without exposing returned device data.
 - Grouped duplicate-system cleanup tasks that share the same conditions for
   clearer live-test maintenance.
+- Kept DigitalOcean live-test pre-install duplicate cleanup enabled by default
+  and expanded its sanitized failure details for diagnosis.
+- Replaced terse duplicate lookup failures with a sanitized module-result dump
+  that omits API keys and returned device data.
 - Temporarily disabled Jenkins failure Slack notifications while live-test
   remediation is still in progress.
 - Cleaned up YAML and Ansible task structure for linting, readability, and

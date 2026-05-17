@@ -26,8 +26,13 @@
     follow_redirects: all
     return_content: true
     status_code: 200
+    timeout: 60
   delegate_to: localhost
   register: jc_registered_systems_json_response
+  retries: 5
+  delay: 5
+  until: jc_registered_systems_json_response.status == 200
+  throttle: 1
   no_log: true
   when: jumpcloud_can_remove_duplicate_systems | bool
 
@@ -51,9 +56,14 @@
       - 200
       - 204
       - 404
+    timeout: 60
   loop: "{{ jc_registered_systems_json_response.json.results }}"
   delegate_to: localhost
   register: jc_deleted_systems_json_response
+  retries: 5
+  delay: 5
+  until: jc_deleted_systems_json_response.status in [200, 204, 404]
+  throttle: 1
   no_log: true
   when:
     - jc_count_of_duplicate_registered_systems | default(0) | int > 0

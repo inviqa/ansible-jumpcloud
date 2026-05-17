@@ -5,6 +5,7 @@ def JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
 def JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
 def SSH_PRIVATE_KEY_CREDENTIAL_ID = 'ansible-roles-test-ssh-private-key'
 def SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
+def SLACK_NOTIFICATIONS_ENABLED = false
 
 def runWithSshAgent(String command, String credentialId) {
     sshagent(credentials: [credentialId]) {
@@ -149,8 +150,11 @@ pipeline {
                         fields: fields
                     ]
                 ]
-
-                slackSend(channel: env.SLACK_NOTIFICATION_CHANNEL, color: 'danger', attachments: attachments, tokenCredentialId: SLACK_TOKEN_CREDENTIAL_ID)
+                if (SLACK_NOTIFICATIONS_ENABLED) {
+                    slackSend(channel: env.SLACK_NOTIFICATION_CHANNEL, color: 'danger', attachments: attachments, tokenCredentialId: SLACK_TOKEN_CREDENTIAL_ID)
+                } else {
+                    echo 'Slack failure notification temporarily disabled while Jenkins live-test remediation is in progress.'
+                }
             }
         }
         always {

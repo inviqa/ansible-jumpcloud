@@ -59,6 +59,10 @@
 - Fixed the live-test role symlink so Jenkins can resolve the role from a
   job-named workspace instead of requiring an `ansible-jumpcloud` parent
   directory.
+- Serialized and retried duplicate-system JumpCloud API cleanup calls to avoid
+  transient live-test failures while keeping API responses hidden from logs.
+- Temporarily disabled Jenkins failure Slack notifications while live-test
+  remediation is still in progress.
 - Cleaned up YAML and Ansible task structure for linting, readability, and
   publication readiness.
 

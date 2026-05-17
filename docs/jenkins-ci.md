@@ -10,6 +10,8 @@ The pipeline runs inside a Jenkins-native Docker agent and executes:
 
 - Python and Ansible dependency installation from `tests/requirements.txt` and
   `tests/requirements.yml`
+- the tracked `tests/roles/ansible-jumpcloud` symlink so Ansible can resolve the
+  checked-out role by name in Jenkins job workspaces
 - syntax checks for the Docker inventory and DigitalOcean live-test inventory
 - the live DigitalOcean JumpCloud test matrix with `tests/playbook.yml`
 - cleanup with `tests/playbook_cleanup.yml`, even when the live test stage fails

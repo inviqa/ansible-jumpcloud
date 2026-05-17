@@ -56,6 +56,9 @@
   bodies, and request headers stay out of task output and failed-test logs.
 - Fixed live Jenkins test SSH credential binding so the shared SSH-agent helper
   receives the configured shared Ansible roles credential ID explicitly.
+- Fixed the live-test role symlink so Jenkins can resolve the role from a
+  job-named workspace instead of requiring an `ansible-jumpcloud` parent
+  directory.
 - Cleaned up YAML and Ansible task structure for linting, readability, and
   publication readiness.
 

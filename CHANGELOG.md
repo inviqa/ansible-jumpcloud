@@ -54,6 +54,8 @@
   of the current supported platform matrix and RedHat-family naming.
 - Hardened secret handling so JumpCloud API keys, connect keys, API response
   bodies, and request headers stay out of task output and failed-test logs.
+- Fixed live Jenkins test SSH credential binding so the shared SSH-agent helper
+  receives the credential ID explicitly.
 - Cleaned up YAML and Ansible task structure for linting, readability, and
   publication readiness.
 

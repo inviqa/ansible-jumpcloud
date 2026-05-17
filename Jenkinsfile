@@ -6,8 +6,8 @@ def JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
 def SSH_PRIVATE_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-test-ssh-private-key'
 def SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
 
-def runWithSshAgent(String command) {
-    sshagent(credentials: [SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
+def runWithSshAgent(String command, String credentialId) {
+    sshagent(credentials: [credentialId]) {
         sh command
     }
 }
@@ -104,9 +104,15 @@ pipeline {
                         '''
 
                         try {
-                            runWithSshAgent("ansible-playbook -i '${params.TEST_INVENTORY}' tests/playbook.yml")
+                            runWithSshAgent(
+                                "ansible-playbook -i '${params.TEST_INVENTORY}' tests/playbook.yml",
+                                SSH_PRIVATE_KEY_CREDENTIAL_ID
+                            )
                         } finally {
-                            runWithSshAgent("ansible-playbook -i '${params.TEST_INVENTORY}' tests/playbook_cleanup.yml")
+                            runWithSshAgent(
+                                "ansible-playbook -i '${params.TEST_INVENTORY}' tests/playbook_cleanup.yml",
+                                SSH_PRIVATE_KEY_CREDENTIAL_ID
+                            )
                         }
                     }
                 }

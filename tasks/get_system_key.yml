@@ -3,7 +3,6 @@
   ansible.builtin.slurp:
     src: "{{ jumpcloud_agent_config }}"
   register: jumpcloud_agent_config_content
-  become: "{{ jumpcloud_use_sudo }}"
   retries: 5
   delay: 3
   until: >-

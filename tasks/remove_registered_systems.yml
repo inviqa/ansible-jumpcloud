@@ -31,6 +31,7 @@
         status_code: 200
         timeout: 60
       delegate_to: localhost
+      become: false
       register: jc_registered_systems_json_response
       retries: 5
       delay: 5
@@ -57,7 +58,18 @@
               'failed': jc_registered_systems_json_response.failed | default('unavailable'),
               'location': jc_registered_systems_json_response.location | default('unavailable'),
               'msg': jc_registered_systems_json_response.msg | default('unavailable'),
+              'module_stderr': (
+                jc_registered_systems_json_response.module_stderr | default('unavailable') | string
+                | regex_replace(jumpcloud_api_key, 'REDACTED')
+                | regex_replace('(?i)(x-api-key[\\x27\\x22]?[\\s:=]+)[^\\s,}\\]]+', '\\1REDACTED')
+              ),
+              'module_stdout': (
+                jc_registered_systems_json_response.module_stdout | default('unavailable') | string
+                | regex_replace(jumpcloud_api_key, 'REDACTED')
+                | regex_replace('(?i)(x-api-key[\\x27\\x22]?[\\s:=]+)[^\\s,}\\]]+', '\\1REDACTED')
+              ),
               'redirected': jc_registered_systems_json_response.redirected | default('unavailable'),
+              'result_keys': jc_registered_systems_json_response.keys() | list | sort,
               'status': jc_registered_systems_json_response.status | default('unavailable'),
               'unreachable': jc_registered_systems_json_response.unreachable | default('unavailable'),
               'url': jc_registered_systems_json_response.url | default(jumpcloud_api_v1_url ~ '/search/systems')
@@ -91,6 +103,7 @@
         timeout: 60
       loop: "{{ jc_registered_systems_json_response.json.results }}"
       delegate_to: localhost
+      become: false
       register: jc_deleted_systems_json_response
       retries: 5
       delay: 5

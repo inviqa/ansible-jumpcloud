@@ -1,6 +1,7 @@
 ---
 - name: Resolve requested JumpCloud system groups
   delegate_to: localhost
+  become: false
   no_log: true
   block:
     - name: Retrieve system groups by name
@@ -89,6 +90,7 @@
       - 409
   loop: "{{ jc_system_groups }}"
   delegate_to: localhost
+  become: false
   register: jumpcloud_group_membership_response
   no_log: true
   when:

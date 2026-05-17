@@ -17,7 +17,6 @@ jumpcloud_api_v1_url: "https://console.jumpcloud.com/api"
 jumpcloud_api_v2_url: "https://console.jumpcloud.com/api/v2"
 jumpcloud_agent_service: jcagent
 jumpcloud_force_install: false
-jumpcloud_use_sudo: false
 jumpcloud_validate_supported_distribution: true
 jumpcloud_install_on_unsupported_distribution: false
 jumpcloud_delete_duplicate_systems: true

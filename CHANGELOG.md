@@ -69,6 +69,11 @@
   and expanded its sanitized failure details for diagnosis.
 - Replaced terse duplicate lookup failures with a sanitized module-result dump
   that omits API keys and returned device data.
+- Disabled privilege escalation for JumpCloud API tasks delegated to localhost
+  so live tests do not require `sudo` inside the Jenkins Ansible container.
+- Removed broad play-level privilege escalation from the live test playbook.
+- Removed the role-specific `jumpcloud_use_sudo` privilege switch; callers now
+  run the role as a privileged user or set Ansible `become: true`.
 - Temporarily disabled Jenkins failure Slack notifications while live-test
   remediation is still in progress.
 - Cleaned up YAML and Ansible task structure for linting, readability, and

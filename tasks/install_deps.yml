@@ -24,7 +24,6 @@
   ansible.builtin.apt:
     update_cache: true
     cache_valid_time: 3600
-  become: "{{ jumpcloud_use_sudo }}"
   when: ansible_facts.pkg_mgr == "apt"
 
 - name: Report JumpCloud dependencies
@@ -36,5 +35,4 @@
   ansible.builtin.package:
     name: "{{ jumpcloud_dependencies }}"
     state: present
-  become: "{{ jumpcloud_use_sudo }}"
   when: jumpcloud_dependencies | length > 0

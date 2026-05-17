@@ -107,7 +107,6 @@ that release exists, consume it from a local checkout or a pinned Git reference.
 | `jumpcloud_registration_check_delay_seconds` | `10` | Delay between JumpCloud API registration lookup attempts. |
 | `jumpcloud_agent_service` | `jcagent` | JumpCloud agent service name. |
 | `jumpcloud_force_install` | `false` | Force the install path even when the agent config exists. |
-| `jumpcloud_use_sudo` | `false` | Run system-level tasks with privilege escalation. |
 | `jumpcloud_validate_supported_distribution` | `true` | Fail early on Linux releases outside the role's current JumpCloud support matrix. |
 | `jumpcloud_install_on_unsupported_distribution` | `false` | Temporarily present unsupported releases as the latest supported release in the same distribution family during the JumpCloud kickstart install, then restore `/etc/os-release`. |
 | `jumpcloud_delete_duplicate_systems` | `true` | Remove existing JumpCloud systems with the same `displayName` before install. |
@@ -144,6 +143,10 @@ ended support for those releases. CentOS Stream is not listed in JumpCloud's
 current Linux support matrix, so this role does not claim CentOS Stream support.
 Use RHEL or Rocky Linux for current Enterprise Linux validation.
 
+Run this role as a privileged user or set `become: true` in the calling
+playbook. Tasks delegated to `localhost` force `become: false` so controller-side
+API calls do not depend on local privilege escalation.
+
 ## Examples
 
 ```yaml
@@ -154,7 +157,6 @@ Use RHEL or Rocky Linux for current Enterprise Linux validation.
   roles:
     - role: inviqa.jumpcloud
       vars:
-        jumpcloud_use_sudo: true
         jumpcloud_x_connect_key: "{{ vault_jumpcloud_x_connect_key }}"
         jumpcloud_api_key: "{{ vault_jumpcloud_api_key }}"
         jumpcloud_display_name: "{{ inventory_hostname }}"
@@ -178,6 +180,16 @@ run the same playbook against real supported Linux hosts or the
 DigitalOcean-backed inventory. DigitalOcean provisioning uses the maintained
 `digitalocean.cloud` collection, matching the newer Frontdoor Base pattern.
 
+The preferred local entrypoint is the Docker-backed test Makefile, which uses
+the same Ansible image as Jenkins:
+
+```text
+make -C tests
+make -C tests syntax
+make -C tests lint-jenkinsfile
+make -C tests test-live-rocky PRIVATE_KEY=/path/to/private/key
+```
+
 Fast local validation before live testing:
 
 ```text
@@ -190,6 +202,13 @@ markdownlint -c ~/.markdownlint.json AGENTS.md README.md CHANGELOG.md TODO.md te
 ```
 
 End-to-end cloud validation:
+
+```text
+make -C tests test-live
+```
+
+The Make target runs cleanup automatically before returning. To run the
+playbooks manually:
 
 ```text
 ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook.yml

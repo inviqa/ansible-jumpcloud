@@ -1,6 +1,7 @@
 ---
 - name: Verify requested JumpCloud system group memberships
   delegate_to: localhost
+  become: false
   no_log: true
   when:
     - jc_system_groups | default([]) | length > 0

@@ -22,6 +22,7 @@
       - 200
       - 404
   delegate_to: localhost
+  become: false
   register: jc_system_attributes_json_response
   no_log: true
   retries: "{{ jumpcloud_registration_check_retries | int }}"
@@ -42,6 +43,7 @@
     jc_system_is_registered: "{{ jc_system_attributes_json_response.status == 200 }}"
   when: jc_system_attributes_json_response is defined
   delegate_to: localhost
+  become: false
 
 - name: Warn when system is not registered in JumpCloud
   ansible.builtin.debug:

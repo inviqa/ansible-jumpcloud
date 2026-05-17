@@ -18,6 +18,7 @@
     return_content: true
     status_code: 200
   delegate_to: localhost
+  become: false
   register: jumpcloud_update_system_response
   no_log: true
   when: jumpcloud_system_key is defined

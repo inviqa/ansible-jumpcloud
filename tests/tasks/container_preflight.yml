@@ -22,8 +22,6 @@
   ansible.builtin.include_role:
     name: ansible-jumpcloud
     tasks_from: install_deps
-  vars:
-    jumpcloud_use_sudo: true
 
 - name: Check that required dependency executables are available
   ansible.builtin.stat:

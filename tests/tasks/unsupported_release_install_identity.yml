@@ -10,7 +10,6 @@
     tasks_from: apply_install_os_release_identity
   vars:
     jumpcloud_install_on_unsupported_distribution: true
-    jumpcloud_use_sudo: true
 
 - name: Read the temporary container OS release
   ansible.builtin.slurp:
@@ -30,8 +29,6 @@
   ansible.builtin.include_role:
     name: ansible-jumpcloud
     tasks_from: restore_install_os_release_identity
-  vars:
-    jumpcloud_use_sudo: true
 
 - name: Read the restored container OS release
   ansible.builtin.slurp:

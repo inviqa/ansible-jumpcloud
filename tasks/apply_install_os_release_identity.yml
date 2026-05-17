@@ -16,7 +16,6 @@
       ansible.builtin.slurp:
         src: /etc/os-release
       register: jumpcloud_original_os_release
-      become: "{{ jumpcloud_use_sudo }}"
 
     - name: Back up original OS release before temporary JumpCloud install identity
       ansible.builtin.copy:
@@ -25,7 +24,6 @@
         owner: root
         group: root
         mode: "0600"
-      become: "{{ jumpcloud_use_sudo }}"
 
     - name: Resolve latest supported JumpCloud release for this distribution
       ansible.builtin.set_fact:
@@ -58,7 +56,6 @@
         owner: root
         group: root
         mode: "0644"
-      become: "{{ jumpcloud_use_sudo }}"
 
     - name: Mark temporary JumpCloud install identity as active
       ansible.builtin.set_fact:

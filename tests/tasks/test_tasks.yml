@@ -3,7 +3,6 @@
   ansible.builtin.stat:
     path: "{{ jumpcloud_agent_config }}"
   register: jumpcloud_test_agent_config
-  become: "{{ jumpcloud_use_sudo }}"
 
 - name: Assert that the JumpCloud agent config exists
   ansible.builtin.assert:

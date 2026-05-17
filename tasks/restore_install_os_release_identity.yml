@@ -3,7 +3,6 @@
   ansible.builtin.stat:
     path: "{{ jumpcloud_install_os_release_backup }}"
   register: jumpcloud_install_os_release_backup_status
-  become: "{{ jumpcloud_use_sudo }}"
 
 - name: Restore temporary JumpCloud install identity
   when: jumpcloud_install_os_release_backup_status.stat.exists | bool
@@ -12,7 +11,6 @@
       ansible.builtin.slurp:
         src: "{{ jumpcloud_install_os_release_backup }}"
       register: jumpcloud_original_os_release_backup
-      become: "{{ jumpcloud_use_sudo }}"
 
     - name: Restore original OS release after JumpCloud install identity override
       ansible.builtin.copy:
@@ -21,13 +19,11 @@
         owner: root
         group: root
         mode: "0644"
-      become: "{{ jumpcloud_use_sudo }}"
 
     - name: Remove temporary JumpCloud install identity backup
       ansible.builtin.file:
         path: "{{ jumpcloud_install_os_release_backup }}"
         state: absent
-      become: "{{ jumpcloud_use_sudo }}"
 
     - name: Mark temporary JumpCloud install identity as inactive
       ansible.builtin.set_fact:

@@ -78,7 +78,6 @@
 
 - name: Validate JumpCloud role on supported Linux targets
   hosts: jumpcloud_test_hosts
-  become: true
   vars_files:
     - ../defaults/main.yml
   vars:
@@ -114,7 +113,6 @@
 
     - name: Set live test role variables
       ansible.builtin.set_fact:
-        jumpcloud_use_sudo: true
         jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
         jumpcloud_display_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
         jumpcloud_system_groups: "{{ jumpcloud_test_system_groups | default([]) }}"

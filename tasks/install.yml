@@ -6,7 +6,6 @@
     mode: "0755"
     headers:
       x-connect-key: "{{ jumpcloud_x_connect_key }}"
-  become: "{{ jumpcloud_use_sudo }}"
   no_log: true
 
 - name: Install and initialize JumpCloud agent
@@ -26,7 +25,6 @@
         APT_LISTCHANGES_FRONTEND: none
         DEBIAN_FRONTEND: noninteractive
         NEEDRESTART_MODE: a
-      become: "{{ jumpcloud_use_sudo }}"
       register: jumpcloud_install_result
       changed_when: >-
         jumpcloud_install_result.rc is defined
@@ -49,7 +47,6 @@
       ansible.builtin.stat:
         path: "{{ jumpcloud_agent_config }}"
       register: jumpcloud_agent_config_status
-      become: "{{ jumpcloud_use_sudo }}"
 
     - name: Report JumpCloud agent config status
       ansible.builtin.debug:
@@ -72,7 +69,6 @@
             name: "{{ jumpcloud_agent_service }}"
             enabled: true
             state: started
-          become: "{{ jumpcloud_use_sudo }}"
           register: jumpcloud_service_start_result
           failed_when: false
 
@@ -80,7 +76,6 @@
           ansible.builtin.wait_for:
             path: "{{ jumpcloud_agent_config }}"
             timeout: "{{ jumpcloud_registration_timeout_seconds | int }}"
-          become: "{{ jumpcloud_use_sudo }}"
           register: jumpcloud_agent_config_wait_result
           failed_when: false
           when: not jumpcloud_service_start_result.failed | default(false) | bool
@@ -89,7 +84,6 @@
           ansible.builtin.stat:
             path: "{{ jumpcloud_agent_config }}"
           register: jumpcloud_agent_config_status
-          become: "{{ jumpcloud_use_sudo }}"
 
         - name: Set whether JumpCloud initialized after service start
           ansible.builtin.set_fact:
@@ -121,5 +115,4 @@
     name: "{{ jumpcloud_agent_service }}"
     enabled: true
     state: started
-  become: "{{ jumpcloud_use_sudo }}"
   when: jumpcloud_is_installed

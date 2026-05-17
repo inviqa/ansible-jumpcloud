@@ -3,7 +3,7 @@ def DO_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-oauth-token'
 def DO_SSH_KEYS_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-ssh-key-ids'
 def JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
 def JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
-def SSH_PRIVATE_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-test-ssh-private-key'
+def SSH_PRIVATE_KEY_CREDENTIAL_ID = 'ansible-roles-test-ssh-private-key'
 def SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
 
 def runWithSshAgent(String command, String credentialId) {

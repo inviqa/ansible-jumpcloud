@@ -61,7 +61,7 @@ The credential ID placeholders are defined at the top of `Jenkinsfile`:
 | `ansible-jumpcloud-digitalocean-ssh-key-ids` | Secret text | Comma or newline separated DigitalOcean SSH key IDs or fingerprints. |
 | `ansible-jumpcloud-connect-key` | Secret text | JumpCloud connect key for agent registration. |
 | `ansible-jumpcloud-api-key` | Secret text | JumpCloud API key for cleanup, updates, and verification. |
-| `ansible-jumpcloud-test-ssh-private-key` | SSH username with private key | Private key loaded for live test droplet access. |
+| `ansible-roles-test-ssh-private-key` | SSH username with private key | Private key loaded for live test droplet access. |
 | `inviqa-slack-integration-token` | Secret text | Slack token used for Jenkins failure notifications. |
 
 ## Parameters

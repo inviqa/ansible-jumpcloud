@@ -28,7 +28,34 @@
   retries: "{{ jumpcloud_registration_check_retries | int }}"
   delay: "{{ jumpcloud_registration_check_delay_seconds | int }}"
   until: >-
-    jc_system_attributes_json_response.status == 200
+    (
+      jc_system_attributes_json_response.status == 200
+      and (
+        jumpcloud_registration_expected_display_name is not defined
+        or jc_system_attributes_json_response.json.displayName
+          == jumpcloud_registration_expected_display_name
+      )
+      and (
+        jumpcloud_registration_expected_allow_public_key_authentication is not defined
+        or jc_system_attributes_json_response.json.allowPublicKeyAuthentication
+          == (jumpcloud_registration_expected_allow_public_key_authentication | bool)
+      )
+      and (
+        jumpcloud_registration_expected_allow_ssh_password_authentication is not defined
+        or jc_system_attributes_json_response.json.allowSshPasswordAuthentication
+          == (jumpcloud_registration_expected_allow_ssh_password_authentication | bool)
+      )
+      and (
+        jumpcloud_registration_expected_allow_ssh_root_login is not defined
+        or jc_system_attributes_json_response.json.allowSshRootLogin
+          == (jumpcloud_registration_expected_allow_ssh_root_login | bool)
+      )
+      and (
+        jumpcloud_registration_expected_allow_multi_factor_authentication is not defined
+        or jc_system_attributes_json_response.json.allowMultiFactorAuthentication
+          == (jumpcloud_registration_expected_allow_multi_factor_authentication | bool)
+      )
+    )
     or (
       jc_system_attributes_json_response.status == 404
       and jc_system_attributes_json_response.attempts | default(1) | int

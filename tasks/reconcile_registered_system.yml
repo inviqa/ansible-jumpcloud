@@ -12,6 +12,19 @@
     - name: Update registered system attributes
       ansible.builtin.import_tasks: update_system.yml
 
+    - name: Wait for registered system attributes to match requested values
+      ansible.builtin.include_tasks: check_system_registration.yml
+      vars:
+        jumpcloud_registration_expected_display_name: "{{ jumpcloud_effective_display_name }}"
+        jumpcloud_registration_expected_allow_public_key_authentication: >-
+          {{ jumpcloud_effective_allow_public_key_authentication }}
+        jumpcloud_registration_expected_allow_ssh_password_authentication: >-
+          {{ jumpcloud_effective_allow_ssh_password_authentication }}
+        jumpcloud_registration_expected_allow_ssh_root_login: >-
+          {{ jumpcloud_effective_allow_ssh_root_login }}
+        jumpcloud_registration_expected_allow_multi_factor_authentication: >-
+          {{ jumpcloud_effective_allow_multi_factor_authentication }}
+
     - name: Reconcile registered system group membership
       when: jumpcloud_system_groups is defined
       block:

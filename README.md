@@ -18,6 +18,7 @@ groups.
 - [Testing](#testing)
 - [Jenkins CI](#jenkins-ci)
 - [Development Notes](#development-notes)
+- [Changelog](#changelog)
 - [Maintainer](#maintainer)
 - [Support](#support)
 - [Repository](#repository)
@@ -191,6 +192,10 @@ sequence.
 - `tests/test_variables.yml` is gitignored and may hold local live-test secrets.
 - Keep the role support matrix aligned with JumpCloud's published Linux agent
   compatibility list before publishing a new Galaxy release.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## Maintainer
 

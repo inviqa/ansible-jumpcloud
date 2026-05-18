@@ -73,6 +73,8 @@
   required before running `ws` test commands.
 - Added Mermaid flowcharts for the DigitalOcean live-test cleanup path and the
   Jenkins live-test pipeline.
+- Added a README link to the repository changelog so release history is easier
+  to find.
 
 ### Fixed
 
@@ -104,6 +106,14 @@
   into the top-level pipeline environment block.
 - Cleaned up YAML and Ansible task structure for linting, readability, and
   publication readiness.
+
+## [2.4.1] - 2022-04-12
+
+- Added retry handling while reading the JumpCloud agent `systemKey` from
+  `jcagent.conf`, avoiding transient install failures when the agent had not
+  finished writing the key yet.
+- Increased the lookup window to five attempts with a three-second delay so a
+  first role run can complete instead of requiring a manual rerun.
 
 ## [2.4.0]
 

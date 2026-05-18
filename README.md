@@ -18,6 +18,7 @@ groups.
 - [Examples](#examples)
 - [Testing](#testing)
 - [Jenkins CI](#jenkins-ci)
+- [Publishing](#publishing)
 - [Development Notes](#development-notes)
 - [Changelog](#changelog)
 - [Maintainer](#maintainer)
@@ -91,8 +92,14 @@ Intended Ansible Galaxy role name:
 inviqa.jumpcloud
 ```
 
-The repository is being prepared for refreshed Ansible Galaxy publication. Until
-that release exists, consume it from a local checkout or a pinned Git reference.
+After the `3.0.0` Galaxy import is complete, install the pinned release with:
+
+```bash
+ansible-galaxy role install inviqa.jumpcloud,3.0.0
+```
+
+Until that import exists, consume the role from a local checkout or a pinned Git
+reference.
 
 ## Upgrade Guide
 
@@ -191,6 +198,26 @@ maintenance check.
 required credential placeholders, Jenkinsfile lint helper, and live-test command
 sequence.
 
+## Publishing
+
+[docs/ansible-galaxy-release.md](docs/ansible-galaxy-release.md) documents the
+GitHub release and Ansible Galaxy import runbook. Maintainers can inspect the
+available publication commands with:
+
+```bash
+ws ansible-galaxy
+```
+
+After the GitHub release and tag exist on `main`, import the role into Galaxy
+with:
+
+```bash
+ws ansible-galaxy publish
+```
+
+The command uses `ansible.galaxy.token` from `workspace.override.yml` or
+`ANSIBLE_GALAXY_TOKEN` from the shell environment.
+
 ## Development Notes
 
 - `AGENTS.md` defines strict repository linting and documentation rules for AI
@@ -217,8 +244,9 @@ documented alongside the published source.
 
 ## Repository
 
-- Public repository URL: pending refreshed publication metadata
-- Publication status: pending Ansible Galaxy refresh
+- Public repository URL: <https://github.com/inviqa/ansible-jumpcloud>
+- Ansible Galaxy role: <https://galaxy.ansible.com/ui/standalone/roles/inviqa/jumpcloud/>
+- Publication status: pending `3.0.0` Ansible Galaxy refresh
 
 ## License
 

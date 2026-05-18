@@ -12,6 +12,7 @@ attribute('test.jumpcloud.x_connect_key'): ''
 attribute('test.jumpcloud.system_groups'): ''
 attribute('test.jumpcloud.create_missing_system_groups'): false
 attribute('test.jumpcloud.delete_duplicate_systems'): true
+attribute('ansible.galaxy.token'): ''
 
 command('enable %', 'enable'):
   description: "Usage: ws enable [service]. Start all services or one service."
@@ -162,6 +163,46 @@ command('ansible-lint', 'ansible-lint'):
   exec: |
     #!bash(workspace:/)|@
     ws console ansible-lint .
+
+command('ansible-galaxy check-token', 'ansible-galaxy check-token'):
+  description: Check that an Ansible Galaxy token is configured.
+  env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    if [[ -z "${ANSIBLE_GALAXY_TOKEN}" ]]; then
+      echo "Set ansible.galaxy.token in workspace.override.yml or ANSIBLE_GALAXY_TOKEN before using token-required Galaxy commands." >&2
+      exit 1
+    fi
+
+command('ansible-galaxy publish', 'ansible-galaxy publish'):
+  description: Import the main branch into Ansible Galaxy and show role info.
+  env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    passthru ws ansible-galaxy check-token
+    passthru ansible-galaxy role import inviqa ansible-jumpcloud \
+      --branch main \
+      --role-name jumpcloud \
+      --token "${ANSIBLE_GALAXY_TOKEN}"
+    passthru ansible-galaxy role info inviqa.jumpcloud
+
+command('ansible-galaxy status', 'ansible-galaxy status'):
+  description: Check the latest Ansible Galaxy import status.
+  env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    passthru ws ansible-galaxy check-token
+    passthru ansible-galaxy role import --status inviqa ansible-jumpcloud \
+      --token "${ANSIBLE_GALAXY_TOKEN}"
+
+command('ansible-galaxy info', 'ansible-galaxy info'):
+  description: Show the currently indexed Ansible Galaxy role metadata.
+  exec: |
+    #!bash(workspace:/)|@
+    passthru ansible-galaxy role info inviqa.jumpcloud
 
 command('lint-jenkinsfile', 'lint-jenkinsfile'):
   description: Validate the Jenkinsfile with the Dockerized Jenkins linter.

@@ -24,6 +24,8 @@
 - Added sanitized duplicate-system diagnostics for actionable Jenkins failures
   without leaking JumpCloud data.
 - Added a Workspace-backed Jenkins pipeline and local Jenkinsfile lint command.
+- Added Workspace Ansible Galaxy publication commands for `publish`, `status`,
+  and `info`.
 - Replaced the legacy Docker, Vagrant, and Travis-era test workflow with a
   Workspace-managed container and DigitalOcean integration harness.
 
@@ -32,6 +34,8 @@
 - Refreshed Galaxy-facing metadata, support claims, maintainer details,
   documentation, and role defaults for current Ansible Galaxy and JumpCloud
   Linux agent expectations.
+- Updated Galaxy role description and discovery tags for installation,
+  registration, SSH, MFA, and identity management use cases.
 - Aligned Galaxy metadata with the default-supported runtime matrix.
 - Added Fedora 43 to the validated Linux support matrix to match JumpCloud's
   current Linux agent compatibility documentation.
@@ -95,6 +99,8 @@
   check, and renamed public variables to snake_case with legacy compatibility.
 - Fixed live Jenkins SSH credential binding for the shared SSH-agent helper.
 - Fixed live-test role resolution from Jenkins job-named workspaces.
+- Waited for DigitalOcean test-droplet SSH readiness to settle before the
+  first remote command.
 - Restored failure-only Jenkins Slack notifications after live-test remediation.
 - Moved Jenkins credential IDs, Slack notification controls, and runtime values
   into the top-level pipeline environment block.
@@ -111,6 +117,11 @@
 - Added a README link to the repository changelog so release history is easier
   to find.
 - Added an upgrade guide for users moving from `2.4.1` to `3.0.0`.
+- Added a generic Ansible Galaxy release runbook covering GitHub release
+  preparation, Galaxy publication, import-status checks, and pinned install
+  verification.
+- Documented the Workspace Ansible Galaxy publication commands and token
+  configuration.
 - Grouped the 3.0.0 release notes by scope.
 
 ## [2.4.1] - 2022-04-12

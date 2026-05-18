@@ -9,3 +9,4 @@ attribute('test.jumpcloud.x_connect_key'): ''
 attribute('test.jumpcloud.system_groups'): ''
 attribute('test.jumpcloud.create_missing_system_groups'): false
 attribute('test.jumpcloud.delete_duplicate_systems'): true
+attribute('ansible.galaxy.token'): ''

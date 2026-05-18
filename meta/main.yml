@@ -3,7 +3,7 @@ galaxy_info:
   namespace: inviqa
   role_name: jumpcloud
   author: "Marco Massari Calderone <marco.massari-calder@inviqa.com>"
-  description: "Install and configure the JumpCloud Linux agent"
+  description: "Install, register, and reconcile the JumpCloud Linux agent"
   company: "Inviqa UK Ltd"
   license: MIT
   min_ansible_version: "2.16"
@@ -30,12 +30,16 @@ galaxy_info:
         - jammy
         - noble
   galaxy_tags:
+    - access
     - authentication
     - device
     - iam
+    - identity
     - jumpcloud
     - linux
+    - mfa
     - security
+    - ssh
     - system
 
 dependencies: []

@@ -40,3 +40,10 @@
     timeout: 420
     state: started
   delegate_to: localhost
+
+- name: Wait for Ansible SSH readiness
+  ansible.builtin.wait_for_connection:
+    delay: 10
+    timeout: 600
+    connect_timeout: 5
+    sleep: 10

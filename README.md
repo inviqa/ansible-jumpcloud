@@ -12,6 +12,7 @@ groups.
 - [Current Behavior Notes](#current-behavior-notes)
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [Upgrade Guide](#upgrade-guide)
 - [Variables](#variables)
 - [Supported Linux Matrix](#supported-linux-matrix)
 - [Examples](#examples)
@@ -92,6 +93,12 @@ inviqa.jumpcloud
 
 The repository is being prepared for refreshed Ansible Galaxy publication. Until
 that release exists, consume it from a local checkout or a pinned Git reference.
+
+## Upgrade Guide
+
+Version `3.0.0` is a major release. Existing `2.4.1` users should review
+[Upgrading to 3.0.0](docs/upgrading-to-3.0.0.md) before changing their pinned
+role version.
 
 ## Variables
 

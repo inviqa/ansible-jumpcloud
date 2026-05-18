@@ -40,6 +40,7 @@ jumpcloud_supported_linux_versions:
     - "40"
     - "41"
     - "42"
+    - "43"
   OracleLinux:
     - "9"
   Pop!_OS:
@@ -75,6 +76,9 @@ jumpcloud_common_dependencies:
   - sudo
   - tar
 jumpcloud_apt_dependencies:
+  - apt-rdepends
+  - apt-show-versions
+  - coreutils
   - curl
   - dpkg
   - hostname
@@ -100,11 +104,13 @@ jumpcloud_yum_dependencies:
   - glibc-common
   - initscripts
   - net-tools
+  - nss
   - nss-tools
   - psmisc
   - rpm
   - shadow-utils
   - util-linux
+  - util-linux-user
   - which
 jumpcloud_dnf_dependencies:
   - dnf
@@ -128,14 +134,19 @@ jumpcloud_amazon_dependencies:
   - dmidecode
   - initscripts
   - redhat-lsb-core
-jumpcloud_redhat_dependencies:
-  - redhat-lsb-core
 jumpcloud_fedora_dependencies:
   - audispd-plugins
   - dmidecode
   - policycoreutils
+  - redhat-lsb-core
 jumpcloud_oracle_dependencies:
   - audispd-plugins
+  - initscripts
   - policycoreutils
 jumpcloud_rocky_dependencies:
+  - initscripts
   - policycoreutils
+jumpcloud_redhat_dependencies:
+  - chkconfig
+  - initscripts
+  - redhat-lsb-core

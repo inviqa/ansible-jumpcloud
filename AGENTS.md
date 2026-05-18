@@ -123,6 +123,9 @@ modified.
 12. Keep JumpCloud API keys, connect keys, system keys, and returned device data
     out of logs. Use `no_log: true` for tasks that transmit or receive those
     values.
+13. When adding Workspace commands that pass user input into containers, dispatch
+    a fixed command with tokenized arguments. Do not pass user-controlled
+    strings through `bash -lc`, `eval`, or command substitution.
 
 ## Changelog Policy (Always Required)
 

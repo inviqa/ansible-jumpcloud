@@ -1,11 +1,4 @@
 def failureMessages = []
-def DO_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-oauth-token'
-def DO_SSH_KEYS_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-ssh-key-ids'
-def JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
-def JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
-def SSH_PRIVATE_KEY_CREDENTIAL_ID = 'ansible-roles-test-ssh-private-key'
-def SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
-def SLACK_NOTIFICATIONS_ENABLED = false
 
 def runWithSshAgent(String command, String credentialId) {
     sshagent(credentials: [credentialId]) {
@@ -23,17 +16,24 @@ pipeline {
         }
     }
 
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timestamps()
-    }
-
     environment {
         ANSIBLE_COLLECTIONS_PATH = ".ansible/collections:/home/ansible/.ansible/collections:/usr/share/ansible/collections"
         ANSIBLE_FORCE_COLOR = 'true'
         ANSIBLE_ROLES_PATH = "tests/roles:.ansible/roles:/home/ansible/.ansible/roles"
+        DO_SSH_KEYS_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-ssh-key-ids'
+        DO_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-oauth-token'
+        JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
+        JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
         PIP_BREAK_SYSTEM_PACKAGES = '1'
         SLACK_NOTIFICATION_CHANNEL = 'ops-integrations'
+        SLACK_NOTIFICATIONS_ENABLED = 'true'
+        SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
+        SSH_PRIVATE_KEY_CREDENTIAL_ID = 'ansible-roles-test-ssh-private-key'
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
     }
 
     parameters {
@@ -86,10 +86,10 @@ pipeline {
                     }
 
                     withCredentials([
-                        string(credentialsId: DO_TOKEN_CREDENTIAL_ID, variable: 'DIGITAL_OCEAN_API_TOKEN'),
-                        string(credentialsId: DO_SSH_KEYS_CREDENTIAL_ID, variable: 'DO_SSH_KEYS'),
-                        string(credentialsId: JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID, variable: 'JUMPCLOUD_X_CONNECT_KEY'),
-                        string(credentialsId: JUMPCLOUD_API_KEY_CREDENTIAL_ID, variable: 'JUMPCLOUD_API_KEY')
+                        string(credentialsId: env.DO_TOKEN_CREDENTIAL_ID, variable: 'DIGITAL_OCEAN_API_TOKEN'),
+                        string(credentialsId: env.DO_SSH_KEYS_CREDENTIAL_ID, variable: 'DO_SSH_KEYS'),
+                        string(credentialsId: env.JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID, variable: 'JUMPCLOUD_X_CONNECT_KEY'),
+                        string(credentialsId: env.JUMPCLOUD_API_KEY_CREDENTIAL_ID, variable: 'JUMPCLOUD_API_KEY')
                     ]) {
                         sh '''
                             set -eu
@@ -107,12 +107,12 @@ pipeline {
                         try {
                             runWithSshAgent(
                                 "ansible-playbook -i '${params.TEST_INVENTORY}' tests/playbook.yml",
-                                SSH_PRIVATE_KEY_CREDENTIAL_ID
+                                env.SSH_PRIVATE_KEY_CREDENTIAL_ID
                             )
                         } finally {
                             runWithSshAgent(
                                 "ansible-playbook -i '${params.TEST_INVENTORY}' tests/playbook_cleanup.yml",
-                                SSH_PRIVATE_KEY_CREDENTIAL_ID
+                                env.SSH_PRIVATE_KEY_CREDENTIAL_ID
                             )
                         }
                     }
@@ -150,10 +150,10 @@ pipeline {
                         fields: fields
                     ]
                 ]
-                if (SLACK_NOTIFICATIONS_ENABLED) {
-                    slackSend(channel: env.SLACK_NOTIFICATION_CHANNEL, color: 'danger', attachments: attachments, tokenCredentialId: SLACK_TOKEN_CREDENTIAL_ID)
+                if (!env.SLACK_NOTIFICATIONS_ENABLED.toBoolean()) {
+                    echo "Slack ${currentBuild.currentResult} notification skipped; SLACK_NOTIFICATIONS_ENABLED is false."
                 } else {
-                    echo 'Slack failure notification temporarily disabled while Jenkins live-test remediation is in progress.'
+                    slackSend(channel: env.SLACK_NOTIFICATION_CHANNEL, color: 'danger', attachments: attachments, tokenCredentialId: env.SLACK_TOKEN_CREDENTIAL_ID)
                 }
             }
         }

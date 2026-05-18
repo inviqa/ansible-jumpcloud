@@ -89,7 +89,7 @@ command('destroy', 'destroy'):
       --timeout 120
 
 command('console %', 'console'):
-  description: "Usage: ws console [command]. Run an allowed command in the Ansible console container."
+  description: "Usage: ws console [command]. Run a command in the Ansible console container."
   env:
     DO_OAUTH_TOKEN: "= @('test.digitalocean.api_token') ?: env('DO_OAUTH_TOKEN') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: ''"
     DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
@@ -111,18 +111,7 @@ command('console %', 'console'):
       docker_command=(bash)
     else
       docker_exec_args+=(-T)
-
-      case "${console_command}" in
-        bash|ansible-playbook\ *|ansible-lint\ *|tests/lint_jenkinsfile.sh\ *)
-          ;;
-        *)
-          echo "Unsupported ws console command '${console_command}'." >&2
-          echo "Allowed commands: bash, ansible-playbook, ansible-lint, tests/lint_jenkinsfile.sh." >&2
-          exit 1
-          ;;
-      esac
-
-      docker_command=(bash -lc "${console_command}")
+      read -r -a docker_command <<< "${console_command}"
     fi
 
     ws enable console

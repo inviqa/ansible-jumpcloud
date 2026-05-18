@@ -41,7 +41,8 @@ The DigitalOcean harness provisions real droplets for end-to-end validation:
 
 ## Setup
 
-Install the Workspace CLI if `ws` is not already available:
+Install the Workspace CLI before running the test commands if `ws` is not
+already available.
 
 ```bash
 WS_VERSION=0.4.1
@@ -146,6 +147,23 @@ The live playbook:
 - verifies local agent config and service state
 - verifies JumpCloud registration, display name, SSH attributes, and optional
   system-group membership through the JumpCloud API
+
+The live-test path creates real provider resources, validates them, and then
+hands off to the cleanup playbook whether the validation succeeds or fails.
+
+```mermaid
+flowchart LR
+  accTitle: DigitalOcean live-test flow
+  accDescr: Shows the Workspace live-test sequence from setup through cleanup.
+  setup["Load local test credentials"] --> provision["Create DigitalOcean droplets"]
+  provision --> ssh["Wait for SSH and install Python"]
+  ssh --> role["Run JumpCloud role"]
+  role --> verify["Verify agent and JumpCloud state"]
+  verify --> cleanup["Run cleanup playbook"]
+  role -->|Failure| cleanup
+  cleanup --> records["Remove JumpCloud records"]
+  records --> droplets["Delete DigitalOcean droplets"]
+```
 
 The DigitalOcean harness runs the role's pre-install duplicate system cleanup by
 default so reruns can replace stale records with the same display name. Set

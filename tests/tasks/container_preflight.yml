@@ -34,6 +34,7 @@
     - lsof
     - openssl
     - tar
+    - timeout
   register: jumpcloud_test_dependency_executables
 
 - name: Resolve missing dependency executables

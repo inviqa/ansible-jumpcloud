@@ -20,6 +20,27 @@ The pipeline runs inside a Jenkins-native Docker agent and executes:
 The live test stage provisions real DigitalOcean droplets and registers real
 systems in JumpCloud, so it incurs provider cost while it runs.
 
+The Jenkins pipeline mirrors the local live-test path, with cleanup wired into
+the live-test stage so provider resources are removed after a failed run too.
+
+```mermaid
+flowchart LR
+  accTitle: Jenkins live-test pipeline
+  accDescr: Shows the Jenkins stages and cleanup handoff for live tests.
+  checkout["Pipeline checkout"] --> deps["Install Ansible dependencies"]
+  deps --> syntax["Run syntax checks"]
+  syntax --> gate{"RUN_LIVE_TESTS?"}
+  gate -->|No| finish["Finish build"]
+  gate -->|Yes| creds["Load Jenkins credentials"]
+  creds --> live["Run live playbook with SSH agent"]
+  live --> cleanup["Run cleanup playbook"]
+  live -->|Failure| cleanup
+  cleanup --> notify{"Build failed?"}
+  notify -->|Yes| slack["Send Slack failure notification"]
+  notify -->|No| finish
+  slack --> finish
+```
+
 Markdown, YAML, and full `ws ansible-lint` checks are intentionally kept as
 pre-handoff checks rather than Jenkins pipeline stages.
 

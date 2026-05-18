@@ -4,6 +4,12 @@
     src: /etc/os-release
   register: jumpcloud_test_original_os_release
 
+- name: Inspect the original container OS release path
+  ansible.builtin.stat:
+    path: /etc/os-release
+    follow: false
+  register: jumpcloud_test_original_os_release_path
+
 - name: Apply temporary unsupported-release install identity
   ansible.builtin.include_role:
     name: ansible-jumpcloud
@@ -35,14 +41,33 @@
     src: /etc/os-release
   register: jumpcloud_test_restored_os_release
 
+- name: Inspect the restored container OS release path
+  ansible.builtin.stat:
+    path: /etc/os-release
+    follow: false
+  register: jumpcloud_test_restored_os_release_path
+
 - name: Check that temporary OS release backup was removed
   ansible.builtin.stat:
     path: "{{ jumpcloud_install_os_release_backup }}"
   register: jumpcloud_test_os_release_backup_status
 
+- name: Check that temporary OS release symlink target backup was removed
+  ansible.builtin.stat:
+    path: "{{ jumpcloud_install_os_release_backup }}.symlink-target"
+  register: jumpcloud_test_os_release_link_backup_status
+
 - name: Validate the original OS release has been restored
   ansible.builtin.assert:
     that:
       - jumpcloud_test_restored_os_release.content == jumpcloud_test_original_os_release.content
+      - >-
+        jumpcloud_test_restored_os_release_path.stat.islnk | default(false)
+        == jumpcloud_test_original_os_release_path.stat.islnk | default(false)
+      - >-
+        not jumpcloud_test_original_os_release_path.stat.islnk | default(false)
+        or jumpcloud_test_restored_os_release_path.stat.lnk_source
+        == jumpcloud_test_original_os_release_path.stat.lnk_source
       - not jumpcloud_test_os_release_backup_status.stat.exists
+      - not jumpcloud_test_os_release_link_backup_status.stat.exists
     fail_msg: "The temporary JumpCloud install identity was not restored."

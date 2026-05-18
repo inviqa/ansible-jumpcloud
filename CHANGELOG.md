@@ -1,21 +1,27 @@
 # CHANGELOG
 
-## [3.0.0 - Unreleased] - 2026-05-13
+## [3.0.0 - Unreleased]
 
 ### Changed
 
 - Refreshed Galaxy-facing metadata, support claims, maintainer details,
   documentation, and role defaults for current Ansible Galaxy and JumpCloud
   Linux agent expectations.
+- Added Fedora 43 to the validated Linux support matrix to match JumpCloud's
+  current Linux agent compatibility documentation.
 - Modernized the install path for current Debian, Ubuntu, and RedHat-family
   targets, including cleaner dependency lists, DNF `curl-minimal`
   compatibility, bounded Kickstart execution, non-interactive Debian-family
   installs, and recovery when the installed `jcagent` service must be started
   before `jcagent.conf` is created.
+- Extended Debian-family dependency installation while preserving DNF minimal
+  package compatibility for `coreutils-single` and `curl-minimal`.
 - Added opt-in installation on newer unsupported releases in otherwise
   supported distribution families by temporarily presenting the latest supported
   `/etc/os-release` identity during the JumpCloud kickstart run, then restoring
   the original file before registration checks.
+- Preserved original `/etc/os-release` symlink structure when restoring after
+  unsupported-release install identity overrides.
 - Advertised Debian 13 as a validated target, with container validation for the
   temporary install identity path and a DigitalOcean live target for
   end-to-end unsupported-release validation.
@@ -37,6 +43,10 @@
   and `ws ansible-playbook <playbook> <inventory>` so Compose setup,
   environment forwarding, and playbook execution are not duplicated across
   wrappers.
+- Hardened Workspace console command dispatch so pass-through commands execute
+  as tokenized container arguments instead of shell-evaluated strings.
+- Aligned Galaxy metadata with the default-supported runtime matrix instead of
+  advertising opt-in or unconstrained platforms.
 - Kept Workspace playbook execution under the `ansible` container user and used
   Compose `group_add` with the host Docker socket GID for Docker access instead
   of mutating users or groups during container startup.
@@ -46,6 +56,8 @@
   files so playbooks and role entrypoints act as orchestration layers.
 - Split DigitalOcean live-test provisioning into reusable SSH key resolution,
   SSH agent validation, droplet provisioning, and SSH access task files.
+- Disabled inherited SSH proxy settings for DigitalOcean live-test droplets so
+  the test harness connects directly to the provisioned public hosts.
 - Renamed test inventories and normalized DigitalOcean droplet names so Docker
   and DigitalOcean targets are explicit and the `ansible-jumpcloud` prefix is
   applied only once.
@@ -57,6 +69,10 @@
   Workspace CLI install path and Compose environment model, and updated
   repository agent instructions so Ansible and Jenkinsfile linting run through
   Workspace.
+- Clarified the test procedure with the copy-paste Workspace CLI install command
+  required before running `ws` test commands.
+- Added Mermaid flowcharts for the DigitalOcean live-test cleanup path and the
+  Jenkins live-test pipeline.
 
 ### Fixed
 
@@ -83,8 +99,9 @@
   JumpCloud API tasks, and removed the role-specific `jumpcloud_use_sudo`
   switch; callers now run the role as a privileged user or set Ansible
   `become: true`.
-- Temporarily disabled Jenkins failure Slack notifications while live-test
-  remediation is still in progress.
+- Restored failure-only Jenkins Slack notifications after live-test remediation.
+- Moved Jenkins credential IDs, Slack notification controls, and runtime values
+  into the top-level pipeline environment block.
 - Cleaned up YAML and Ansible task structure for linting, readability, and
   publication readiness.
 

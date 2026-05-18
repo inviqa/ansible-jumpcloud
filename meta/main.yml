@@ -19,10 +19,16 @@ galaxy_info:
         - trixie
     - name: Fedora
       versions:
-        - all
+        - "40"
+        - "41"
+        - "42"
+        - "43"
     - name: Ubuntu
       versions:
-        - all
+        - bionic
+        - focal
+        - jammy
+        - noble
   galaxy_tags:
     - authentication
     - device

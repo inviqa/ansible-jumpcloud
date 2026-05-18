@@ -126,9 +126,9 @@ testing is:
 | Family | Current supported targets |
 | --- | --- |
 | Debian | Debian 11, Debian 12, Debian 13 with `jumpcloud_install_on_unsupported_distribution: true` |
-| Ubuntu | Ubuntu 18.04, 20.04, 22.04, 24.04, 26.04 |
+| Ubuntu | Ubuntu 18.04, 20.04, 22.04, 24.04, 26.04; Galaxy metadata advertises currently known release codenames only |
 | Enterprise Linux | RHEL 8, RHEL 9, Rocky Linux 8, Rocky Linux 9 |
-| Fedora | Fedora 40, 41, 42 |
+| Fedora | Fedora 40, 41, 42, 43 |
 | Amazon Linux | Amazon Linux 2, 2023 |
 | Oracle Linux | Oracle Linux 9 |
 
@@ -174,7 +174,8 @@ For local checkout testing before Galaxy publication, use the local role name
 
 The current test workflow is documented in [docs/testing.md](docs/testing.md).
 It covers Workspace commands, container tests, DigitalOcean live tests,
-Jenkinsfile lint, cleanup, and the Debian 13 maintenance check.
+Jenkinsfile lint, cleanup, the Workspace CLI install command, and the Debian 13
+maintenance check.
 
 ## Jenkins CI
 

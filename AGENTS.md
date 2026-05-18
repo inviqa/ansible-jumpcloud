@@ -55,13 +55,13 @@ Applies to:
 
 Required:
 
-- `ansible-lint <file>` or `ansible-lint .` when role-level context is more
-  representative
+- `ws ansible-lint`
 - `yamllint <file>`
 
-Agents must run `ansible-lint` every time an Ansible file is created or
+Agents must run `ws ansible-lint` every time an Ansible file is created or
 modified, including files under `tests/`, even if other repo-wide lint commands
-already pass.
+already pass. Do not run `ansible-lint` directly from the host machine for this
+repository.
 
 ### Markdown files
 
@@ -83,12 +83,25 @@ Required:
 
 - `ruff check <file>`
 
+### Jenkins pipeline
+
+Applies to:
+
+- `Jenkinsfile`
+
+Required:
+
+- `ws lint-jenkinsfile`
+
+Agents must run `ws lint-jenkinsfile` every time `Jenkinsfile` is created or
+modified.
+
 ## Execution Rules
 
 1. Lint after each meaningful change set and before final handoff.
 2. Do not skip linting because a change is small.
 3. Every newly created or modified Ansible file must be validated with
-   `ansible-lint` before finishing the task.
+   `ws ansible-lint` before finishing the task.
 4. If a linter is unavailable, report it clearly and provide the exact install
    command.
 5. Prefer targeted linting for changed files, then run broader linting if
@@ -138,7 +151,8 @@ Required:
 
 - Shell: `shellcheck --enable=all path/to/file.sh`
 - YAML: `yamllint path/to/file.yml`
-- Ansible: `ansible-lint .`
+- Ansible: `ws ansible-lint`
+- Jenkinsfile: `ws lint-jenkinsfile`
 - Markdown: `markdownlint -c ~/.markdownlint.json AGENTS.md README.md CHANGELOG.md TODO.md`
 - Python: `ruff check path/to/file.py`
 

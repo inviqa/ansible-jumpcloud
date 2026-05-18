@@ -1,5 +1,4 @@
 ---
-ansible_python_interpreter: /usr/bin/python3
 ansible_user: root
 jumpcloud_test_do_api_token_from_env: >-
   {{
@@ -11,7 +10,39 @@ jumpcloud_test_do_api_token: >-
     jumpcloud_test_do_api_token_from_env
     | default(do_test_api_token | default(''), true)
   }}
+jumpcloud_test_do_ssh_keys_from_env: >-
+  {{
+    lookup('env', 'DO_SSH_KEYS')
+    | default('', true)
+    | split(',')
+    | map('trim')
+    | reject('equalto', '')
+    | list
+  }}
+do_ssh_keys: "{{ jumpcloud_test_do_ssh_keys_from_env | default([], true) }}"
 jumpcloud_test_do_api_base_url: "https://api.digitalocean.com/v2"
 jumpcloud_test_do_tag: "{{ do_test_tag | default('ANSIBLE-JUMPCLOUD-TEST') }}"
 jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
 jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
+jumpcloud_test_system_groups_from_env: >-
+  {{
+    lookup('env', 'JUMPCLOUD_TEST_SYSTEM_GROUPS')
+    | default('', true)
+    | split(',')
+    | map('trim')
+    | reject('equalto', '')
+    | list
+  }}
+jumpcloud_test_system_groups: "{{ jumpcloud_test_system_groups_from_env }}"
+jumpcloud_test_create_missing_system_groups: >-
+  {{
+    lookup('env', 'JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS')
+    | default(false, true)
+    | bool
+  }}
+jumpcloud_test_delete_duplicate_systems: >-
+  {{
+    lookup('env', 'JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS')
+    | default(true, true)
+    | bool
+  }}

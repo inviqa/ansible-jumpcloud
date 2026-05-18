@@ -4,4 +4,7 @@ tests/test_variables.yml
 tests/inventory-live
 !.gitignore
 *.retry
+*.override.yml
+*.override.yaml
+.my127ws/
 .ansible

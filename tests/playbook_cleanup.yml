@@ -2,49 +2,15 @@
 - name: Clean up JumpCloud live test records
   hosts: jumpcloud_test_hosts
   gather_facts: false
-  vars:
-    jumpcloud_test_api_key_from_env: "{{ lookup('env', 'JUMPCLOUD_API_KEY') }}"
   pre_tasks:
-    - name: Check whether local test overrides exist
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/test_variables.yml"
-      register: local_test_variables_file
-      delegate_to: localhost
-
     - name: Load local test overrides
-      ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/test_variables.yml"
-      when: local_test_variables_file.stat.exists
-      no_log: true
+      ansible.builtin.include_tasks: tasks/load_local_test_overrides.yml
 
-    - name: Resolve cleanup credentials and display name
-      ansible.builtin.set_fact:
-        jumpcloud_api_key: >-
-          {{
-            jumpcloud_test_api_key_from_env
-            | default(jumpcloud_test_api_key | default(''), true)
-          }}
-        jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
-        jumpcloud_effective_display_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
-        jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
-      no_log: true
-
-    - name: Check whether JumpCloud API cleanup should run
-      ansible.builtin.set_fact:
-        jumpcloud_test_run_api_cleanup: >-
-          {{
-            jumpcloud_test_run_agent_install | default(false) | bool
-            and jumpcloud_api_key | length > 0
-          }}
-      no_log: true
+    - name: Resolve cleanup context
+      ansible.builtin.include_tasks: tasks/resolve_cleanup_context.yml
 
     - name: Report when JumpCloud API cleanup is skipped
-      ansible.builtin.debug:
-        msg: >-
-          JumpCloud API cleanup is skipped because no API key is configured.
-          Local test containers will still be removed when enabled.
-      when: not jumpcloud_test_run_api_cleanup | bool
-      no_log: true
+      ansible.builtin.include_tasks: tasks/report_jumpcloud_cleanup_skip.yml
   tasks:
     - name: Remove matching JumpCloud test records
       ansible.builtin.include_role:
@@ -54,10 +20,7 @@
 
 - name: Remove DigitalOcean JumpCloud test droplets
   hosts: jumpcloud_test_hosts
-  connection: local
   gather_facts: false
-  vars:
-    ansible_python_interpreter: "{{ ansible_playbook_python }}"
   tasks:
     - name: Remove provisioned DigitalOcean test resources
       ansible.builtin.include_tasks: tasks/delete_test_resources.yml

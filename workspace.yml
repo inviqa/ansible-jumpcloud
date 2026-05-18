@@ -1,0 +1,237 @@
+---
+workspace('ansible-jumpcloud'):
+  description: Workspace environment for the JumpCloud Ansible role
+
+# Leave these values blank in this file.
+# Copy them to workspace.override.yml with real values for live testing.
+
+attribute('test.digitalocean.api_token'): ''
+attribute('test.digitalocean.ssh_keys'): ''
+attribute('test.jumpcloud.api_key'): ''
+attribute('test.jumpcloud.x_connect_key'): ''
+attribute('test.jumpcloud.system_groups'): ''
+attribute('test.jumpcloud.create_missing_system_groups'): false
+attribute('test.jumpcloud.delete_duplicate_systems'): true
+
+command('enable %', 'enable'):
+  description: "Usage: ws enable [service]. Start all services or one service."
+  env:
+    PARAMETER: = input.argument('%')
+    HOST_DOCKER_SOCK: "= env('HOST_DOCKER_SOCK') ?: '/var/run/docker.sock'"
+    HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
+  exec: |
+    #!bash(workspace:/)|@
+    # Compose uses this GID as a supplemental group for Docker socket access.
+    if [[ -z "${HOST_DOCKER_GID:-}" ]]; then
+      HOST_DOCKER_GID="$(stat -f '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || stat -c '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || true)"
+    fi
+    if [[ -z "${HOST_DOCKER_GID}" ]]; then
+      echo "Unable to resolve Docker socket group ID for '${HOST_DOCKER_SOCK}'." >&2
+      exit 1
+    fi
+    export HOST_DOCKER_GID HOST_DOCKER_SOCK
+
+    docker_args=(up -d)
+    service_name="${PARAMETER}"
+
+    case "${service_name}" in
+      --force-recreate)
+        docker_args+=(--build --force-recreate)
+        service_name=''
+        ;;
+      --force-recreate\ *)
+        docker_args+=(--build --force-recreate)
+        service_name=${service_name#--force-recreate }
+        ;;
+      --*)
+        echo "Unsupported ws enable option '${service_name}'." >&2
+        exit 1
+        ;;
+    esac
+
+    if [[ "${service_name}" == *[[:space:]]* ]]; then
+      echo "Unsupported ws enable service argument '${service_name}'." >&2
+      exit 1
+    fi
+
+    if [[ -n "${service_name}" ]]; then
+      docker_args+=("${service_name}")
+    fi
+
+    passthru docker compose "${docker_args[@]}"
+
+command('rebuild %', 'rebuild'):
+  description: "Usage: ws rebuild [service]. Rebuild and recreate services."
+  env:
+    PARAMETER: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)
+    if [[ -n "${PARAMETER}" ]]; then
+      ws enable --force-recreate "${PARAMETER}"
+    else
+      ws enable --force-recreate
+    fi
+
+command('disable', 'disable'):
+  description: Stop workspace containers.
+  exec: |
+    #!bash(workspace:/)|@
+    passthru docker compose stop
+
+command('destroy', 'destroy'):
+  description: Remove workspace containers, local images, and volumes.
+  exec: |
+    #!bash(workspace:/)|@
+    passthru docker compose down \
+      --rmi local \
+      --volumes \
+      --remove-orphans \
+      --timeout 120
+
+command('console %', 'console'):
+  description: "Usage: ws console [command]. Run an allowed command in the Ansible console container."
+  env:
+    DO_OAUTH_TOKEN: "= @('test.digitalocean.api_token') ?: env('DO_OAUTH_TOKEN') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: ''"
+    DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
+    DO_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ?: env('DO_SSH_KEYS') ?: ''"
+    HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
+    JUMPCLOUD_API_KEY: "= @('test.jumpcloud.api_key') ?: env('JUMPCLOUD_API_KEY') ?: ''"
+    JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS: "= @('test.jumpcloud.create_missing_system_groups')"
+    JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS: "= @('test.jumpcloud.delete_duplicate_systems')"
+    JUMPCLOUD_TEST_SYSTEM_GROUPS: "= @('test.jumpcloud.system_groups') ?: env('JUMPCLOUD_TEST_SYSTEM_GROUPS') ?: ''"
+    JUMPCLOUD_X_CONNECT_KEY: "= @('test.jumpcloud.x_connect_key') ?: env('JUMPCLOUD_X_CONNECT_KEY') ?: ''"
+    JENKINS_LINT_URL: "= env('JENKINS_LINT_URL') ?: ''"
+    PARAMETER: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)|@
+    console_command="${PARAMETER}"
+    docker_exec_args=(exec)
+
+    if [[ -z "${console_command}" ]]; then
+      docker_command=(bash)
+    else
+      docker_exec_args+=(-T)
+
+      case "${console_command}" in
+        bash|ansible-playbook\ *|ansible-lint\ *|tests/lint_jenkinsfile.sh\ *)
+          ;;
+        *)
+          echo "Unsupported ws console command '${console_command}'." >&2
+          echo "Allowed commands: bash, ansible-playbook, ansible-lint, tests/lint_jenkinsfile.sh." >&2
+          exit 1
+          ;;
+      esac
+
+      docker_command=(bash -lc "${console_command}")
+    fi
+
+    ws enable console
+    passthru docker compose "${docker_exec_args[@]}" \
+      -e DO_OAUTH_TOKEN \
+      -e DIGITAL_OCEAN_API_TOKEN \
+      -e DO_SSH_KEYS \
+      -e JUMPCLOUD_API_KEY \
+      -e JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS \
+      -e JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS \
+      -e JUMPCLOUD_TEST_SYSTEM_GROUPS \
+      -e JUMPCLOUD_X_CONNECT_KEY \
+      -e JENKINS_LINT_URL \
+      -e HOME=/home/ansible \
+      -u ansible \
+      console \
+      "${docker_command[@]}"
+
+command('ansible-playbook <playbook> <inventory>', 'ansible-playbook'):
+  description: "Usage: ws ansible-playbook <playbook> <inventory>. Run an Ansible playbook."
+  env:
+    INVENTORY: = input.argument('inventory')
+    PLAYBOOK: = input.argument('playbook')
+    PLAYBOOK_LIMIT: "= env('WS_PLAYBOOK_LIMIT') ?: ''"
+    PLAYBOOK_SYNTAX_CHECK: "= env('WS_PLAYBOOK_SYNTAX_CHECK') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    extra_args=()
+    if [[ "${PLAYBOOK_SYNTAX_CHECK}" = "1" ]]; then
+      extra_args+=(--syntax-check)
+    fi
+    if [[ -n "${PLAYBOOK_LIMIT}" ]]; then
+      extra_args+=(--limit "${PLAYBOOK_LIMIT}")
+    fi
+
+    ws console ansible-playbook "${PLAYBOOK}" -i "${INVENTORY}" "${extra_args[@]}"
+
+command('syntax', 'syntax'):
+  description: Run Ansible syntax checks for Docker and DigitalOcean inventories.
+  exec: |
+    #!bash(workspace:/)|@
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory-docker
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory-digitalocean-droplets
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook_cleanup.yml tests/inventory-digitalocean-droplets
+
+command('ansible-lint', 'ansible-lint'):
+  description: Run ansible-lint for the role inside the console container.
+  exec: |
+    #!bash(workspace:/)|@
+    ws console ansible-lint .
+
+command('lint-jenkinsfile', 'lint-jenkinsfile'):
+  description: Validate the Jenkinsfile with the Dockerized Jenkins linter.
+  exec: |
+    #!bash(workspace:/)|@
+    ws enable jenkins-lint
+    JENKINS_LINT_URL=http://jenkins-lint:8080 ws console tests/lint_jenkinsfile.sh Jenkinsfile
+
+command('test-docker', 'test-docker'):
+  description: Run the container-backed role test and cleanup through Workspace.
+  exec: |
+    #!bash(workspace:/)|@
+    run_rc=0
+    cleanup_rc=0
+
+    ws ansible-playbook tests/playbook.yml tests/inventory-docker || run_rc=$?
+    ws ansible-playbook tests/playbook_cleanup.yml tests/inventory-docker || cleanup_rc=$?
+
+    if [[ "${run_rc}" -ne 0 ]]; then
+      exit "${run_rc}"
+    fi
+
+    exit "${cleanup_rc}"
+
+command('test-live %', 'test-live'):
+  description: "Usage: ws test-live [limit]. Run DigitalOcean JumpCloud live tests and cleanup."
+  env:
+    LIMIT: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)|@
+    run_rc=0
+    cleanup_rc=0
+
+    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+      tests/playbook.yml \
+      tests/inventory-digitalocean-droplets || run_rc=$?
+
+    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+      tests/playbook_cleanup.yml \
+      tests/inventory-digitalocean-droplets || cleanup_rc=$?
+
+    if [[ "${run_rc}" -ne 0 ]]; then
+      exit "${run_rc}"
+    fi
+
+    exit "${cleanup_rc}"
+
+command('test-live-rocky', 'test-live-rocky'):
+  description: Run one Rocky Linux 9 DigitalOcean JumpCloud live test.
+  exec: |
+    #!bash(workspace:/)|@
+    ws test-live jumpcloud-rocky9
+
+command('cleanup-live %', 'cleanup-live'):
+  description: "Usage: ws cleanup-live [limit]. Remove live JumpCloud and DigitalOcean test resources."
+  env:
+    LIMIT: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)|@
+    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+      tests/playbook_cleanup.yml \
+      tests/inventory-digitalocean-droplets

@@ -1,5 +1,5 @@
 [local]
-localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
+localhost ansible_connection=local
 
 [jumpcloud_debian]
 jumpcloud-debian13 ansible_host=jumpcloud-debian13 ansible_connection=docker jumpcloud_container_image=geerlingguy/docker-debian13-ansible:latest jumpcloud_test_validate_unsupported_release_install_identity=true

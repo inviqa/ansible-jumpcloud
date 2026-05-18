@@ -1,0 +1,11 @@
+---
+# Copy this file to workspace.override.yml and fill local live-test values.
+# The override file is gitignored.
+
+attribute('test.digitalocean.api_token'): ''
+attribute('test.digitalocean.ssh_keys'): ''
+attribute('test.jumpcloud.api_key'): ''
+attribute('test.jumpcloud.x_connect_key'): ''
+attribute('test.jumpcloud.system_groups'): ''
+attribute('test.jumpcloud.create_missing_system_groups'): false
+attribute('test.jumpcloud.delete_duplicate_systems'): true

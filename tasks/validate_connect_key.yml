@@ -1,0 +1,9 @@
+---
+- name: Validate JumpCloud connect key for installation
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_x_connect_key | length > 0
+    fail_msg: >-
+      Set jumpcloud_x_connect_key, enc_jumpcloud_x_connect_key, or the test
+      harness variable before installing the JumpCloud agent.
+  no_log: true

@@ -16,26 +16,36 @@
   supported distribution families by temporarily presenting the latest supported
   `/etc/os-release` identity during the JumpCloud kickstart run, then restoring
   the original file before registration checks.
+- Advertised Debian 13 as a validated target, with container validation for the
+  temporary install identity path and a DigitalOcean live target for
+  end-to-end unsupported-release validation.
 - Reworked the role task layout so `tasks/main.yml` is an orchestration entry
   point, registered-system reconciliation is separated from installation, and
   group synchronization plus verification live in focused task files.
 - Replaced the legacy Docker, Vagrant, and Travis-era test workflow with a
-  scoped `community.docker` validation path and a `digitalocean.cloud`
-  integration path that provisions real droplets, applies the role, verifies
-  JumpCloud state, and cleans up test resources.
-- Added Debian 13 container validation for the temporary install identity path
-  and a Debian 13 DigitalOcean live target for unsupported-release validation.
-- Advertised Debian 13 as a validated role target in Galaxy metadata and
-  documented the required unsupported-release install opt-in for that system.
-- Documented the isolated unsupported-release identity test as a maintainer
-  check, distinct from the Debian 13 DigitalOcean end-to-end role test.
-- Added a Jenkins pipeline, matching the DigitalOcean reserved IP role style,
-  for dependency installation, syntax checks, live DigitalOcean JumpCloud tests,
-  cleanup, and failure-only Slack notifications.
-- Added a repeatable Jenkinsfile lint helper that reports its stages, clearly
-  shows Docker container startup and deletion, validates the pipeline with a
-  temporary Dockerized Jenkins controller, and uses the official Declarative
-  Pipeline linter.
+  Workspace-managed test harness with container-safe `community.docker`
+  validation and a `digitalocean.cloud` integration path that provisions real
+  droplets, applies the role, verifies JumpCloud state, and cleans up resources.
+- Added a Jenkins pipeline and local Jenkinsfile lint command that run through
+  Workspace, use a companion Jenkins controller with the required pipeline
+  plugins, and validate with the Jenkins Declarative Pipeline linter.
+- Standardized local validation on Workspace commands using the published
+  multi-arch `quay.io/inviqa_images/ansible:2.20-python3.13-trixie` image,
+  forwarded SSH agent and Docker socket access, and gitignored
+  `workspace.override.yml` attributes for live-test credentials.
+- Centralized Workspace command execution through `ws enable`, `ws console`,
+  and `ws ansible-playbook <playbook> <inventory>` so Compose setup,
+  environment forwarding, and playbook execution are not duplicated across
+  wrappers.
+- Kept Workspace playbook execution under the `ansible` container user and used
+  Compose `group_add` with the host Docker socket GID for Docker access instead
+  of mutating users or groups during container startup.
+- Moved the controller Python interpreter selection into `local` group vars so
+  localhost tasks use the Ansible runtime Python without play-level overrides.
+- Reorganized test playbooks and duplicate-system cleanup into focused task
+  files so playbooks and role entrypoints act as orchestration layers.
+- Split DigitalOcean live-test provisioning into reusable SSH key resolution,
+  SSH agent validation, droplet provisioning, and SSH access task files.
 - Renamed test inventories and normalized DigitalOcean droplet names so Docker
   and DigitalOcean targets are explicit and the `ansible-jumpcloud` prefix is
   applied only once.
@@ -43,6 +53,10 @@
   avoidable command-module dependency check from container validation, and
   renamed public variables to snake case while preserving legacy camelCase
   compatibility.
+- Moved test harness documentation into `docs/testing.md`, documented the
+  Workspace CLI install path and Compose environment model, and updated
+  repository agent instructions so Ansible and Jenkinsfile linting run through
+  Workspace.
 
 ### Fixed
 
@@ -60,20 +74,15 @@
   job-named workspace instead of requiring an `ansible-jumpcloud` parent
   directory.
 - Serialized and retried duplicate-system JumpCloud API cleanup calls to avoid
-  transient live-test failures while keeping API responses hidden from logs.
-- Added sanitized JumpCloud API status reporting for duplicate-system lookup
-  failures without exposing returned device data.
-- Grouped duplicate-system cleanup tasks that share the same conditions for
-  clearer live-test maintenance.
-- Kept DigitalOcean live-test pre-install duplicate cleanup enabled by default
-  and expanded its sanitized failure details for diagnosis.
-- Replaced terse duplicate lookup failures with a sanitized module-result dump
-  that omits API keys and returned device data.
-- Disabled privilege escalation for JumpCloud API tasks delegated to localhost
-  so live tests do not require `sudo` inside the Jenkins Ansible container.
-- Removed broad play-level privilege escalation from the live test playbook.
-- Removed the role-specific `jumpcloud_use_sudo` privilege switch; callers now
-  run the role as a privileged user or set Ansible `become: true`.
+  transient live-test failures while keeping API responses, request headers,
+  returned device data, and secrets hidden from logs.
+- Added sanitized duplicate-system lookup diagnostics, including status and
+  redacted module output, so Jenkins exposes actionable failures without
+  leaking JumpCloud data.
+- Removed role-internal privilege escalation, disabled `become` for localhost
+  JumpCloud API tasks, and removed the role-specific `jumpcloud_use_sudo`
+  switch; callers now run the role as a privileged user or set Ansible
+  `become: true`.
 - Temporarily disabled Jenkins failure Slack notifications while live-test
   remediation is still in progress.
 - Cleaned up YAML and Ansible task structure for linting, readability, and

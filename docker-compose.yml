@@ -1,0 +1,39 @@
+---
+name: ansible-jumpcloud
+services:
+  console:
+    user: root
+    build:
+      context: .
+      dockerfile: Dockerfile
+      pull: true
+    command:
+      - /bin/sh
+      - -c
+      - |
+        chown -R ansible:ansible /run/host-services/ssh-auth.sock || true
+        sleep infinity
+    # Allow the ansible user to access the mounted Docker socket without
+    # mutating users or groups inside the container at startup.
+    group_add:
+      - "0"
+      - "${HOST_DOCKER_GID:-1}"
+    working_dir: /app
+    environment:
+      ANSIBLE_COLLECTIONS_PATH: /home/ansible/.ansible/collections:/usr/share/ansible/collections
+      ANSIBLE_FORCE_COLOR: "false"
+      ANSIBLE_ROLES_PATH: /app/tests/roles:/app/.ansible/roles:/home/ansible/.ansible/roles
+      SSH_AUTH_SOCK: /run/host-services/ssh-auth.sock
+    volumes:
+      - ${HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock
+      - ${HOST_DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock
+      - ~/.ssh/config:/home/ansible/.ssh/config:ro
+      - .:/app
+  jenkins-lint:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins-lint
+    environment:
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false
+    expose:
+      - "8080"

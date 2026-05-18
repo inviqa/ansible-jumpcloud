@@ -20,7 +20,7 @@ The pipeline runs inside a Jenkins-native Docker agent and executes:
 The live test stage provisions real DigitalOcean droplets and registers real
 systems in JumpCloud, so it incurs provider cost while it runs.
 
-Markdown, YAML, and full `ansible-lint` checks are intentionally kept as local
+Markdown, YAML, and full `ws ansible-lint` checks are intentionally kept as
 pre-handoff checks rather than Jenkins pipeline stages.
 
 ## Jenkins Docker agent
@@ -83,33 +83,17 @@ Slack.
 Validate the Jenkinsfile locally before pushing pipeline changes:
 
 ```text
-tests/lint_jenkinsfile.sh
+ws lint-jenkinsfile
 ```
 
-The helper starts a temporary Dockerized Jenkins controller, installs the
-Pipeline, Docker, credential, SSH agent, Slack, Timestamper, and workspace
-cleanup plugins needed by this pipeline, runs the official Declarative Pipeline
-linter endpoint, and removes the temporary controller.
+The Workspace command starts the `console` and `jenkins-lint` Compose services,
+then runs the helper inside the console container.
 
 ## Local equivalent
 
-The Jenkinsfile mirrors this local sequence:
+The Jenkinsfile mirrors the Workspace test sequence:
 
 ```text
-docker run --rm -v "$PWD:/workspace" -w /workspace \
-  -e ANSIBLE_COLLECTIONS_PATH=/workspace/.ansible/collections:/home/ansible/.ansible/collections:/usr/share/ansible/collections \
-  -e ANSIBLE_ROLES_PATH=/workspace/tests/roles:/workspace/.ansible/roles:/home/ansible/.ansible/roles \
-  -e DIGITAL_OCEAN_API_TOKEN \
-  -e JUMPCLOUD_X_CONNECT_KEY \
-  -e JUMPCLOUD_API_KEY \
-  quay.io/inviqa_images/ansible:2.15-python3.10-trixie \
-  sh -c '
-    python3 -m pip install --user -r tests/requirements.txt &&
-    ansible-galaxy collection install -r tests/requirements.yml -p .ansible/collections &&
-    ansible-playbook --syntax-check -i tests/inventory-docker tests/playbook.yml &&
-    ansible-playbook --syntax-check -i tests/inventory-digitalocean-droplets tests/playbook.yml &&
-    ansible-playbook --syntax-check -i tests/inventory-digitalocean-droplets tests/playbook_cleanup.yml &&
-    ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook.yml &&
-    ansible-playbook -i tests/inventory-digitalocean-droplets tests/playbook_cleanup.yml
-  '
+ws syntax
+ws test-live
 ```

@@ -9,64 +9,17 @@
 
 - name: Resolve DigitalOcean test credentials
   hosts: jumpcloud_test_hosts
-  connection: local
   gather_facts: false
-  vars:
-    ansible_python_interpreter: "{{ ansible_playbook_python }}"
   pre_tasks:
-    - name: Check whether local test overrides exist
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/test_variables.yml"
-      register: local_test_variables_file
-      delegate_to: localhost
-
     - name: Load local test overrides
-      ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/test_variables.yml"
-      when: local_test_variables_file.stat.exists
-      no_log: true
+      ansible.builtin.include_tasks: tasks/load_local_test_overrides.yml
 
     - name: Resolve DigitalOcean test variables
-      ansible.builtin.set_fact:
-        jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
-        jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
-      no_log: true
+      ansible.builtin.include_tasks: tasks/resolve_digitalocean_test_context.yml
   tasks:
     - name: Provision DigitalOcean droplets when requested
+      ansible.builtin.include_tasks: tasks/provision_digitalocean_droplet.yml
       when: jumpcloud_test_provision_droplets | default(false) | bool
-      block:
-        - name: Check whether DigitalOcean credentials are available
-          ansible.builtin.assert:
-            that:
-              - jumpcloud_test_do_api_token | length > 0
-            fail_msg: >-
-              Set do_test_api_token in tests/test_variables.yml or export
-              DIGITAL_OCEAN_API_TOKEN / DO_OAUTH_TOKEN before running the
-              DigitalOcean test harness.
-          no_log: true
-
-        - name: Validate the DigitalOcean API token for tests
-          digitalocean.cloud.account_info:
-            token: "{{ jumpcloud_test_do_api_token }}"
-            timeout: 60
-          delegate_to: localhost
-          register: jumpcloud_test_do_auth_check
-          no_log: true
-          failed_when: false
-
-        - name: Check whether the DigitalOcean API token can authenticate tests
-          ansible.builtin.assert:
-            that:
-              - jumpcloud_test_do_auth_check.msg == 'Current account information'
-            fail_msg: >-
-              The configured DigitalOcean token could not authenticate. Update
-              tests/test_variables.yml or export a valid DIGITAL_OCEAN_API_TOKEN /
-              DO_OAUTH_TOKEN before running the DigitalOcean test harness.
-          no_log: true
-
-        - name: Provision DigitalOcean test droplet
-          ansible.builtin.include_role:
-            name: digital-ocean
 
 - name: Install Python on DigitalOcean test droplets
   hosts: jumpcloud_test_hosts
@@ -80,91 +33,16 @@
   hosts: jumpcloud_test_hosts
   vars_files:
     - ../defaults/main.yml
-  vars:
-    jumpcloud_test_x_connect_key_from_env: "{{ lookup('env', 'JUMPCLOUD_X_CONNECT_KEY') }}"
-    jumpcloud_test_api_key_from_env: "{{ lookup('env', 'JUMPCLOUD_API_KEY') }}"
   pre_tasks:
-    - name: Check whether local test overrides exist
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/test_variables.yml"
-      register: local_test_variables_file
-      delegate_to: localhost
-      become: false
-
     - name: Load local test overrides
-      ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/test_variables.yml"
-      when: local_test_variables_file.stat.exists
-      no_log: true
+      ansible.builtin.include_tasks: tasks/load_local_test_overrides.yml
 
-    - name: Resolve live test credentials
-      ansible.builtin.set_fact:
-        jumpcloud_x_connect_key: >-
-          {{
-            jumpcloud_test_x_connect_key_from_env
-            | default(jumpcloud_test_x_connect_key | default(''), true)
-          }}
-        jumpcloud_api_key: >-
-          {{
-            jumpcloud_test_api_key_from_env
-            | default(jumpcloud_test_api_key | default(''), true)
-          }}
-      no_log: true
-
-    - name: Set live test role variables
-      ansible.builtin.set_fact:
-        jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
-        jumpcloud_display_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
-        jumpcloud_system_groups: "{{ jumpcloud_test_system_groups | default([]) }}"
-        jumpcloud_create_missing_system_groups: >-
-          {{ jumpcloud_test_create_missing_system_groups | default(false) }}
-        jumpcloud_delete_duplicate_systems: >-
-          {{ jumpcloud_test_delete_duplicate_systems | default(true) }}
-        jumpcloud_install_on_unsupported_distribution: >-
-          {{ jumpcloud_test_install_on_unsupported_distribution | default(false) }}
+    - name: Resolve live test context
+      ansible.builtin.include_tasks: tasks/resolve_live_test_context.yml
 
     - name: Validate JumpCloud live-test credentials when requested
+      ansible.builtin.include_tasks: tasks/validate_jumpcloud_live_credentials.yml
       when: jumpcloud_test_run_agent_install | default(false) | bool
-      block:
-        - name: Check whether JumpCloud live test credentials are available
-          ansible.builtin.assert:
-            that:
-              - jumpcloud_x_connect_key | length > 0
-              - jumpcloud_api_key | length > 0
-            fail_msg: >-
-              Set JUMPCLOUD_X_CONNECT_KEY and JUMPCLOUD_API_KEY, or copy
-              tests/test_variables.example.yml to tests/test_variables.yml and fill
-              the local values before running the live test harness.
-          no_log: true
-
-        - name: Validate the JumpCloud API key for live tests
-          ansible.builtin.uri:
-            url: "{{ jumpcloud_api_v1_url }}/systems"
-            headers:
-              Content-Type: application/json
-              Accept: application/json
-              x-api-key: "{{ jumpcloud_api_key }}"
-            method: GET
-            status_code:
-              - 200
-              - 401
-            return_content: true
-            timeout: 60
-          delegate_to: localhost
-          become: false
-          register: jumpcloud_test_account_auth_check
-          no_log: true
-          failed_when: false
-
-        - name: Check whether the JumpCloud API key can authenticate tests
-          ansible.builtin.assert:
-            that:
-              - jumpcloud_test_account_auth_check.status == 200
-            fail_msg: >-
-              The configured JumpCloud API key could not authenticate. Update
-              tests/test_variables.yml or export a valid JUMPCLOUD_API_KEY before
-              running the live test harness.
-          no_log: true
   tasks:
     - name: Run live JumpCloud role
       ansible.builtin.include_role:

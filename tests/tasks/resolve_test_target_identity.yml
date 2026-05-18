@@ -1,0 +1,7 @@
+---
+- name: Resolve test target identity
+  ansible.builtin.set_fact:
+    jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
+    jumpcloud_test_display_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
+    jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
+  no_log: true

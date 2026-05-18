@@ -1,0 +1,13 @@
+---
+- name: Check whether local test overrides exist
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/test_variables.yml"
+  register: local_test_variables_file
+  delegate_to: localhost
+  become: false
+
+- name: Load local test overrides
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/test_variables.yml"
+  when: local_test_variables_file.stat.exists
+  no_log: true

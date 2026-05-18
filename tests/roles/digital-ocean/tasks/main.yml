@@ -1,109 +1,13 @@
 ---
-- name: Ensure test SSH keys are configured
-  ansible.builtin.assert:
-    that:
-      - digital_ocean_ssh_keys | length > 0
-    fail_msg: >-
-      Set do_ssh_keys in tests/test_variables.yml to one or more DigitalOcean
-      SSH key IDs or fingerprints before running the DigitalOcean test harness.
-  delegate_to: localhost
+- name: Resolve DigitalOcean SSH key
+  ansible.builtin.import_tasks: resolve_ssh_key.yml
 
-- name: Gather DigitalOcean SSH keys
-  digitalocean.cloud.ssh_keys_info:
-    token: "{{ digital_ocean_api_token }}"
-  delegate_to: localhost
-  register: jumpcloud_test_do_ssh_keys
-  no_log: true
-
-- name: Resolve DigitalOcean SSH key selector
-  ansible.builtin.set_fact:
-    jumpcloud_test_do_ssh_key: "{{ item }}"
-  loop: "{{ jumpcloud_test_do_ssh_keys.ssh_keys }}"
-  delegate_to: localhost
-  no_log: true
-  when: >-
-    item.id | string == (digital_ocean_ssh_keys | first | string)
-    or item.fingerprint == (digital_ocean_ssh_keys | first | string)
-    or item.name == (digital_ocean_ssh_keys | first | string)
-
-- name: Validate DigitalOcean SSH key selector
-  ansible.builtin.assert:
-    that:
-      - jumpcloud_test_do_ssh_key is defined
-      - jumpcloud_test_do_ssh_key.fingerprint is defined
-      - jumpcloud_test_do_ssh_key.public_key is defined
-    fail_msg: >-
-      The first do_ssh_keys entry was not found in DigitalOcean as an ID,
-      fingerprint, or name.
-  delegate_to: localhost
-
-- name: Create or reuse the JumpCloud test droplet
-  digitalocean.cloud.droplet:
-    state: present
-    name: "{{ digital_ocean_name }}"
-    token: "{{ digital_ocean_api_token }}"
-    size: "{{ digital_ocean_size_id }}"
-    image: "{{ digital_ocean_image_id }}"
-    region: "{{ digital_ocean_region_id }}"
-    ssh_keys:
-      - "{{ jumpcloud_test_do_ssh_key.fingerprint }}"
-    tags:
-      - "{{ jumpcloud_test_do_tag }}"
-    unique_name: "{{ digital_ocean_unique_name | bool }}"
-    timeout: 600
-  delegate_to: localhost
-  register: jumpcloud_test_do_create
-  no_log: true
-
-- name: Store DigitalOcean droplet metadata
-  ansible.builtin.set_fact:
-    jumpcloud_test_droplet_id: "{{ jumpcloud_test_do_create.droplet.id }}"
-    jumpcloud_test_droplet_public_ip: >-
-      {{
-        (
-          jumpcloud_test_do_create.droplet.networks.v4
-          | selectattr('type', 'equalto', 'public')
-          | list
-          | first
-        ).ip_address
-      }}
-
-- name: Set the public IP used for SSH
-  ansible.builtin.set_fact:
-    ansible_host: "{{ jumpcloud_test_droplet_public_ip }}"
-
-- name: Set SSH private key file when provided
-  ansible.builtin.set_fact:
-    ansible_ssh_private_key_file: "{{ do_ssh_private_key_file }}"
-  when: do_ssh_private_key_file is defined
-
-- name: Create local SSH public key selector directory
-  ansible.builtin.file:
-    path: "{{ playbook_dir }}/../.ansible/test-ssh-keys"
-    state: directory
-    mode: "0700"
-  delegate_to: localhost
+- name: Validate selected SSH key is available locally
+  ansible.builtin.import_tasks: validate_ssh_agent_key.yml
   when: do_ssh_private_key_file is not defined
 
-- name: Write local SSH public key selector
-  ansible.builtin.copy:
-    content: "{{ jumpcloud_test_do_ssh_key.public_key }}"
-    dest: "{{ playbook_dir }}/../.ansible/test-ssh-keys/{{ inventory_hostname }}.pub"
-    mode: "0600"
-  delegate_to: localhost
-  no_log: true
-  when: do_ssh_private_key_file is not defined
+- name: Provision DigitalOcean droplet
+  ansible.builtin.import_tasks: provision_droplet.yml
 
-- name: Use the DigitalOcean public key selector for SSH agent authentication
-  ansible.builtin.set_fact:
-    ansible_ssh_private_key_file: "{{ playbook_dir }}/../.ansible/test-ssh-keys/{{ inventory_hostname }}.pub"
-  when: do_ssh_private_key_file is not defined
-
-- name: Wait for SSH to come up
-  ansible.builtin.wait_for:
-    host: "{{ ansible_host }}"
-    port: 22
-    delay: 15
-    timeout: 420
-    state: started
-  delegate_to: localhost
+- name: Configure SSH access to DigitalOcean droplet
+  ansible.builtin.import_tasks: configure_ssh_access.yml

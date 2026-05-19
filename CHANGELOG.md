@@ -113,6 +113,8 @@
   environment flags and the `main` branch.
 - Verified Jenkins Galaxy publication against the resolved release version by
   checking the pushed Git tag and running a pinned Galaxy install after import.
+- Added a non-mutating Jenkins release preflight that accepts pending GitHub
+  releases and checks Ansible Galaxy token/status access.
 - Restored failure-only Jenkins Slack notifications after live-test remediation.
 - Moved Jenkins credential IDs, Slack notification controls, and runtime values
   into the top-level pipeline environment block.

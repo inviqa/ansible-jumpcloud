@@ -84,6 +84,31 @@ pipeline {
             }
         }
 
+        stage('Release preflight') {
+            steps {
+                withCredentials([
+                    string(credentialsId: env.GITHUB_RELEASE_CREDENTIAL_ID, variable: 'GITHUB_TOKEN'),
+                    string(credentialsId: env.ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID, variable: 'ANSIBLE_GALAXY_TOKEN')
+                ]) {
+                    sh '''
+                        set +e
+                        RELEASE_VERSION="${RELEASE_VERSION}" ws github release check
+                        github_release_status="$?"
+                        set -e
+
+                        [ "${github_release_status}" = 0 ] || [ "${github_release_status}" = 2 ] || exit "${github_release_status}"
+
+                        RELEASE_VERSION="${RELEASE_VERSION}" ws ansible-galaxy status
+                    '''
+                }
+            }
+            post {
+                failure {
+                    script { failureMessages << 'Release preflight checks failed' }
+                }
+            }
+        }
+
         stage('Live DigitalOcean JumpCloud tests') {
             when {
                 expression { return params.RUN_LIVE_TESTS }

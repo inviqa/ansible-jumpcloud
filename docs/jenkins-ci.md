@@ -13,6 +13,8 @@ The pipeline runs inside a Jenkins-native Docker agent and executes:
 - the tracked `tests/roles/ansible-jumpcloud` symlink so Ansible can resolve the
   checked-out role by name in Jenkins job workspaces
 - syntax checks for the Docker inventory and DigitalOcean live-test inventory
+- non-mutating release preflight checks for GitHub release readiness and
+  Ansible Galaxy token/status access
 - the live DigitalOcean JumpCloud test matrix with `tests/playbook.yml`
 - cleanup with `tests/playbook_cleanup.yml`, even when the live test stage fails
 - optional GitHub release creation from `main`
@@ -31,7 +33,8 @@ flowchart LR
   accDescr: Shows the Jenkins stages and cleanup handoff for live tests.
   checkout["Pipeline checkout"] --> deps["Install Ansible dependencies"]
   deps --> syntax["Run syntax checks"]
-  syntax --> gate{"RUN_LIVE_TESTS?"}
+  syntax --> preflight["Run release preflight"]
+  preflight --> gate{"RUN_LIVE_TESTS?"}
   gate -->|No| finish["Finish build"]
   gate -->|Yes| creds["Load Jenkins credentials"]
   creds --> live["Run live playbook with SSH agent"]
@@ -131,6 +134,22 @@ the token from `https://galaxy.ansible.com/ui/token/`, and store it as the
 `ansible-jumpcloud-galaxy-token` Secret text credential. Reloading a Galaxy
 token invalidates the previous one, so Jenkins must be updated whenever the
 token is regenerated.
+
+## Release preflight
+
+Every Jenkins build runs a non-mutating release preflight before live tests:
+
+```text
+ws github release check
+ws ansible-galaxy status
+```
+
+The GitHub check accepts exit code `0` when the release already exists and exit
+code `2` when the changelog has a concrete release that is not published yet.
+The latter is expected for a pull request that prepares a release.
+
+The Galaxy status check validates the Galaxy token, command wiring, and Galaxy
+API reachability without importing a new role release.
 
 ## Release publication
 

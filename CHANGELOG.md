@@ -96,6 +96,8 @@
   multi-arch Ansible image with SSH agent and Docker socket forwarding.
 - Centralized Workspace command execution through `ws enable`, `ws console`,
   and `ws ansible-playbook <playbook> <inventory>`.
+- Fixed Docker socket group detection on GNU/Linux Jenkins agents by accepting
+  only numeric `stat` results before passing `HOST_DOCKER_GID` to Compose.
 - Kept Workspace playbook execution under the `ansible` container user and
   configured Docker socket access through Compose.
 - Moved controller Python interpreter selection into `local` group vars.

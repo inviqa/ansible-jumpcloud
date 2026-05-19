@@ -25,9 +25,12 @@ command('enable %', 'enable'):
     #!bash(workspace:/)|@
     # Compose uses this GID as a supplemental group for Docker socket access.
     if [[ -z "${HOST_DOCKER_GID:-}" ]]; then
-      HOST_DOCKER_GID="$(stat -f '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || stat -c '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || true)"
+      HOST_DOCKER_GID="$(stat -c '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || true)"
+      if [[ ! "${HOST_DOCKER_GID}" =~ ^[0-9]+$ ]]; then
+        HOST_DOCKER_GID="$(stat -f '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || true)"
+      fi
     fi
-    if [[ -z "${HOST_DOCKER_GID}" ]]; then
+    if [[ ! "${HOST_DOCKER_GID}" =~ ^[0-9]+$ ]]; then
       echo "Unable to resolve Docker socket group ID for '${HOST_DOCKER_SOCK}'." >&2
       exit 1
     fi

@@ -19,12 +19,16 @@ pipeline {
     environment {
         ANSIBLE_COLLECTIONS_PATH = ".ansible/collections:/home/ansible/.ansible/collections:/usr/share/ansible/collections"
         ANSIBLE_FORCE_COLOR = 'true'
+        ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-galaxy-token'
         ANSIBLE_ROLES_PATH = "tests/roles:.ansible/roles:/home/ansible/.ansible/roles"
         DO_SSH_KEYS_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-ssh-key-ids'
         DO_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-oauth-token'
+        GITHUB_RELEASE_CREDENTIAL_ID = 'inviqa-ansible-roles-releases'
         JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
         JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
         PIP_BREAK_SYSTEM_PACKAGES = '1'
+        PUBLISH_ANSIBLE_GALAXY_RELEASE = 'false'
+        PUBLISH_GITHUB_RELEASE = 'false'
         SLACK_NOTIFICATION_CHANNEL = 'ops-integrations'
         SLACK_NOTIFICATIONS_ENABLED = 'true'
         SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
@@ -41,6 +45,11 @@ pipeline {
             name: 'RUN_LIVE_TESTS',
             defaultValue: true,
             description: 'Run the DigitalOcean-backed JumpCloud live integration test matrix.'
+        )
+        string(
+            name: 'RELEASE_VERSION',
+            defaultValue: '',
+            description: 'Optional release version to publish. Leave blank to use the latest concrete CHANGELOG.md release section.'
         )
         choice(
             name: 'TEST_INVENTORY',
@@ -121,6 +130,50 @@ pipeline {
             post {
                 failure {
                     script { failureMessages << 'Live DigitalOcean JumpCloud integration tests failed' }
+                }
+            }
+        }
+
+        stage('Publish GitHub release') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { return env.PUBLISH_GITHUB_RELEASE.toBoolean() }
+                }
+            }
+            steps {
+                withCredentials([string(
+                    credentialsId: env.GITHUB_RELEASE_CREDENTIAL_ID,
+                    variable: 'GITHUB_TOKEN'
+                )]) {
+                    sh 'RELEASE_VERSION="${RELEASE_VERSION}" ws github release publish'
+                }
+            }
+            post {
+                failure {
+                    script { failureMessages << 'GitHub release publication failed' }
+                }
+            }
+        }
+
+        stage('Publish Ansible Galaxy release') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { return env.PUBLISH_ANSIBLE_GALAXY_RELEASE.toBoolean() }
+                }
+            }
+            steps {
+                withCredentials([string(
+                    credentialsId: env.ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID,
+                    variable: 'ANSIBLE_GALAXY_TOKEN'
+                )]) {
+                    sh 'RELEASE_VERSION="${RELEASE_VERSION}" ws ansible-galaxy publish'
+                }
+            }
+            post {
+                failure {
+                    script { failureMessages << 'Ansible Galaxy release publication failed' }
                 }
             }
         }

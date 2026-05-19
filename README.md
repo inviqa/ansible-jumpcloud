@@ -212,11 +212,18 @@ After the GitHub release and tag exist on `main`, import the role into Galaxy
 with:
 
 ```bash
+ws github release check
 ws ansible-galaxy publish
 ```
 
-The command uses `ansible.galaxy.token` from `workspace.override.yml` or
+The commands use `github.api_token` and `ansible.galaxy.token` from
+`workspace.override.yml`, or `GITHUB_TOKEN`/`GH_TOKEN` and
 `ANSIBLE_GALAXY_TOKEN` from the shell environment.
+
+Jenkins can also create the GitHub release and import the role into Galaxy from
+the `main` branch with separate environment flags for each publication stage.
+See [docs/jenkins-ci.md](docs/jenkins-ci.md) for the required Jenkins
+credentials.
 
 ## Development Notes
 

@@ -13,6 +13,7 @@ attribute('test.jumpcloud.system_groups'): ''
 attribute('test.jumpcloud.create_missing_system_groups'): false
 attribute('test.jumpcloud.delete_duplicate_systems'): true
 attribute('ansible.galaxy.token'): ''
+attribute('github.api_token'): ''
 
 command('enable %', 'enable'):
   description: "Usage: ws enable [service]. Start all services or one service."
@@ -164,6 +165,137 @@ command('ansible-lint', 'ansible-lint'):
     #!bash(workspace:/)|@
     ws console ansible-lint .
 
+command('github release version', 'github release version'):
+  description: Print the latest concrete changelog release version.
+  env:
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    requested_version="${RELEASE_VERSION}"
+    version="$(
+      awk -v requested_version="${requested_version}" '/^## \[/ && $0 !~ /Unreleased/ {
+        sub(/^## \[/, "")
+        sub(/\].*/, "")
+        if (requested_version == "" || $0 == requested_version) {
+          print
+          exit
+        }
+      }' CHANGELOG.md
+    )"
+    if [[ -z "${version}" ]]; then
+      if [[ -n "${requested_version}" ]]; then
+        echo "CHANGELOG.md has no concrete ${requested_version} release section." >&2
+      else
+        echo "CHANGELOG.md has no concrete release section." >&2
+      fi
+      exit 1
+    fi
+    printf '%s\n' "${version}"
+
+command('github release check', 'github release check'):
+  description: Check the latest changelog release against GitHub releases.
+  env:
+    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    version="$(ws github release version)"
+
+    auth_args=()
+    if [[ -n "${GITHUB_TOKEN}" ]]; then
+      auth_args=(--header "Authorization: Bearer ${GITHUB_TOKEN}")
+    fi
+
+    status="$(
+      curl \
+        --silent \
+        --show-error \
+        --output /dev/null \
+        --write-out '%{http_code}' \
+        "${auth_args[@]}" \
+        --header 'Accept: application/vnd.github+json' \
+        --header 'X-GitHub-Api-Version: 2022-11-28' \
+        "https://api.github.com/repos/inviqa/ansible-jumpcloud/releases/tags/${version}"
+    )"
+
+    case "${status}" in
+      200)
+        echo "GitHub release ${version} already exists."
+        ;;
+      404)
+        echo "CHANGELOG.md release ${version} exists locally but is not published on GitHub." >&2
+        exit 2
+        ;;
+      *)
+        echo "Unable to check GitHub release ${version}; GitHub returned HTTP ${status}." >&2
+        exit 1
+        ;;
+    esac
+
+command('github release publish', 'github release publish'):
+  description: Publish the latest concrete changelog release to GitHub.
+  env:
+    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    if [[ -z "${GITHUB_TOKEN}" ]]; then
+      echo "Set github.api_token in workspace.override.yml, GITHUB_TOKEN, or GH_TOKEN before publishing." >&2
+      exit 1
+    fi
+
+    set +e
+    ws github release check
+    check_rc=$?
+    set -e
+    if [[ "${check_rc}" -eq 0 ]]; then
+      exit 0
+    fi
+    if [[ "${check_rc}" -ne 2 ]]; then
+      exit "${check_rc}"
+    fi
+
+    version="$(ws github release version)"
+    notes="$(
+      awk -v version="${version}" '
+        $0 ~ "^## \\[" version "\\]" { found = 1; next }
+        found && /^## \[/ { exit }
+        found { print }
+      ' CHANGELOG.md
+    )"
+    payload="$(mktemp)"
+    trap 'rm -f "${payload}"' EXIT
+    jq -n \
+      --arg tag "${version}" \
+      --arg body "${notes}" \
+      '{
+        tag_name: $tag,
+        target_commitish: "main",
+        name: $tag,
+        body: $body,
+        draft: false,
+        prerelease: false,
+        make_latest: "true"
+      }' > "${payload}"
+
+    status="$(
+      curl \
+        --silent \
+        --show-error \
+        --output /dev/null \
+        --write-out '%{http_code}' \
+        --request POST \
+        --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+        --header 'Accept: application/vnd.github+json' \
+        --header 'X-GitHub-Api-Version: 2022-11-28' \
+        --data-binary @"${payload}" \
+        'https://api.github.com/repos/inviqa/ansible-jumpcloud/releases'
+    )"
+    if [[ "${status}" != '201' ]]; then
+      echo "GitHub release ${version} creation failed with HTTP ${status}." >&2
+      exit 1
+    fi
+    echo "GitHub release ${version} published."
+
 command('ansible-galaxy check-token', 'ansible-galaxy check-token'):
   description: Check that an Ansible Galaxy token is configured.
   env:
@@ -175,18 +307,48 @@ command('ansible-galaxy check-token', 'ansible-galaxy check-token'):
       exit 1
     fi
 
+command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
+  description: Check that the changelog release is on GitHub and Galaxy.
+  env:
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    set +e
+    ws github release check
+    github_rc=$?
+    set -e
+    if [[ "${github_rc}" -eq 2 ]]; then
+      echo "Run ws github release publish before importing Ansible Galaxy." >&2
+      exit 1
+    fi
+    if [[ "${github_rc}" -ne 0 ]]; then
+      echo "Fix CHANGELOG.md or GitHub release state before checking Ansible Galaxy." >&2
+      exit "${github_rc}"
+    fi
+
+    version="$(ws github release version)"
+    tmp_roles="$(mktemp -d)"
+    trap 'rm -rf "${tmp_roles}"' EXIT
+    if ! ansible-galaxy role install --roles-path "${tmp_roles}" "inviqa.jumpcloud,${version}"; then
+      echo "Ansible Galaxy does not expose inviqa.jumpcloud,${version}; run ws ansible-galaxy publish after the GitHub release exists." >&2
+      exit 1
+    fi
+
 command('ansible-galaxy publish', 'ansible-galaxy publish'):
   description: Import the main branch into Ansible Galaxy and show role info.
   env:
     ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
   exec: |
     #!bash(workspace:/)|@
     passthru ws ansible-galaxy check-token
+    passthru ws github release check
     passthru ansible-galaxy role import inviqa ansible-jumpcloud \
       --branch main \
       --role-name jumpcloud \
       --token "${ANSIBLE_GALAXY_TOKEN}"
     passthru ansible-galaxy role info inviqa.jumpcloud
+    passthru ws ansible-galaxy check-release
 
 command('ansible-galaxy status', 'ansible-galaxy status'):
   description: Check the latest Ansible Galaxy import status.

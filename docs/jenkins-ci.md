@@ -15,6 +15,8 @@ The pipeline runs inside a Jenkins-native Docker agent and executes:
 - syntax checks for the Docker inventory and DigitalOcean live-test inventory
 - the live DigitalOcean JumpCloud test matrix with `tests/playbook.yml`
 - cleanup with `tests/playbook_cleanup.yml`, even when the live test stage fails
+- optional GitHub release creation from `main`
+- optional Ansible Galaxy import from `main`
 - failure notification to the `ops-integrations` Slack channel
 
 The live test stage provisions real DigitalOcean droplets and registers real
@@ -35,7 +37,13 @@ flowchart LR
   creds --> live["Run live playbook with SSH agent"]
   live --> cleanup["Run cleanup playbook"]
   live -->|Failure| cleanup
-  cleanup --> notify{"Build failed?"}
+  cleanup --> github_gate{"PUBLISH_GITHUB_RELEASE on main?"}
+  github_gate -->|Yes| github_release["Create GitHub release"]
+  github_gate -->|No| galaxy_gate{"PUBLISH_ANSIBLE_GALAXY_RELEASE on main?"}
+  github_release --> galaxy_gate
+  galaxy_gate -->|Yes| galaxy_release["Import Galaxy role"]
+  galaxy_gate -->|No| notify{"Build failed?"}
+  galaxy_release --> notify
   notify -->|Yes| slack["Send Slack failure notification"]
   notify -->|No| finish
   slack --> finish
@@ -75,11 +83,16 @@ Recommended Jenkins configuration:
   - JumpCloud API key
   - SSH private key matching the DigitalOcean SSH key configured for droplets
   - Slack token credential used for failure notifications
+  - GitHub API token with write access to `inviqa/ansible-jumpcloud`
+  - Ansible Galaxy API token for the `inviqa` namespace, preferably loaded by a
+    dedicated publishing account rather than a personal maintainer account
 
 The credential ID placeholders are defined at the top of `Jenkinsfile`:
 
 | Placeholder | Jenkins credential type | Purpose |
 | --- | --- | --- |
+| `inviqa-ansible-roles-releases` | Secret text | GitHub API token used to create the release in `inviqa/ansible-jumpcloud`. |
+| `ansible-jumpcloud-galaxy-token` | Secret text | Ansible Galaxy API token used to import the role after the GitHub release exists. |
 | `ansible-jumpcloud-digitalocean-oauth-token` | Secret text | DigitalOcean API token. |
 | `ansible-jumpcloud-digitalocean-ssh-key-ids` | Secret text | Comma or newline separated DigitalOcean SSH key IDs or fingerprints. |
 | `ansible-jumpcloud-connect-key` | Secret text | JumpCloud connect key for agent registration. |
@@ -87,14 +100,70 @@ The credential ID placeholders are defined at the top of `Jenkinsfile`:
 | `ansible-roles-test-ssh-private-key` | SSH username with private key | Private key loaded for live test droplet access. |
 | `inviqa-slack-integration-token` | Secret text | Slack token used for Jenkins failure notifications. |
 
+## Environment flags
+
+Release publication is controlled by Jenkinsfile environment flags so the job
+owner can enable GitHub and Galaxy publication independently:
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `PUBLISH_GITHUB_RELEASE` | `false` | On `main` only, creates the GitHub release from `CHANGELOG.md`. |
+| `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `false` | On `main` only, imports the role into Ansible Galaxy. |
+
 ## Parameters
 
 | Parameter | Default | Purpose |
 | --- | --- | --- |
 | `RUN_LIVE_TESTS` | `true` | Enables the DigitalOcean-backed JumpCloud integration test stage. |
+| `RELEASE_VERSION` | empty | Optional release version to publish. When empty, Jenkins uses the latest concrete release section in `CHANGELOG.md`. |
 | `TEST_INVENTORY` | `tests/inventory-digitalocean-droplets` | Fixed inventory choice used by the live test and cleanup playbooks. |
 
 When `RUN_LIVE_TESTS` is enabled, all non-Slack credentials above must exist.
+
+When either publication flag is enabled, the matching credential above must
+exist. Publication stages only run for the `main` branch. Pull request and
+feature-branch builds cannot publish a release through this Jenkinsfile.
+
+Galaxy documents API tokens as user-account tokens and does not document a
+separate public machine-user token type. For Jenkins, the preferred operational
+pattern is to log in to Galaxy with a dedicated GitHub publishing account, load
+the token from `https://galaxy.ansible.com/ui/token/`, and store it as the
+`ansible-jumpcloud-galaxy-token` Secret text credential. Reloading a Galaxy
+token invalidates the previous one, so Jenkins must be updated whenever the
+token is regenerated.
+
+## Release publication
+
+The GitHub release stage only calls `ws github release publish`. That Workspace
+command derives the release body from `CHANGELOG.md`, using `RELEASE_VERSION`
+when provided or the latest concrete release section when it is left blank.
+
+The Ansible Galaxy stage only calls `ws ansible-galaxy publish`. That Workspace
+command checks the GitHub release first, imports the `main` branch into Galaxy,
+and verifies the same version with a pinned `ansible-galaxy role install`.
+
+Enable both flags for the normal release path. Enable only the Galaxy flag when
+the GitHub release already exists and the role only needs to be reimported.
+
+Required data:
+
+- GitHub repository: `inviqa/ansible-jumpcloud`
+- GitHub credential ID: `inviqa-ansible-roles-releases`
+- GitHub publication flag: `PUBLISH_GITHUB_RELEASE=true`
+  - local equivalent: `ws github release publish`
+- Ansible Galaxy credential ID: `ansible-jumpcloud-galaxy-token`
+- Ansible Galaxy publication flag: `PUBLISH_ANSIBLE_GALAXY_RELEASE=true`
+  - local equivalent: `ws ansible-galaxy publish`
+- Galaxy GitHub owner/repository: `inviqa/ansible-jumpcloud`
+- Galaxy branch: `main`
+- Galaxy role name: `jumpcloud`
+- Galaxy version check: pinned install of `inviqa.jumpcloud,<release-version>`
+
+The GitHub release and Galaxy import runbook is documented in
+[Ansible Galaxy Release Runbook](ansible-galaxy-release.md).
+
+Keeping the publication logic in Workspace keeps Jenkins thin and lets
+maintainers run the same checks and publication commands locally.
 
 The pipeline sends failure notifications only. Successful builds do not post to
 Slack.

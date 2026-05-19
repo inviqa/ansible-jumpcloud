@@ -26,6 +26,11 @@
 - Added a Workspace-backed Jenkins pipeline and local Jenkinsfile lint command.
 - Added Workspace Ansible Galaxy publication commands for `publish`, `status`,
   and `info`.
+- Added Workspace GitHub release commands to check and publish the latest
+  concrete changelog release.
+- Added optional Jenkins release-publication stages for `main` that separately
+  create a GitHub release from `CHANGELOG.md` and import the role into Ansible
+  Galaxy.
 - Replaced the legacy Docker, Vagrant, and Travis-era test workflow with a
   Workspace-managed container and DigitalOcean integration harness.
 
@@ -101,6 +106,10 @@
 - Fixed live-test role resolution from Jenkins job-named workspaces.
 - Waited for DigitalOcean test-droplet SSH readiness to settle before the
   first remote command.
+- Gated Jenkins GitHub and Ansible Galaxy release publication behind separate
+  environment flags and the `main` branch.
+- Verified Jenkins Galaxy publication against the resolved release version by
+  checking the pushed Git tag and running a pinned Galaxy install after import.
 - Restored failure-only Jenkins Slack notifications after live-test remediation.
 - Moved Jenkins credential IDs, Slack notification controls, and runtime values
   into the top-level pipeline environment block.
@@ -122,6 +131,15 @@
   verification.
 - Documented the Workspace Ansible Galaxy publication commands and token
   configuration.
+- Documented reusable Workspace GitHub release commands used by both local
+  operators and Jenkins.
+- Kept Jenkins release publication as thin calls to the reusable Workspace
+  release commands.
+- Documented Jenkins credentials and parameters required for automated GitHub
+  release and Ansible Galaxy publication.
+- Documented the current Galaxy token page, the stale CLI reference to
+  `/me/preferences`, and the Jenkins pattern for using a dedicated Galaxy
+  publishing account token.
 - Grouped the 3.0.0 release notes by scope.
 
 ## [2.4.1] - 2022-04-12

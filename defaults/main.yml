@@ -48,6 +48,7 @@ jumpcloud_supported_linux_versions:
   RedHat:
     - "8"
     - "9"
+    - "10"
   Rocky:
     - "8"
     - "9"
@@ -99,6 +100,8 @@ jumpcloud_debian_dependencies:
   - systemd
 jumpcloud_ubuntu_dependencies: []
 jumpcloud_yum_dependencies:
+  - coreutils
+  - curl
   - findutils
   - gawk
   - glibc-common

@@ -142,7 +142,7 @@ testing is:
 | --- | --- |
 | Debian | Debian 11, Debian 12, Debian 13 with `jumpcloud_install_on_unsupported_distribution: true` |
 | Ubuntu | Ubuntu 18.04, 20.04, 22.04, 24.04, 26.04; Galaxy metadata advertises currently known release codenames only |
-| Enterprise Linux | RHEL 8, RHEL 9, Rocky Linux 8, Rocky Linux 9 |
+| Enterprise Linux | RHEL 8, RHEL 9, RHEL 10, Rocky Linux 8, Rocky Linux 9 |
 | Fedora | Fedora 40, 41, 42, 43 |
 | Amazon Linux | Amazon Linux 2, 2023 |
 | Oracle Linux | Oracle Linux 9 |

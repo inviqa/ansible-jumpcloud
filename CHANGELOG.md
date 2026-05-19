@@ -44,6 +44,7 @@
 - Aligned Galaxy metadata with the default-supported runtime matrix.
 - Added Fedora 43 to the validated Linux support matrix to match JumpCloud's
   current Linux agent compatibility documentation.
+- Added RHEL 10 to the supported Enterprise Linux matrix.
 - Advertised Debian 13 as a validated target using the unsupported-release
   install identity path, although Debian 13 is not yet officially supported by
   JumpCloud.
@@ -55,6 +56,8 @@
 - Modernized the install path for current Debian, Ubuntu, and RedHat-family
   targets, including dependency cleanup, bounded Kickstart execution, and
   non-interactive Debian-family installs.
+- Kept `coreutils` and `curl` in the Yum dependency set while preserving DNF
+  minimal-package compatibility.
 - Preserved DNF minimal package compatibility for `coreutils-single` and
   `curl-minimal`.
 - Preserved original `/etc/os-release` symlink structure when restoring after

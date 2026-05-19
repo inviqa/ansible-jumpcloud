@@ -6,17 +6,17 @@ maintenance.
 
 ## Pipeline coverage
 
-The pipeline runs inside a Jenkins-native Docker agent and executes:
+The pipeline runs on a Jenkins node with Workspace installed and executes:
 
-- Python and Ansible dependency installation from `tests/requirements.txt` and
-  `tests/requirements.yml`
+- Workspace environment startup with `ws enable`
+- role linting through `ws ansible-lint`
 - the tracked `tests/roles/ansible-jumpcloud` symlink so Ansible can resolve the
   checked-out role by name in Jenkins job workspaces
-- syntax checks for the Docker inventory and DigitalOcean live-test inventory
+- syntax checks through `ws syntax`
+- container-backed role validation through `ws test-docker`
 - non-mutating release preflight checks for GitHub release readiness and
   Ansible Galaxy token/status access
-- the live DigitalOcean JumpCloud test matrix with `tests/playbook.yml`
-- cleanup with `tests/playbook_cleanup.yml`, even when the live test stage fails
+- the live DigitalOcean JumpCloud test matrix through `ws test-live`
 - optional GitHub release creation from `main`
 - optional Ansible Galaxy import from `main`
 - failure notification to the `ops-integrations` Slack channel
@@ -31,16 +31,16 @@ the live-test stage so provider resources are removed after a failed run too.
 flowchart LR
   accTitle: Jenkins live-test pipeline
   accDescr: Shows the Jenkins stages and cleanup handoff for live tests.
-  checkout["Pipeline checkout"] --> deps["Install Ansible dependencies"]
-  deps --> syntax["Run syntax checks"]
-  syntax --> preflight["Run release preflight"]
+  checkout["Pipeline checkout"] --> build["Run ws enable"]
+  build --> lint["Run ws ansible-lint"]
+  lint --> syntax["Run ws syntax"]
+  syntax --> container["Run ws test-docker"]
+  container --> preflight["Run release preflight"]
   preflight --> gate{"RUN_LIVE_TESTS?"}
   gate -->|No| finish["Finish build"]
   gate -->|Yes| creds["Load Jenkins credentials"]
-  creds --> live["Run live playbook with SSH agent"]
-  live --> cleanup["Run cleanup playbook"]
-  live -->|Failure| cleanup
-  cleanup --> github_gate{"PUBLISH_GITHUB_RELEASE on main?"}
+  creds --> live["Run ws test-live with SSH agent"]
+  live --> github_gate{"PUBLISH_GITHUB_RELEASE on main?"}
   github_gate -->|Yes| github_release["Create GitHub release"]
   github_gate -->|No| galaxy_gate{"PUBLISH_ANSIBLE_GALAXY_RELEASE on main?"}
   github_release --> galaxy_gate
@@ -52,22 +52,19 @@ flowchart LR
   slack --> finish
 ```
 
-Markdown, YAML, and full `ws ansible-lint` checks are intentionally kept as
-pre-handoff checks rather than Jenkins pipeline stages.
+Markdown and YAML checks are intentionally kept as pre-handoff checks rather
+than Jenkins pipeline stages.
 
-## Jenkins Docker agent
+## Jenkins Workspace agent
 
-The Jenkinsfile follows the Jenkins-native Docker workflow used by the
-DigitalOcean reserved IP role. Jenkins runs the pipeline inside the shared
-Inviqa Ansible image:
+The Jenkinsfile follows the Workspace-first pattern used by Frontdoor Base.
+Jenkins runs on a `linux-amd64` node where the Workspace CLI is already
+available. The pipeline calls `ws enable`, and Workspace starts the Docker
+Compose services that provide the Ansible execution environment.
 
-```text
-quay.io/inviqa_images/ansible:2.15-python3.10-trixie
-```
-
-The pipeline installs the Python dependencies needed by the DigitalOcean
-collection, installs Ansible collections into `.ansible/collections`, and runs
-the Ansible commands directly.
+The Workspace `console` image installs the Python dependencies from
+`tests/requirements.txt` and Ansible collections from `tests/requirements.yml`.
+Jenkins does not run Ansible directly on the host.
 
 ## Jenkins setup
 
@@ -79,6 +76,7 @@ Recommended Jenkins configuration:
 - Required tools on the agent:
   - Docker
   - `ssh-agent`
+  - Workspace CLI `ws`
 - Required Jenkins credentials:
   - DigitalOcean API token
   - DigitalOcean SSH key IDs or fingerprints used for test droplets
@@ -118,8 +116,8 @@ owner can enable GitHub and Galaxy publication independently:
 | Parameter | Default | Purpose |
 | --- | --- | --- |
 | `RUN_LIVE_TESTS` | `true` | Enables the DigitalOcean-backed JumpCloud integration test stage. |
+| `LIVE_TEST_LIMIT` | empty | Optional host limit passed to `ws test-live`. |
 | `RELEASE_VERSION` | empty | Optional release version to publish. When empty, Jenkins uses the latest concrete release section in `CHANGELOG.md`. |
-| `TEST_INVENTORY` | `tests/inventory-digitalocean-droplets` | Fixed inventory choice used by the live test and cleanup playbooks. |
 
 When `RUN_LIVE_TESTS` is enabled, all non-Slack credentials above must exist.
 
@@ -203,6 +201,9 @@ then runs the helper inside the console container.
 The Jenkinsfile mirrors the Workspace test sequence:
 
 ```text
+ws enable
+ws ansible-lint
 ws syntax
+ws test-docker
 ws test-live
 ```

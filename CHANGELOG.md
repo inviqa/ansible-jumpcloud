@@ -109,6 +109,12 @@
 - Fixed live-test role resolution from Jenkins job-named workspaces.
 - Waited for DigitalOcean test-droplet SSH readiness to settle before the
   first remote command.
+- Aligned Jenkins with the Workspace-first pipeline pattern used by related
+  role infrastructure, so Jenkins calls `ws enable`, `ws ansible-lint`,
+  `ws syntax`, `ws test-docker`, and `ws test-live` instead of running Ansible
+  directly from a Docker agent.
+- Reused the already-enabled Workspace console for Jenkins live tests instead
+  of rebuilding it immediately before `ws test-live`.
 - Gated Jenkins GitHub and Ansible Galaxy release publication behind separate
   environment flags and the `main` branch.
 - Verified Jenkins Galaxy publication against the resolved release version by

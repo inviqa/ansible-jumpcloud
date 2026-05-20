@@ -126,6 +126,14 @@ modified.
 13. When adding Workspace commands that pass user input into containers, dispatch
     a fixed command with tokenized arguments. Do not pass user-controlled
     strings through `bash -lc`, `eval`, or command substitution.
+14. Workspace commands invoked by Jenkins must keep project toolchain binaries
+    inside the Workspace `console` container. Jenkins agents should not need
+    host-level Ansible, Galaxy, GitHub helper, JSON, or HTTP client CLIs beyond
+    the documented Jenkins prerequisites.
+15. Jenkins credentials consumed by Workspace should be declared once in the
+    Jenkinsfile environment and surfaced to `console` through Compose service
+    environment. Do not pass release, Galaxy, GitHub, or provider tokens as
+    command-line arguments to containerized helpers.
 
 ## Changelog Policy (Always Required)
 

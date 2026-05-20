@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get install -y --no-install-recommends \
         curl \
         docker-cli \
+        gh \
     ; \
     python3 -m pip install \
         --root-user-action=ignore \

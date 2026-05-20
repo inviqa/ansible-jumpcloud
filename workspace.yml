@@ -19,8 +19,19 @@ command('enable %', 'enable'):
   description: "Usage: ws enable [service]. Start all services or one service."
   env:
     PARAMETER: = input.argument('%')
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+    DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
+    DO_OAUTH_TOKEN: "= @('test.digitalocean.api_token') ?: env('DO_OAUTH_TOKEN') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: ''"
+    DO_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ?: env('DO_SSH_KEYS') ?: ''"
+    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
+    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
     HOST_DOCKER_SOCK: "= env('HOST_DOCKER_SOCK') ?: '/var/run/docker.sock'"
     HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
+    JUMPCLOUD_API_KEY: "= @('test.jumpcloud.api_key') ?: env('JUMPCLOUD_API_KEY') ?: ''"
+    JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS: "= @('test.jumpcloud.create_missing_system_groups')"
+    JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS: "= @('test.jumpcloud.delete_duplicate_systems')"
+    JUMPCLOUD_TEST_SYSTEM_GROUPS: "= @('test.jumpcloud.system_groups') ?: env('JUMPCLOUD_TEST_SYSTEM_GROUPS') ?: ''"
+    JUMPCLOUD_X_CONNECT_KEY: "= @('test.jumpcloud.x_connect_key') ?: env('JUMPCLOUD_X_CONNECT_KEY') ?: ''"
   exec: |
     #!bash(workspace:/)|@
     # Compose uses this GID as a supplemental group for Docker socket access.
@@ -96,16 +107,7 @@ command('destroy', 'destroy'):
 command('console %', 'console'):
   description: "Usage: ws console [command]. Run a command in the Ansible console container."
   env:
-    DO_OAUTH_TOKEN: "= @('test.digitalocean.api_token') ?: env('DO_OAUTH_TOKEN') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: ''"
-    DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
-    DO_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ?: env('DO_SSH_KEYS') ?: ''"
     HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
-    JUMPCLOUD_API_KEY: "= @('test.jumpcloud.api_key') ?: env('JUMPCLOUD_API_KEY') ?: ''"
-    JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS: "= @('test.jumpcloud.create_missing_system_groups')"
-    JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS: "= @('test.jumpcloud.delete_duplicate_systems')"
-    JUMPCLOUD_TEST_SYSTEM_GROUPS: "= @('test.jumpcloud.system_groups') ?: env('JUMPCLOUD_TEST_SYSTEM_GROUPS') ?: ''"
-    JUMPCLOUD_X_CONNECT_KEY: "= @('test.jumpcloud.x_connect_key') ?: env('JUMPCLOUD_X_CONNECT_KEY') ?: ''"
-    JENKINS_LINT_URL: "= env('JENKINS_LINT_URL') ?: ''"
     PARAMETER: = input.argument('%')
   exec: |
     #!bash(workspace:/)|@
@@ -121,16 +123,6 @@ command('console %', 'console'):
 
     ws enable console
     passthru docker compose "${docker_exec_args[@]}" \
-      -e DO_OAUTH_TOKEN \
-      -e DIGITAL_OCEAN_API_TOKEN \
-      -e DO_SSH_KEYS \
-      -e JUMPCLOUD_API_KEY \
-      -e JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS \
-      -e JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS \
-      -e JUMPCLOUD_TEST_SYSTEM_GROUPS \
-      -e JUMPCLOUD_X_CONNECT_KEY \
-      -e JENKINS_LINT_URL \
-      -e HOME=/home/ansible \
       -u ansible \
       console \
       "${docker_command[@]}"
@@ -199,45 +191,38 @@ command('github release check', 'github release check'):
   description: Check the latest changelog release against GitHub releases.
   env:
     GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
+    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
   exec: |
     #!bash(workspace:/)|@
     version="$(ws github release version)"
 
-    auth_args=()
-    if [[ -n "${GITHUB_TOKEN}" ]]; then
-      auth_args=(--header "Authorization: Bearer ${GITHUB_TOKEN}")
+    ws console bash -s -- "${version}" <<'CONSOLE'
+    set -euo pipefail
+
+    version=${1:?"Usage: github release check <version>"}
+    error_file="$(mktemp)"
+    trap 'rm -f "${error_file}"' EXIT
+
+    if gh api --silent "repos/inviqa/ansible-jumpcloud/releases/tags/${version}" 2>"${error_file}"; then
+      printf 'GitHub release %s already exists.\n' "${version}"
+      exit 0
     fi
 
-    status="$(
-      curl \
-        --silent \
-        --show-error \
-        --output /dev/null \
-        --write-out '%{http_code}' \
-        "${auth_args[@]}" \
-        --header 'Accept: application/vnd.github+json' \
-        --header 'X-GitHub-Api-Version: 2022-11-28' \
-        "https://api.github.com/repos/inviqa/ansible-jumpcloud/releases/tags/${version}"
-    )"
+    api_rc=$?
+    if grep -q '(HTTP 404)' "${error_file}"; then
+      printf 'CHANGELOG.md release %s exists locally but is not published on GitHub.\n' "${version}" >&2
+      exit 2
+    fi
 
-    case "${status}" in
-      200)
-        echo "GitHub release ${version} already exists."
-        ;;
-      404)
-        echo "CHANGELOG.md release ${version} exists locally but is not published on GitHub." >&2
-        exit 2
-        ;;
-      *)
-        echo "Unable to check GitHub release ${version}; GitHub returned HTTP ${status}." >&2
-        exit 1
-        ;;
-    esac
+    cat "${error_file}" >&2
+    exit "${api_rc}"
+    CONSOLE
 
 command('github release publish', 'github release publish'):
   description: Publish the latest concrete changelog release to GitHub.
   env:
     GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
+    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
     RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
   exec: |
     #!bash(workspace:/)|@
@@ -258,46 +243,26 @@ command('github release publish', 'github release publish'):
     fi
 
     version="$(ws github release version)"
-    notes="$(
-      awk -v version="${version}" '
-        $0 ~ "^## \\[" version "\\]" { found = 1; next }
-        found && /^## \[/ { exit }
-        found { print }
-      ' CHANGELOG.md
-    )"
-    payload="$(mktemp)"
-    trap 'rm -f "${payload}"' EXIT
-    jq -n \
-      --arg tag "${version}" \
-      --arg body "${notes}" \
-      '{
-        tag_name: $tag,
-        target_commitish: "main",
-        name: $tag,
-        body: $body,
-        draft: false,
-        prerelease: false,
-        make_latest: "true"
-      }' > "${payload}"
+    passthru ws console bash -s -- "${version}" <<'CONSOLE'
+    set -euo pipefail
 
-    status="$(
-      curl \
-        --silent \
-        --show-error \
-        --output /dev/null \
-        --write-out '%{http_code}' \
-        --request POST \
-        --header "Authorization: Bearer ${GITHUB_TOKEN}" \
-        --header 'Accept: application/vnd.github+json' \
-        --header 'X-GitHub-Api-Version: 2022-11-28' \
-        --data-binary @"${payload}" \
-        'https://api.github.com/repos/inviqa/ansible-jumpcloud/releases'
-    )"
-    if [[ "${status}" != '201' ]]; then
-      echo "GitHub release ${version} creation failed with HTTP ${status}." >&2
-      exit 1
-    fi
-    echo "GitHub release ${version} published."
+    version=${1:?"Usage: github release publish <version>"}
+    notes_file="$(mktemp)"
+    trap 'rm -f "${notes_file}"' EXIT
+
+    awk -v version="${version}" '
+      $0 ~ "^## \\[" version "\\]" { found = 1; next }
+      found && /^## \[/ { exit }
+      found { print }
+    ' CHANGELOG.md > "${notes_file}"
+
+    gh release create "${version}" \
+      --repo inviqa/ansible-jumpcloud \
+      --target main \
+      --title "${version}" \
+      --notes-file "${notes_file}" \
+      --latest
+    CONSOLE
 
 command('ansible-galaxy check-token', 'ansible-galaxy check-token'):
   description: Check that an Ansible Galaxy token is configured.
@@ -330,12 +295,18 @@ command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
     fi
 
     version="$(ws github release version)"
+    passthru ws console bash -s -- "${version}" <<'CONSOLE'
+    set -euo pipefail
+
+    version=${1:?"Usage: ansible-galaxy check-release <version>"}
     tmp_roles="$(mktemp -d)"
     trap 'rm -rf "${tmp_roles}"' EXIT
+
     if ! ansible-galaxy role install --roles-path "${tmp_roles}" "inviqa.jumpcloud,${version}"; then
-      echo "Ansible Galaxy does not expose inviqa.jumpcloud,${version}; run ws ansible-galaxy publish after the GitHub release exists." >&2
+      printf 'Ansible Galaxy does not expose inviqa.jumpcloud,%s; run ws ansible-galaxy publish after the GitHub release exists.\n' "${version}" >&2
       exit 1
     fi
+    CONSOLE
 
 command('ansible-galaxy publish', 'ansible-galaxy publish'):
   description: Import the main branch into Ansible Galaxy and show role info.
@@ -346,11 +317,15 @@ command('ansible-galaxy publish', 'ansible-galaxy publish'):
     #!bash(workspace:/)|@
     passthru ws ansible-galaxy check-token
     passthru ws github release check
-    passthru ansible-galaxy role import inviqa ansible-jumpcloud \
+    passthru ws console bash -s <<'CONSOLE'
+    set -euo pipefail
+
+    ansible-galaxy role import inviqa ansible-jumpcloud \
       --branch main \
       --role-name jumpcloud \
       --token "${ANSIBLE_GALAXY_TOKEN}"
-    passthru ansible-galaxy role info inviqa.jumpcloud
+    ansible-galaxy role info inviqa.jumpcloud
+    CONSOLE
     passthru ws ansible-galaxy check-release
 
 command('ansible-galaxy status', 'ansible-galaxy status'):
@@ -360,21 +335,25 @@ command('ansible-galaxy status', 'ansible-galaxy status'):
   exec: |
     #!bash(workspace:/)|@
     passthru ws ansible-galaxy check-token
-    passthru ansible-galaxy role import --status inviqa ansible-jumpcloud \
+    passthru ws console bash -s <<'CONSOLE'
+    set -euo pipefail
+
+    ansible-galaxy role import --status inviqa ansible-jumpcloud \
       --token "${ANSIBLE_GALAXY_TOKEN}"
+    CONSOLE
 
 command('ansible-galaxy info', 'ansible-galaxy info'):
   description: Show the currently indexed Ansible Galaxy role metadata.
   exec: |
     #!bash(workspace:/)|@
-    passthru ansible-galaxy role info inviqa.jumpcloud
+    passthru ws console ansible-galaxy role info inviqa.jumpcloud
 
 command('lint-jenkinsfile', 'lint-jenkinsfile'):
   description: Validate the Jenkinsfile with the Dockerized Jenkins linter.
   exec: |
     #!bash(workspace:/)|@
     ws enable jenkins-lint
-    JENKINS_LINT_URL=http://jenkins-lint:8080 ws console tests/lint_jenkinsfile.sh Jenkinsfile
+    ws console env JENKINS_LINT_URL=http://jenkins-lint:8080 tests/lint_jenkinsfile.sh Jenkinsfile
 
 command('test-docker', 'test-docker'):
   description: Run the container-backed role test and cleanup through Workspace.

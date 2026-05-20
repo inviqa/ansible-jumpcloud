@@ -10,11 +10,19 @@ pipeline {
 
     environment {
         ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-galaxy-token'
+        ANSIBLE_GALAXY_TOKEN = credentials('ansible-jumpcloud-galaxy-token')
         DO_SSH_KEYS_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-ssh-key-ids'
+        DO_SSH_KEYS = credentials('ansible-jumpcloud-digitalocean-ssh-key-ids')
         DO_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-oauth-token'
+        DIGITAL_OCEAN_API_TOKEN = credentials('ansible-jumpcloud-digitalocean-oauth-token')
+        DO_OAUTH_TOKEN = credentials('ansible-jumpcloud-digitalocean-oauth-token')
         GITHUB_RELEASE_CREDENTIAL_ID = 'inviqa-ansible-roles-releases'
+        GITHUB_TOKEN = credentials('inviqa-ansible-roles-releases')
+        GH_TOKEN = credentials('inviqa-ansible-roles-releases')
         JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
+        JUMPCLOUD_API_KEY = credentials('ansible-jumpcloud-api-key')
         JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
+        JUMPCLOUD_X_CONNECT_KEY = credentials('ansible-jumpcloud-connect-key')
         PUBLISH_ANSIBLE_GALAXY_RELEASE = 'false'
         PUBLISH_GITHUB_RELEASE = 'false'
         SLACK_NOTIFICATION_CHANNEL = 'ops-integrations'
@@ -89,21 +97,16 @@ pipeline {
 
         stage('Release preflight') {
             steps {
-                withCredentials([
-                    string(credentialsId: env.GITHUB_RELEASE_CREDENTIAL_ID, variable: 'GITHUB_TOKEN'),
-                    string(credentialsId: env.ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID, variable: 'ANSIBLE_GALAXY_TOKEN')
-                ]) {
-                    sh '''
-                        set +e
-                        RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release check
-                        github_release_status="$?"
-                        set -e
+                sh '''
+                    set +e
+                    RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release check
+                    github_release_status="$?"
+                    set -e
 
-                        [ "${github_release_status}" = 0 ] || [ "${github_release_status}" = 2 ] || exit "${github_release_status}"
+                    [ "${github_release_status}" = 0 ] || [ "${github_release_status}" = 2 ] || exit "${github_release_status}"
 
-                        ws ansible-galaxy status
-                    '''
-                }
+                    ws ansible-galaxy status
+                '''
             }
             post {
                 failure {
@@ -117,15 +120,8 @@ pipeline {
                 expression { return params.RUN_LIVE_TESTS }
             }
             steps {
-                withCredentials([
-                    string(credentialsId: env.DO_TOKEN_CREDENTIAL_ID, variable: 'DIGITAL_OCEAN_API_TOKEN'),
-                    string(credentialsId: env.DO_SSH_KEYS_CREDENTIAL_ID, variable: 'DO_SSH_KEYS'),
-                    string(credentialsId: env.JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID, variable: 'JUMPCLOUD_X_CONNECT_KEY'),
-                    string(credentialsId: env.JUMPCLOUD_API_KEY_CREDENTIAL_ID, variable: 'JUMPCLOUD_API_KEY')
-                ]) {
-                    sshagent(credentials: [env.SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
-                        sh 'ws test-live "${LIVE_TEST_LIMIT:-}"'
-                    }
+                sshagent(credentials: [env.SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
+                    sh 'ws test-live "${LIVE_TEST_LIMIT:-}"'
                 }
             }
             post {
@@ -143,12 +139,7 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([string(
-                    credentialsId: env.GITHUB_RELEASE_CREDENTIAL_ID,
-                    variable: 'GITHUB_TOKEN'
-                )]) {
-                    sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release publish'
-                }
+                sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release publish'
             }
             post {
                 failure {
@@ -165,12 +156,7 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([string(
-                    credentialsId: env.ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID,
-                    variable: 'ANSIBLE_GALAXY_TOKEN'
-                )]) {
-                    sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws ansible-galaxy publish'
-                }
+                sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws ansible-galaxy publish'
             }
             post {
                 failure {

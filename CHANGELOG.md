@@ -115,6 +115,11 @@
   role infrastructure, so Jenkins calls `ws enable`, `ws ansible-lint`,
   `ws syntax`, `ws test-docker`, and `ws test-live` instead of running Ansible
   directly from a Docker agent.
+- Kept Workspace GitHub release and Ansible Galaxy commands inside the
+  `console` container so Jenkins agents do not need host-level `gh` or
+  `ansible-galaxy` binaries.
+- Centralized Jenkins credential binding and Compose `console` environment
+  wiring so Workspace commands do not repeat credential forwarding flags.
 - Reused the already-enabled Workspace console for Jenkins live tests instead
   of rebuilding it immediately before `ws test-live`.
 - Gated Jenkins GitHub and Ansible Galaxy release publication behind separate
@@ -133,6 +138,9 @@
   Workspace CLI install path and Compose environment model, and updated
   repository agent instructions so Ansible and Jenkinsfile linting run through
   Workspace.
+- Added repository agent guidance that Jenkins-invoked Workspace commands must
+  keep project toolchain binaries and release credentials inside the Workspace
+  container boundary.
 - Clarified the test procedure with the Workspace CLI install command.
 - Added Mermaid flowcharts for the DigitalOcean live-test cleanup path and the
   Jenkins live-test pipeline.

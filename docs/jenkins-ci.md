@@ -95,18 +95,18 @@ at the top of `Jenkinsfile`:
 | `inviqa-ansible-roles-releases` | Secret text | GitHub API token used to create the release in `inviqa/ansible-jumpcloud`. |
 | `ansible-jumpcloud-galaxy-token` | Secret text | Ansible Galaxy API token used to import the role after the GitHub release exists. |
 | `ansible-roles-digitalocean-oauth-token` | Secret text | DigitalOcean API token. |
-| `ansible-roles-tests-digitalocean-ssh-key-id` | Secret text | Comma or newline separated DigitalOcean SSH key IDs or fingerprints. |
+| `ansible-roles-tests-digitalocean-ssh-key-id` | Secret text | Comma-separated DigitalOcean SSH key IDs or fingerprints. |
 | `ansible-jumpcloud-connect-key` | Secret text | JumpCloud connect key for agent registration. |
 | `ansible-jumpcloud-api-key` | Secret text | JumpCloud API key for cleanup, updates, and verification. |
 | `ansible-roles-test-ssh-private-key` | SSH username with private key | Private key loaded for live test droplet access. |
 | `inviqa-slack-integration-token` | Secret text | Slack token used for Jenkins failure notifications. |
 
-## Jenkins environment defaults
+## Jenkins parameters
 
-Release publication and live-test scope are controlled by top-level Jenkinsfile
-environment defaults:
+Release publication and live-test scope are controlled by Jenkins build
+parameters:
 
-| Environment value | Default | Purpose |
+| Parameter | Default | Purpose |
 | --- | --- | --- |
 | `RUN_LIVE_TESTS` | `true` | Enables the DigitalOcean-backed JumpCloud integration test stage. |
 | `LIVE_TEST_TARGET` | `all` | Target passed to `ws test-live`; valid values are `all`, `debian`, `redhat`, and `ubuntu`. |
@@ -114,14 +114,24 @@ environment defaults:
 | `PUBLISH_GITHUB_RELEASE` | `true` | Enables GitHub release publication on `main` after validation succeeds. |
 | `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `true` | Enables Ansible Galaxy import on `main` after validation succeeds. |
 
+Jenkins shows these values on the job page through **Build with Parameters**.
+Maintainers can change them for one build without editing `Jenkinsfile`; for
+example, they can disable live tests, run only the `redhat` target, publish a
+specific `RELEASE_VERSION`, or reimport Galaxy while skipping GitHub release
+creation.
+
 All credentials above must exist before the pipeline starts. Jenkins binds them
 once in the top-level environment, and `ws console` is the single Workspace
 entrypoint that forwards matching environment variables into commands executed
 inside the `console` container.
 
+Credentials are configured separately in Jenkins Credentials and are referenced
+by the fixed credential IDs listed above. Change those IDs only when the Jenkins
+job wiring changes; use build parameters for per-run operator choices.
+
 Publication stages only run for the `main` branch. Pull request and
 feature-branch builds cannot publish a release through this Jenkinsfile, even
-when the publication environment values are enabled.
+when the publication parameters are enabled.
 
 Galaxy documents API tokens as user-account tokens and does not document a
 separate public machine-user token type. For Jenkins, the preferred operational

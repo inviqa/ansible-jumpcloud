@@ -23,7 +23,11 @@
   redundant per-family inventory files.
 - Matched Jenkins Slack notification gating to the explicit
   `SLACK_NOTIFICATIONS_ENABLED == 'true'` check used by this pipeline.
-- Updated Jenkins CI documentation to match the current credential IDs.
+- Updated README and Jenkins CI documentation to match the current release,
+  credential IDs, and comma-separated SSH key selector parsing.
+- Added agent guidance to keep Jenkins publication and live-test operator
+  choices as per-build controls.
+- Clarified where Jenkins maintainers set per-build pipeline parameters.
 
 ## [3.0.2] - 2026-05-20 - Galaxy Check Output
 
@@ -101,7 +105,7 @@
   `docker compose exec -e`.
 - Defaulted Jenkins `main` builds to publish the GitHub release and import the
   role into Galaxy after validation, while keeping both steps separately
-  disableable with top-level environment values.
+  disableable with build parameters.
 - Added release preflight checks for pending GitHub releases, Galaxy token
   configuration, and Galaxy role read access while avoiding the Galaxy
   import-status endpoint because it can return server errors.

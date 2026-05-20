@@ -92,10 +92,10 @@ Intended Ansible Galaxy role name:
 inviqa.jumpcloud
 ```
 
-After the `3.0.2` Galaxy import is complete, install the pinned release with:
+After the `3.1.0` Galaxy import is complete, install the pinned release with:
 
 ```bash
-ansible-galaxy role install inviqa.jumpcloud,3.0.2
+ansible-galaxy role install inviqa.jumpcloud,3.1.0
 ```
 
 Until that import exists, consume the role from a local checkout or a pinned Git
@@ -221,7 +221,7 @@ The commands use `github.api_token` and `ansible.galaxy.token` from
 shell environment.
 
 Jenkins can also create the GitHub release and import the role into Galaxy from
-the `main` branch with separate publication environment values. See
+the `main` branch with separate publication build parameters. See
 [docs/jenkins-ci.md](docs/jenkins-ci.md) for the required Jenkins credentials
 and publication controls.
 
@@ -253,7 +253,7 @@ documented alongside the published source.
 
 - Public repository URL: <https://github.com/inviqa/ansible-jumpcloud>
 - Ansible Galaxy role: <https://galaxy.ansible.com/ui/standalone/roles/inviqa/jumpcloud/>
-- Publication status: pending `3.0.2` Ansible Galaxy refresh
+- Publication status: pending `3.1.0` Ansible Galaxy refresh
 
 ## License
 

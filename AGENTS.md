@@ -138,6 +138,10 @@ modified.
     credential values into the `console` container. Keep credential forwarding
     centralized there with `docker compose exec -e`, and do not pass release,
     Galaxy, GitHub, or provider tokens as command-line arguments to helpers.
+17. Jenkins operator choices must remain per-build controls, not fixed
+    credential-style environment values. Keep live-test enablement and target,
+    release version selection, and GitHub/Galaxy publication gates as build
+    parameters or an equivalent explicit Jenkins input surface.
 
 ## Changelog Policy (Always Required)
 

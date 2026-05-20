@@ -23,8 +23,6 @@ pipeline {
         JUMPCLOUD_API_KEY = credentials('ansible-jumpcloud-api-key')
         JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
         JUMPCLOUD_X_CONNECT_KEY = credentials('ansible-jumpcloud-connect-key')
-        PUBLISH_ANSIBLE_GALAXY_RELEASE = 'false'
-        PUBLISH_GITHUB_RELEASE = 'false'
         SLACK_NOTIFICATION_CHANNEL = 'ops-integrations'
         SLACK_NOTIFICATIONS_ENABLED = 'true'
         SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
@@ -46,6 +44,16 @@ pipeline {
             name: 'RELEASE_VERSION',
             defaultValue: '',
             description: 'Optional release version to publish. Leave blank to use the latest concrete CHANGELOG.md release section.'
+        )
+        booleanParam(
+            name: 'PUBLISH_GITHUB_RELEASE',
+            defaultValue: true,
+            description: 'On main only, publish the GitHub release after validation succeeds.'
+        )
+        booleanParam(
+            name: 'PUBLISH_ANSIBLE_GALAXY_RELEASE',
+            defaultValue: true,
+            description: 'On main only, import the validated release into Ansible Galaxy after validation succeeds.'
         )
     }
 
@@ -136,7 +144,7 @@ pipeline {
             when {
                 allOf {
                     branch 'main'
-                    expression { return env.PUBLISH_GITHUB_RELEASE.toBoolean() }
+                    expression { return params.PUBLISH_GITHUB_RELEASE }
                 }
             }
             steps {
@@ -153,7 +161,7 @@ pipeline {
             when {
                 allOf {
                     branch 'main'
-                    expression { return env.PUBLISH_ANSIBLE_GALAXY_RELEASE.toBoolean() }
+                    expression { return params.PUBLISH_ANSIBLE_GALAXY_RELEASE }
                 }
             }
             steps {

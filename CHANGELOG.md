@@ -60,6 +60,9 @@
 - Centralized Jenkins credential binding in the top-level pipeline environment
   and credential forwarding at the `ws console` boundary with
   `docker compose exec -e`.
+- Defaulted Jenkins `main` builds to publish the GitHub release and import the
+  role into Galaxy after validation, while keeping both steps separately
+  disableable with build parameters.
 - Added release preflight checks for pending GitHub releases, Galaxy token
   configuration, and Galaxy role read access while avoiding the Galaxy
   import-status endpoint because it can return server errors.

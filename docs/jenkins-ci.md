@@ -39,9 +39,9 @@ flowchart LR
   preflight --> gate{"RUN_LIVE_TESTS?"}
   gate -->|No| finish["Finish build"]
   gate -->|Yes| live["Run ws test-live with SSH agent"]
-  live --> github_gate{"PUBLISH_GITHUB_RELEASE on main?"}
+  live --> github_gate{"Publish GitHub release on main?"}
   github_gate -->|Yes| github_release["Create GitHub release"]
-  github_gate -->|No| galaxy_gate{"PUBLISH_ANSIBLE_GALAXY_RELEASE on main?"}
+  github_gate -->|No| galaxy_gate{"Publish Galaxy release on main?"}
   github_release --> galaxy_gate
   galaxy_gate -->|Yes| galaxy_release["Import Galaxy role"]
   galaxy_gate -->|No| notify{"Build failed?"}
@@ -101,15 +101,15 @@ defined at the top of `Jenkinsfile`:
 | `ansible-roles-test-ssh-private-key` | SSH username with private key | Private key loaded for live test droplet access. |
 | `inviqa-slack-integration-token` | Secret text | Slack token used for Jenkins failure notifications. |
 
-## Environment flags
+## Publication parameters
 
-Release publication is controlled by Jenkinsfile environment flags so the job
-owner can enable GitHub and Galaxy publication independently:
+Release publication is controlled by Jenkins build parameters so the job owner
+can disable GitHub and Galaxy publication independently:
 
-| Environment variable | Default | Purpose |
+| Parameter | Default | Purpose |
 | --- | --- | --- |
-| `PUBLISH_GITHUB_RELEASE` | `false` | On `main` only, creates the GitHub release from `CHANGELOG.md`. |
-| `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `false` | On `main` only, imports the role into Ansible Galaxy. |
+| `PUBLISH_GITHUB_RELEASE` | `true` | On `main` only, creates the GitHub release from `CHANGELOG.md`. |
+| `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `true` | On `main` only, imports the role into Ansible Galaxy. |
 
 ## Parameters
 
@@ -118,6 +118,8 @@ owner can enable GitHub and Galaxy publication independently:
 | `RUN_LIVE_TESTS` | `true` | Enables the DigitalOcean-backed JumpCloud integration test stage. |
 | `LIVE_TEST_LIMIT` | empty | Optional host limit passed to `ws test-live`. |
 | `RELEASE_VERSION` | empty | Optional release version to publish. When empty, Jenkins uses the latest concrete release section in `CHANGELOG.md`. |
+| `PUBLISH_GITHUB_RELEASE` | `true` | Enables GitHub release publication on `main` after validation succeeds. |
+| `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `true` | Enables Ansible Galaxy import on `main` after validation succeeds. |
 
 All credentials above must exist before the pipeline starts. Jenkins binds them
 once in the top-level environment, and `ws console` is the single Workspace
@@ -125,7 +127,8 @@ entrypoint that forwards matching environment variables into commands executed
 inside the `console` container.
 
 Publication stages only run for the `main` branch. Pull request and
-feature-branch builds cannot publish a release through this Jenkinsfile.
+feature-branch builds cannot publish a release through this Jenkinsfile, even
+when the publication parameters are enabled.
 
 Galaxy documents API tokens as user-account tokens and does not document a
 separate public machine-user token type. For Jenkins, the preferred operational
@@ -162,8 +165,9 @@ command derives the release body from `CHANGELOG.md`, using `RELEASE_VERSION`
 when provided or the latest concrete release section when it is left blank.
 
 The Ansible Galaxy stage only calls `ws ansible-galaxy publish`. That Workspace
-command checks the GitHub release first, imports the `main` branch into Galaxy,
-and verifies the same version with a pinned `ansible-galaxy role install`.
+command checks the GitHub release first, exits without importing when the same
+version is already visible on Galaxy, otherwise imports the `main` branch and
+verifies the version with a pinned `ansible-galaxy role install`.
 
 Enable both flags for the normal release path. Enable only the Galaxy flag when
 the GitHub release already exists and the role only needs to be reimported.

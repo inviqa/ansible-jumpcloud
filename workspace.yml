@@ -329,6 +329,9 @@ command('ansible-galaxy publish', 'ansible-galaxy publish'):
     #!bash(workspace:/)|@
     passthru ws ansible-galaxy check-token
     passthru ws github release check
+    if ws ansible-galaxy check-release; then
+      exit 0
+    fi
     passthru ws console bash -s <<'CONSOLE'
     set -euo pipefail
 

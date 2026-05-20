@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [3.0.1] - 2026-05-20 - Jenkins Publication Trigger
+
+- Retargeted the published release version after the local Galaxy publication
+  validation consumed `3.0.0`.
+- Updated the documented Galaxy install target to `3.0.1`.
+
 ## [3.0.0] - 2026-05-18 - Galaxy and Linux Support Refresh
 
 ### Breaking Changes

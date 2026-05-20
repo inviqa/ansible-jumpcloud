@@ -50,18 +50,25 @@ curl --output ./ws --location "https://github.com/my127/workspace/releases/downl
 chmod +x ws && sudo mv ws /usr/local/bin/ws
 ```
 
-Live commands read local attributes from `workspace.override.yml`. Create it
-from the example first:
+Workspace commands read local attributes from `workspace.override.yml`. Create
+it from the example first:
 
 ```text
 cp workspace.override.yml.example workspace.override.yml
 ```
 
 For live tests, fill the DigitalOcean API token, DigitalOcean SSH key selector
-list, DigitalOcean project name, JumpCloud connect key, and JumpCloud API key.
-The selected DigitalOcean SSH key must match a private key loaded in the
-forwarded SSH agent. The harness validates that match and uses the selected
+list, optional DigitalOcean project name, JumpCloud connect key, and JumpCloud
+API key. The selected DigitalOcean SSH key must match a private key loaded in
+the forwarded SSH agent. The harness validates that match and uses the selected
 DigitalOcean public key to steer SSH agent authentication.
+
+For direct Ansible runs without Workspace, create the gitignored test variable
+file instead:
+
+```text
+cp tests/test_variables.example.yml tests/test_variables.yml
+```
 
 ## Workspace Commands
 
@@ -88,8 +95,8 @@ ws cleanup-live all
 
 Both `ws console` and `ws ansible-playbook` load live-test environment values
 from `workspace.override.yml` and forward them into the `console` container.
-Other Workspace commands compose those entrypoints instead of repeating Docker
-environment wiring.
+The live playbooks also load `tests/test_variables.yml` directly, so direct
+Ansible execution can use test variables without Workspace.
 
 Use `ws syntax` for syntax checks. Internally it calls `ws ansible-playbook`
 with the Workspace syntax-check flag.
@@ -176,8 +183,10 @@ flowchart LR
 
 The DigitalOcean harness runs the role's pre-install duplicate system cleanup by
 default so reruns can replace stale records with the same display name. Set
-`test.jumpcloud.delete_duplicate_systems` to `false` in `workspace.override.yml`
-only when diagnosing the cleanup path separately.
+`test.jumpcloud.delete_duplicate_systems` to `false` in
+`workspace.override.yml`, or `jumpcloud_test_delete_duplicate_systems: false`
+in `tests/test_variables.yml` for direct Ansible runs, only when diagnosing the
+cleanup path separately.
 
 If a DigitalOcean test was interrupted, run cleanup explicitly:
 
@@ -250,8 +259,11 @@ with `jumpcloud_install_on_unsupported_distribution: true`.
 - The DigitalOcean harness creates billable droplets and deletes droplets tagged
   with `ANSIBLE-JUMPCLOUD-TEST` during cleanup.
 - Live-test droplets are assigned to the DigitalOcean project configured by
-  `test.digitalocean.project_name` in `workspace.override.yml`.
-- `tests/test_variables.yml` is gitignored and may contain local secrets.
+  `test.digitalocean.project_name` in `workspace.override.yml`, or by
+  `jumpcloud_test_do_project_name` in `tests/test_variables.yml` for direct
+  Ansible runs.
+- `workspace.override.yml` and `tests/test_variables.yml` are gitignored and
+  may contain local secrets.
 - Test display names and droplets use `ansible-jumpcloud-<target>-test`; if an
   inventory host starts with `jumpcloud-`, that prefix is removed from the
   target suffix.

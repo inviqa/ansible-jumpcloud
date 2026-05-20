@@ -98,7 +98,7 @@ log in, open token management, select `Load Token`, then copy the generated
 token. The same documentation warns that loading a token invalidates the
 previous token, so regenerating the Galaxy token requires updating Jenkins too.
 
-The Workspace publication commands read the Galaxy token from
+The Workspace publication commands read release credentials from
 `workspace.override.yml`:
 
 ```ruby
@@ -244,7 +244,8 @@ For future releases, replace `3.0.0` with the release tag.
   `ws github release publish` or create the GitHub release manually before the
   Galaxy import.
 - If `ws ansible-galaxy status` fails without a token, set
-  `ansible.galaxy.token` in `workspace.override.yml`.
+  `ansible.galaxy.token` in `workspace.override.yml` or export
+  `ANSIBLE_GALAXY_TOKEN`.
 - If Jenkins starts failing after a Galaxy token was reloaded in the UI, update
   the `ansible-roles-galaxy-token` Secret text credential. Galaxy invalidates
   the previous token when a new one is loaded.

@@ -230,7 +230,8 @@ and publication controls.
 - `AGENTS.md` defines strict repository linting and documentation rules for AI
   coding agents.
 - `.ansible/` is generated dependency/cache output and should not be committed.
-- `tests/test_variables.yml` is gitignored and may hold local live-test secrets.
+- `workspace.override.yml` and `tests/test_variables.yml` are gitignored and
+  may hold local live-test secrets.
 - Keep the role support matrix aligned with JumpCloud's published Linux agent
   compatibility list before publishing a new Galaxy release.
 

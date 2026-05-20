@@ -22,4 +22,5 @@ jumpcloud_test_delete_duplicate_systems: true
 # Optional DigitalOcean settings.
 # do_region_id: "lon1"
 # do_size_id: "s-1vcpu-1gb"
+# jumpcloud_test_do_project_name: "Inviqa Sandbox"
 # jumpcloud_test_do_tag: "ANSIBLE-JUMPCLOUD-TEST"

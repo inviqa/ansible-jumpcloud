@@ -9,7 +9,7 @@ pipeline {
     }
 
     environment {
-        ANSIBLE_GALAXY_TOKEN = credentials('ansible-jumpcloud-galaxy-token')
+        ANSIBLE_GALAXY_TOKEN = credentials('ansible-roles-galaxy-token')
         DIGITAL_OCEAN_SSH_KEYS = credentials('ansible-roles-tests-digitalocean-ssh-key-id')
         DIGITAL_OCEAN_API_TOKEN = credentials('ansible-roles-digitalocean-oauth-token')
         GITHUB_TOKEN = credentials('inviqa-ansible-roles-releases')

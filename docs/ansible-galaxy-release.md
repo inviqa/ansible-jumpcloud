@@ -123,7 +123,7 @@ operational GitHub account when company policy allows it:
    Namespace ownership may need to be granted by an existing namespace owner.
 5. Open `https://galaxy.ansible.com/ui/token/` while logged in as that account.
 6. Select `Load Token`, copy the token once, and store it in Jenkins as the
-   `ansible-jumpcloud-galaxy-token` Secret text credential.
+   `ansible-roles-galaxy-token` Secret text credential.
 
 If a dedicated GitHub publishing account is not allowed, use a maintainer-owned
 Galaxy token as an explicit operational exception and rotate it when the
@@ -166,7 +166,7 @@ Jenkins needs these credentials:
 | Credential ID | Jenkins type | Purpose |
 | --- | --- | --- |
 | `inviqa-ansible-roles-releases` | Secret text | Creates the GitHub release in `inviqa/ansible-jumpcloud`. |
-| `ansible-jumpcloud-galaxy-token` | Secret text | Imports the role into Ansible Galaxy. Prefer a token loaded by a dedicated Galaxy publishing account rather than a personal maintainer account. |
+| `ansible-roles-galaxy-token` | Secret text | Imports the role into Ansible Galaxy. Prefer a token loaded by a dedicated Galaxy publishing account rather than a personal maintainer account. |
 
 The release stage derives the release notes from `CHANGELOG.md`. Set
 `RELEASE_VERSION` to publish a specific changelog section, or leave it empty to
@@ -246,7 +246,7 @@ For future releases, replace `3.0.0` with the release tag.
 - If `ws ansible-galaxy status` fails without a token, set
   `ansible.galaxy.token` in `workspace.override.yml`.
 - If Jenkins starts failing after a Galaxy token was reloaded in the UI, update
-  the `ansible-jumpcloud-galaxy-token` Secret text credential. Galaxy invalidates
+  the `ansible-roles-galaxy-token` Secret text credential. Galaxy invalidates
   the previous token when a new one is loaded.
 - If the role description or tags look stale, confirm `meta/main.yml` is merged
   into `main`, then reimport the role.

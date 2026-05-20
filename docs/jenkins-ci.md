@@ -93,7 +93,7 @@ at the top of `Jenkinsfile`:
 | Placeholder | Jenkins credential type | Purpose |
 | --- | --- | --- |
 | `inviqa-ansible-roles-releases` | Secret text | GitHub API token used to create the release in `inviqa/ansible-jumpcloud`. |
-| `ansible-jumpcloud-galaxy-token` | Secret text | Ansible Galaxy API token used to import the role after the GitHub release exists. |
+| `ansible-roles-galaxy-token` | Secret text | Ansible Galaxy API token used to import the role after the GitHub release exists. |
 | `ansible-roles-digitalocean-oauth-token` | Secret text | DigitalOcean API token. |
 | `ansible-roles-tests-digitalocean-ssh-key-id` | Secret text | Comma-separated DigitalOcean SSH key IDs or fingerprints. |
 | `ansible-jumpcloud-connect-key` | Secret text | JumpCloud connect key for agent registration. |
@@ -137,7 +137,7 @@ Galaxy documents API tokens as user-account tokens and does not document a
 separate public machine-user token type. For Jenkins, the preferred operational
 pattern is to log in to Galaxy with a dedicated GitHub publishing account, load
 the token from `https://galaxy.ansible.com/ui/token/`, and store it as the
-`ansible-jumpcloud-galaxy-token` Secret text credential. Reloading a Galaxy
+`ansible-roles-galaxy-token` Secret text credential. Reloading a Galaxy
 token invalidates the previous one, so Jenkins must be updated whenever the
 token is regenerated.
 
@@ -181,7 +181,7 @@ Required data:
 - GitHub credential ID: `inviqa-ansible-roles-releases`
 - GitHub publication flag: `PUBLISH_GITHUB_RELEASE=true`
   - local equivalent: `ws github release publish`
-- Ansible Galaxy credential ID: `ansible-jumpcloud-galaxy-token`
+- Ansible Galaxy credential ID: `ansible-roles-galaxy-token`
 - Ansible Galaxy publication flag: `PUBLISH_ANSIBLE_GALAXY_RELEASE=true`
   - local equivalent: `ws ansible-galaxy publish`
 - Galaxy GitHub owner/repository: `inviqa/ansible-jumpcloud`

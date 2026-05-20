@@ -7,6 +7,8 @@
 - Standardized Jenkins and Workspace release credentials on the expanded
   `GITHUB_TOKEN`, `DIGITAL_OCEAN_API_TOKEN`, and `DIGITAL_OCEAN_SSH_KEYS`
   environment names.
+- Standardized the Jenkins Ansible Galaxy credential ID on the shared
+  `ansible-roles-galaxy-token` credential.
 - Kept `DO_OAUTH_TOKEN` as a backward-compatible local input fallback for
   DigitalOcean API credentials.
 - Simplified the Workspace console Dockerfile requirement-copy paths to generic

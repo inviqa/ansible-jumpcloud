@@ -9,19 +9,11 @@ pipeline {
     }
 
     environment {
-        ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-galaxy-token'
         ANSIBLE_GALAXY_TOKEN = credentials('ansible-jumpcloud-galaxy-token')
-        DO_SSH_KEYS_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-ssh-key-ids'
-        DO_SSH_KEYS = credentials('ansible-jumpcloud-digitalocean-ssh-key-ids')
-        DO_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-oauth-token'
-        DIGITAL_OCEAN_API_TOKEN = credentials('ansible-jumpcloud-digitalocean-oauth-token')
-        DO_OAUTH_TOKEN = credentials('ansible-jumpcloud-digitalocean-oauth-token')
-        GITHUB_RELEASE_CREDENTIAL_ID = 'inviqa-ansible-roles-releases'
+        DIGITAL_OCEAN_SSH_KEYS = credentials('ansible-roles-tests-digitalocean-ssh-key-id')
+        DIGITAL_OCEAN_API_TOKEN = credentials('ansible-roles-digitalocean-oauth-token')
         GITHUB_TOKEN = credentials('inviqa-ansible-roles-releases')
-        GH_TOKEN = credentials('inviqa-ansible-roles-releases')
-        JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
         JUMPCLOUD_API_KEY = credentials('ansible-jumpcloud-api-key')
-        JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
         JUMPCLOUD_X_CONNECT_KEY = credentials('ansible-jumpcloud-connect-key')
         SLACK_NOTIFICATION_CHANNEL = 'ops-integrations'
         SLACK_NOTIFICATIONS_ENABLED = 'true'

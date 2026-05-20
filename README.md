@@ -195,8 +195,8 @@ maintenance check.
 ## Jenkins CI
 
 [docs/jenkins-ci.md](docs/jenkins-ci.md) documents the private Jenkins pipeline,
-required credential bindings, Jenkinsfile lint helper, and live-test command
-sequence.
+required credential IDs and bindings, Jenkinsfile lint helper, and live-test
+command sequence.
 
 ## Publishing
 
@@ -217,8 +217,8 @@ ws ansible-galaxy publish
 ```
 
 The commands use `github.api_token` and `ansible.galaxy.token` from
-`workspace.override.yml`, or `GITHUB_TOKEN`/`GH_TOKEN` and
-`ANSIBLE_GALAXY_TOKEN` from the shell environment.
+`workspace.override.yml`, or `GITHUB_TOKEN` and `ANSIBLE_GALAXY_TOKEN` from the
+shell environment.
 
 Jenkins can also create the GitHub release and import the role into Galaxy from
 the `main` branch with separate build parameters for each publication stage.

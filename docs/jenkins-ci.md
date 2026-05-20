@@ -87,15 +87,15 @@ Recommended Jenkins configuration:
   - Ansible Galaxy API token for the `inviqa` namespace, preferably loaded by a
     dedicated publishing account rather than a personal maintainer account
 
-The credential ID placeholders and Workspace-facing environment variables are
-defined at the top of `Jenkinsfile`:
+The credential bindings and Workspace-facing environment variables are defined
+at the top of `Jenkinsfile`:
 
 | Placeholder | Jenkins credential type | Purpose |
 | --- | --- | --- |
 | `inviqa-ansible-roles-releases` | Secret text | GitHub API token used to create the release in `inviqa/ansible-jumpcloud`. |
 | `ansible-jumpcloud-galaxy-token` | Secret text | Ansible Galaxy API token used to import the role after the GitHub release exists. |
-| `ansible-jumpcloud-digitalocean-oauth-token` | Secret text | DigitalOcean API token. |
-| `ansible-jumpcloud-digitalocean-ssh-key-ids` | Secret text | Comma or newline separated DigitalOcean SSH key IDs or fingerprints. |
+| `ansible-roles-digitalocean-oauth-token` | Secret text | DigitalOcean API token. |
+| `ansible-roles-tests-digitalocean-ssh-key-id` | Secret text | Comma or newline separated DigitalOcean SSH key IDs or fingerprints. |
 | `ansible-jumpcloud-connect-key` | Secret text | JumpCloud connect key for agent registration. |
 | `ansible-jumpcloud-api-key` | Secret text | JumpCloud API key for cleanup, updates, and verification. |
 | `ansible-roles-test-ssh-private-key` | SSH username with private key | Private key loaded for live test droplet access. |

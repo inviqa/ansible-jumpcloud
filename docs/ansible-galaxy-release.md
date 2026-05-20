@@ -107,8 +107,7 @@ attribute('github.api_token'): 'your-token'
 ```
 
 The same commands also accept `ANSIBLE_GALAXY_TOKEN` from the shell
-environment for Galaxy and `GITHUB_TOKEN` or `GH_TOKEN` for GitHub. If neither
-value is set, token-required commands fail with a clear message.
+environment for Galaxy and `GITHUB_TOKEN` for GitHub.
 
 Official Galaxy documentation describes tokens as user-account tokens. It does
 not document a separate public Galaxy machine-user or service-account token

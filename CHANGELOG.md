@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [3.0.3] - 2026-05-20 - Jenkins Credential and Documentation Updates
+
+- Corrected Jenkins credential IDs for DigitalOcean live tests and reduced
+  duplicate Jenkins credential bindings for compatible token environment names.
+- Standardized Jenkins and Workspace release credentials on the expanded
+  `GITHUB_TOKEN`, `DIGITAL_OCEAN_API_TOKEN`, and `DIGITAL_OCEAN_SSH_KEYS`
+  environment names.
+- Kept `DO_OAUTH_TOKEN` as a backward-compatible local input fallback for
+  DigitalOcean API credentials.
+- Simplified the Workspace console Dockerfile requirement-copy paths to generic
+  temporary filenames shared across sibling role repositories.
+- Updated Jenkins CI documentation to match the current credential IDs.
+
 ## [3.0.2] - 2026-05-20 - Galaxy Check Output
 
 - Clarified the Galaxy release check output so it reports missing GitHub

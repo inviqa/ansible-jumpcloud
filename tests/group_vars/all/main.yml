@@ -12,7 +12,7 @@ jumpcloud_test_do_api_token: >-
   }}
 jumpcloud_test_do_ssh_keys_from_env: >-
   {{
-    lookup('env', 'DO_SSH_KEYS')
+    lookup('env', 'DIGITAL_OCEAN_SSH_KEYS')
     | default('', true)
     | split(',')
     | map('trim')

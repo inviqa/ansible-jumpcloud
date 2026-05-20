@@ -22,19 +22,7 @@ services:
     environment:
       ANSIBLE_COLLECTIONS_PATH: /home/ansible/.ansible/collections:/usr/share/ansible/collections
       ANSIBLE_FORCE_COLOR: "false"
-      ANSIBLE_GALAXY_TOKEN: ~
       ANSIBLE_ROLES_PATH: /app/tests/roles:/app/.ansible/roles:/home/ansible/.ansible/roles
-      DIGITAL_OCEAN_API_TOKEN: ~
-      DO_OAUTH_TOKEN: ~
-      DO_SSH_KEYS: ~
-      GH_TOKEN: ~
-      GITHUB_TOKEN: ~
-      HOME: /home/ansible
-      JUMPCLOUD_API_KEY: ~
-      JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS: ~
-      JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS: ~
-      JUMPCLOUD_TEST_SYSTEM_GROUPS: ~
-      JUMPCLOUD_X_CONNECT_KEY: ~
       SSH_AUTH_SOCK: /run/host-services/ssh-auth.sock
     volumes:
       - ${HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock

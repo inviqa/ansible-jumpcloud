@@ -15,7 +15,7 @@ The pipeline runs on a Jenkins node with Workspace installed and executes:
 - syntax checks through `ws syntax`
 - container-backed role validation through `ws test-docker`
 - non-mutating release preflight checks for GitHub release readiness and
-  Ansible Galaxy token/status access
+  Ansible Galaxy token configuration and read access
 - the live DigitalOcean JumpCloud test matrix through `ws test-live`
 - optional GitHub release creation from `main`
 - optional Ansible Galaxy import from `main`
@@ -38,8 +38,7 @@ flowchart LR
   container --> preflight["Run release preflight"]
   preflight --> gate{"RUN_LIVE_TESTS?"}
   gate -->|No| finish["Finish build"]
-  gate -->|Yes| creds["Load Jenkins credentials"]
-  creds --> live["Run ws test-live with SSH agent"]
+  gate -->|Yes| live["Run ws test-live with SSH agent"]
   live --> github_gate{"PUBLISH_GITHUB_RELEASE on main?"}
   github_gate -->|Yes| github_release["Create GitHub release"]
   github_gate -->|No| galaxy_gate{"PUBLISH_ANSIBLE_GALAXY_RELEASE on main?"}
@@ -88,7 +87,8 @@ Recommended Jenkins configuration:
   - Ansible Galaxy API token for the `inviqa` namespace, preferably loaded by a
     dedicated publishing account rather than a personal maintainer account
 
-The credential ID placeholders are defined at the top of `Jenkinsfile`:
+The credential ID placeholders and Workspace-facing environment variables are
+defined at the top of `Jenkinsfile`:
 
 | Placeholder | Jenkins credential type | Purpose |
 | --- | --- | --- |
@@ -119,10 +119,12 @@ owner can enable GitHub and Galaxy publication independently:
 | `LIVE_TEST_LIMIT` | empty | Optional host limit passed to `ws test-live`. |
 | `RELEASE_VERSION` | empty | Optional release version to publish. When empty, Jenkins uses the latest concrete release section in `CHANGELOG.md`. |
 
-When `RUN_LIVE_TESTS` is enabled, all non-Slack credentials above must exist.
+All credentials above must exist before the pipeline starts. Jenkins binds them
+once in the top-level environment, and `ws console` is the single Workspace
+entrypoint that forwards matching environment variables into commands executed
+inside the `console` container.
 
-When either publication flag is enabled, the matching credential above must
-exist. Publication stages only run for the `main` branch. Pull request and
+Publication stages only run for the `main` branch. Pull request and
 feature-branch builds cannot publish a release through this Jenkinsfile.
 
 Galaxy documents API tokens as user-account tokens and does not document a
@@ -139,15 +141,19 @@ Every Jenkins build runs a non-mutating release preflight before live tests:
 
 ```text
 ws github release check
-ws ansible-galaxy status
+ws ansible-galaxy check-token
+ws ansible-galaxy info
 ```
 
 The GitHub check accepts exit code `0` when the release already exists and exit
 code `2` when the changelog has a concrete release that is not published yet.
 The latter is expected for a pull request that prepares a release.
 
-The Galaxy status check validates the Galaxy token, command wiring, and Galaxy
-API reachability without importing a new role release.
+The Galaxy checks validate token configuration, command wiring, and Galaxy API
+read reachability without importing a new role release. The
+`ws ansible-galaxy status` command remains available for manual import-status
+diagnostics, but Jenkins does not use it as a preflight gate because Galaxy can
+return transient server errors for the status endpoint.
 
 ## Release publication
 

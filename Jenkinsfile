@@ -105,7 +105,8 @@ pipeline {
 
                     [ "${github_release_status}" = 0 ] || [ "${github_release_status}" = 2 ] || exit "${github_release_status}"
 
-                    ws ansible-galaxy status
+                    ws ansible-galaxy check-token
+                    ws ansible-galaxy info
                 '''
             }
             post {

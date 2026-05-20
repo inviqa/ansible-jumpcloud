@@ -195,7 +195,7 @@ maintenance check.
 ## Jenkins CI
 
 [docs/jenkins-ci.md](docs/jenkins-ci.md) documents the private Jenkins pipeline,
-required credential placeholders, Jenkinsfile lint helper, and live-test command
+required credential bindings, Jenkinsfile lint helper, and live-test command
 sequence.
 
 ## Publishing

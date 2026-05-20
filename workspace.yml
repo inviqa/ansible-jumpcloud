@@ -19,19 +19,8 @@ command('enable %', 'enable'):
   description: "Usage: ws enable [service]. Start all services or one service."
   env:
     PARAMETER: = input.argument('%')
-    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
-    DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
-    DO_OAUTH_TOKEN: "= @('test.digitalocean.api_token') ?: env('DO_OAUTH_TOKEN') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: ''"
-    DO_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ?: env('DO_SSH_KEYS') ?: ''"
-    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
-    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
     HOST_DOCKER_SOCK: "= env('HOST_DOCKER_SOCK') ?: '/var/run/docker.sock'"
     HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
-    JUMPCLOUD_API_KEY: "= @('test.jumpcloud.api_key') ?: env('JUMPCLOUD_API_KEY') ?: ''"
-    JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS: "= @('test.jumpcloud.create_missing_system_groups')"
-    JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS: "= @('test.jumpcloud.delete_duplicate_systems')"
-    JUMPCLOUD_TEST_SYSTEM_GROUPS: "= @('test.jumpcloud.system_groups') ?: env('JUMPCLOUD_TEST_SYSTEM_GROUPS') ?: ''"
-    JUMPCLOUD_X_CONNECT_KEY: "= @('test.jumpcloud.x_connect_key') ?: env('JUMPCLOUD_X_CONNECT_KEY') ?: ''"
   exec: |
     #!bash(workspace:/)|@
     # Compose uses this GID as a supplemental group for Docker socket access.
@@ -107,7 +96,18 @@ command('destroy', 'destroy'):
 command('console %', 'console'):
   description: "Usage: ws console [command]. Run a command in the Ansible console container."
   env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+    DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
+    DO_OAUTH_TOKEN: "= @('test.digitalocean.api_token') ?: env('DO_OAUTH_TOKEN') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: ''"
+    DO_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ?: env('DO_SSH_KEYS') ?: ''"
+    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
+    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
     HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
+    JUMPCLOUD_API_KEY: "= @('test.jumpcloud.api_key') ?: env('JUMPCLOUD_API_KEY') ?: ''"
+    JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS: "= @('test.jumpcloud.create_missing_system_groups')"
+    JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS: "= @('test.jumpcloud.delete_duplicate_systems')"
+    JUMPCLOUD_TEST_SYSTEM_GROUPS: "= @('test.jumpcloud.system_groups') ?: env('JUMPCLOUD_TEST_SYSTEM_GROUPS') ?: ''"
+    JUMPCLOUD_X_CONNECT_KEY: "= @('test.jumpcloud.x_connect_key') ?: env('JUMPCLOUD_X_CONNECT_KEY') ?: ''"
     PARAMETER: = input.argument('%')
   exec: |
     #!bash(workspace:/)|@
@@ -123,6 +123,18 @@ command('console %', 'console'):
 
     ws enable console
     passthru docker compose "${docker_exec_args[@]}" \
+      -e ANSIBLE_GALAXY_TOKEN \
+      -e DIGITAL_OCEAN_API_TOKEN \
+      -e DO_OAUTH_TOKEN \
+      -e DO_SSH_KEYS \
+      -e GH_TOKEN \
+      -e GITHUB_TOKEN \
+      -e JUMPCLOUD_API_KEY \
+      -e JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS \
+      -e JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS \
+      -e JUMPCLOUD_TEST_SYSTEM_GROUPS \
+      -e JUMPCLOUD_X_CONNECT_KEY \
+      -e HOME=/home/ansible \
       -u ansible \
       console \
       "${docker_command[@]}"

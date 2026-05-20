@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [3.0.2] - 2026-05-20 - Galaxy Check Output
+
+- Clarified the Galaxy release check output so it reports missing GitHub
+  release state instead of prescribing a publish command.
+- Expanded the Galaxy release check output with the resolved release version,
+  GitHub release state, and Galaxy pinned-install state.
+- Updated the documented Galaxy install target to `3.0.2`.
+
 ## [3.0.1] - 2026-05-20 - Jenkins Publication Trigger
 
 - Retargeted the published release version after the local Galaxy publication

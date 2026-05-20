@@ -293,20 +293,23 @@ command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
     RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
   exec: |
     #!bash(workspace:/)|@
+    version="$(ws github release version)"
+    printf 'Checking release %s against GitHub and Ansible Galaxy.\n' "${version}"
+
     set +e
     ws github release check
     github_rc=$?
     set -e
     if [[ "${github_rc}" -eq 2 ]]; then
-      echo "Run ws github release publish before importing Ansible Galaxy." >&2
+      printf 'GitHub release %s is not published yet, so Galaxy version inviqa.jumpcloud,%s cannot be verified.\n' "${version}" "${version}" >&2
       exit 1
     fi
     if [[ "${github_rc}" -ne 0 ]]; then
-      echo "Fix CHANGELOG.md or GitHub release state before checking Ansible Galaxy." >&2
+      printf 'GitHub release check failed for %s; fix CHANGELOG.md or GitHub release state before checking Galaxy.\n' "${version}" >&2
       exit "${github_rc}"
     fi
+    printf 'GitHub release %s is published; checking Galaxy pinned install.\n' "${version}"
 
-    version="$(ws github release version)"
     passthru ws console bash -s -- "${version}" <<'CONSOLE'
     set -euo pipefail
 
@@ -315,9 +318,10 @@ command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
     trap 'rm -rf "${tmp_roles}"' EXIT
 
     if ! ansible-galaxy role install --roles-path "${tmp_roles}" "inviqa.jumpcloud,${version}"; then
-      printf 'Ansible Galaxy does not expose inviqa.jumpcloud,%s; run ws ansible-galaxy publish after the GitHub release exists.\n' "${version}" >&2
+      printf 'Ansible Galaxy does not expose inviqa.jumpcloud,%s yet.\n' "${version}" >&2
       exit 1
     fi
+    printf 'Ansible Galaxy exposes inviqa.jumpcloud,%s and pinned install succeeds.\n' "${version}"
     CONSOLE
 
 command('ansible-galaxy publish', 'ansible-galaxy publish'):

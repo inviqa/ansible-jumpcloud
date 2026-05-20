@@ -92,10 +92,10 @@ Intended Ansible Galaxy role name:
 inviqa.jumpcloud
 ```
 
-After the `3.0.1` Galaxy import is complete, install the pinned release with:
+After the `3.0.2` Galaxy import is complete, install the pinned release with:
 
 ```bash
-ansible-galaxy role install inviqa.jumpcloud,3.0.1
+ansible-galaxy role install inviqa.jumpcloud,3.0.2
 ```
 
 Until that import exists, consume the role from a local checkout or a pinned Git
@@ -253,7 +253,7 @@ documented alongside the published source.
 
 - Public repository URL: <https://github.com/inviqa/ansible-jumpcloud>
 - Ansible Galaxy role: <https://galaxy.ansible.com/ui/standalone/roles/inviqa/jumpcloud/>
-- Publication status: pending `3.0.1` Ansible Galaxy refresh
+- Publication status: pending `3.0.2` Ansible Galaxy refresh
 
 ## License
 

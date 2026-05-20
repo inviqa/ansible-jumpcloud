@@ -163,8 +163,8 @@ command('syntax', 'syntax'):
   exec: |
     #!bash(workspace:/)|@
     WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory-docker
-    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory-digitalocean-droplets
-    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook_cleanup.yml tests/inventory-digitalocean-droplets
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook_cleanup.yml tests/inventory
 
 command('ansible-lint', 'ansible-lint'):
   description: Run ansible-lint for the role inside the console container.
@@ -388,22 +388,29 @@ command('test-docker', 'test-docker'):
 
     exit "${cleanup_rc}"
 
-command('test-live %', 'test-live'):
-  description: "Usage: ws test-live [limit]. Run DigitalOcean JumpCloud live tests and cleanup."
+command('test-live <target>', 'test-live'):
+  description: "Usage: ws test-live <all|debian|redhat|ubuntu>. Run DigitalOcean JumpCloud live tests and cleanup."
   env:
-    LIMIT: = input.argument('%')
+    TARGET: = input.argument('target')
   exec: |
     #!bash(workspace:/)|@
     run_rc=0
     cleanup_rc=0
+    playbook_limit="${TARGET}"
 
-    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+    if [[ ! "${TARGET}" =~ ^(all|debian|redhat|ubuntu)$ ]]; then
+      echo "Usage: ws test-live <all|debian|redhat|ubuntu>" >&2
+      exit 1
+    fi
+    [[ "${TARGET}" != "all" ]] || playbook_limit=''
+
+    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible-playbook \
       tests/playbook.yml \
-      tests/inventory-digitalocean-droplets || run_rc=$?
+      tests/inventory || run_rc=$?
 
-    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible-playbook \
       tests/playbook_cleanup.yml \
-      tests/inventory-digitalocean-droplets || cleanup_rc=$?
+      tests/inventory || cleanup_rc=$?
 
     if [[ "${run_rc}" -ne 0 ]]; then
       exit "${run_rc}"
@@ -411,18 +418,20 @@ command('test-live %', 'test-live'):
 
     exit "${cleanup_rc}"
 
-command('test-live-rocky', 'test-live-rocky'):
-  description: Run one Rocky Linux 9 DigitalOcean JumpCloud live test.
-  exec: |
-    #!bash(workspace:/)|@
-    ws test-live jumpcloud-rocky9
-
-command('cleanup-live %', 'cleanup-live'):
-  description: "Usage: ws cleanup-live [limit]. Remove live JumpCloud and DigitalOcean test resources."
+command('cleanup-live <target>', 'cleanup-live'):
+  description: "Usage: ws cleanup-live <all|debian|redhat|ubuntu>. Remove live JumpCloud and DigitalOcean test resources."
   env:
-    LIMIT: = input.argument('%')
+    TARGET: = input.argument('target')
   exec: |
     #!bash(workspace:/)|@
-    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+    playbook_limit="${TARGET}"
+
+    if [[ ! "${TARGET}" =~ ^(all|debian|redhat|ubuntu)$ ]]; then
+      echo "Usage: ws cleanup-live <all|debian|redhat|ubuntu>" >&2
+      exit 1
+    fi
+    [[ "${TARGET}" != "all" ]] || playbook_limit=''
+
+    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible-playbook \
       tests/playbook_cleanup.yml \
-      tests/inventory-digitalocean-droplets
+      tests/inventory

@@ -79,9 +79,11 @@ ws ansible-lint
 ws ansible-playbook tests/playbook.yml tests/inventory-docker
 ws lint-jenkinsfile
 ws test-docker
-ws test-live
-ws test-live-rocky
-ws cleanup-live
+ws test-live all
+ws test-live debian
+ws test-live redhat
+ws test-live ubuntu
+ws cleanup-live all
 ```
 
 Both `ws console` and `ws ansible-playbook` load live-test environment values
@@ -131,14 +133,19 @@ ws syntax
 Run the DigitalOcean-backed end-to-end harness:
 
 ```text
-ws test-live
+ws test-live all
 ```
 
-To run one Rocky Linux target locally:
+Run one target group only:
 
 ```text
-ws test-live-rocky
+ws test-live debian
+ws test-live redhat
+ws test-live ubuntu
 ```
+
+`ws test-live` requires an explicit target. The available targets are `all`,
+`debian`, `redhat`, and `ubuntu`.
 
 The live playbook:
 
@@ -175,7 +182,7 @@ only when diagnosing the cleanup path separately.
 If a DigitalOcean test was interrupted, run cleanup explicitly:
 
 ```text
-ws cleanup-live
+ws cleanup-live all
 ```
 
 ## Jenkinsfile Lint
@@ -196,7 +203,7 @@ DigitalOcean live tests run cleanup automatically. If a live run is interrupted,
 remove matching JumpCloud test system records and DigitalOcean droplets with:
 
 ```text
-ws cleanup-live
+ws cleanup-live all
 ```
 
 Container test cleanup is part of `ws test-docker`.

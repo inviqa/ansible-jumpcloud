@@ -1,19 +1,19 @@
 [local]
 localhost ansible_connection=local
 
-[jumpcloud_debian]
+[debian]
 jumpcloud-debian12 ansible_host=jumpcloud-debian12 ansible_connection=docker jumpcloud_container_image=geerlingguy/docker-debian12-ansible:latest
 
-[jumpcloud_redhat]
+[redhat]
 jumpcloud-rocky9 ansible_host=jumpcloud-rocky9 ansible_connection=docker jumpcloud_container_image=geerlingguy/docker-rockylinux9-ansible:latest
 
-[jumpcloud_ubuntu]
+[ubuntu]
 jumpcloud-ubuntu2404 ansible_host=jumpcloud-ubuntu2404 ansible_connection=docker jumpcloud_container_image=geerlingguy/docker-ubuntu2404-ansible:latest
 
 [jumpcloud_test_hosts:children]
-jumpcloud_debian
-jumpcloud_redhat
-jumpcloud_ubuntu
+debian
+redhat
+ubuntu
 
 [jumpcloud_test_hosts:vars]
 ansible_python_interpreter=/usr/bin/python3

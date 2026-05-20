@@ -159,7 +159,7 @@ successful import.
 
 Jenkins can publish the GitHub release and import the role into Galaxy after a
 successful `main` build. The two publication steps are separate stages
-controlled by Jenkins build parameters.
+controlled by top-level Jenkinsfile environment defaults.
 
 Jenkins needs these credentials:
 
@@ -185,12 +185,12 @@ ws ansible-galaxy publish
 This keeps Jenkins as an orchestrator only. The release checks and publication
 behavior remain reusable from a local checkout.
 
-| Parameter | Default | Purpose |
+| Environment value | Default | Purpose |
 | --- | --- | --- |
 | `PUBLISH_GITHUB_RELEASE` | `true` | Create the GitHub release from `CHANGELOG.md` on `main`. |
 | `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `true` | Import the `main` branch into Ansible Galaxy when the version is not already visible. |
 
-Keep both parameters enabled for the normal release path. Disable GitHub
+Keep both values enabled for the normal release path. Disable GitHub
 publication when the GitHub release already exists and the role only needs a
 Galaxy reimport.
 

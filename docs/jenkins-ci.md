@@ -101,22 +101,15 @@ at the top of `Jenkinsfile`:
 | `ansible-roles-test-ssh-private-key` | SSH username with private key | Private key loaded for live test droplet access. |
 | `inviqa-slack-integration-token` | Secret text | Slack token used for Jenkins failure notifications. |
 
-## Publication parameters
+## Jenkins environment defaults
 
-Release publication is controlled by Jenkins build parameters so the job owner
-can disable GitHub and Galaxy publication independently:
+Release publication and live-test scope are controlled by top-level Jenkinsfile
+environment defaults:
 
-| Parameter | Default | Purpose |
-| --- | --- | --- |
-| `PUBLISH_GITHUB_RELEASE` | `true` | On `main` only, creates the GitHub release from `CHANGELOG.md`. |
-| `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `true` | On `main` only, imports the role into Ansible Galaxy. |
-
-## Parameters
-
-| Parameter | Default | Purpose |
+| Environment value | Default | Purpose |
 | --- | --- | --- |
 | `RUN_LIVE_TESTS` | `true` | Enables the DigitalOcean-backed JumpCloud integration test stage. |
-| `LIVE_TEST_LIMIT` | empty | Optional host limit passed to `ws test-live`. |
+| `LIVE_TEST_TARGET` | `all` | Target passed to `ws test-live`; valid values are `all`, `debian`, `redhat`, and `ubuntu`. |
 | `RELEASE_VERSION` | empty | Optional release version to publish. When empty, Jenkins uses the latest concrete release section in `CHANGELOG.md`. |
 | `PUBLISH_GITHUB_RELEASE` | `true` | Enables GitHub release publication on `main` after validation succeeds. |
 | `PUBLISH_ANSIBLE_GALAXY_RELEASE` | `true` | Enables Ansible Galaxy import on `main` after validation succeeds. |
@@ -128,7 +121,7 @@ inside the `console` container.
 
 Publication stages only run for the `main` branch. Pull request and
 feature-branch builds cannot publish a release through this Jenkinsfile, even
-when the publication parameters are enabled.
+when the publication environment values are enabled.
 
 Galaxy documents API tokens as user-account tokens and does not document a
 separate public machine-user token type. For Jenkins, the preferred operational
@@ -215,5 +208,5 @@ ws enable
 ws ansible-lint
 ws syntax
 ws test-docker
-ws test-live
+ws test-live all
 ```

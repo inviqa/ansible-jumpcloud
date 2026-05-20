@@ -15,38 +15,15 @@ pipeline {
         GITHUB_TOKEN = credentials('inviqa-ansible-roles-releases')
         JUMPCLOUD_API_KEY = credentials('ansible-jumpcloud-api-key')
         JUMPCLOUD_X_CONNECT_KEY = credentials('ansible-jumpcloud-connect-key')
+        LIVE_TEST_TARGET = 'all'
+        PUBLISH_ANSIBLE_GALAXY_RELEASE = 'true'
+        PUBLISH_GITHUB_RELEASE = 'true'
+        RELEASE_VERSION = ''
+        RUN_LIVE_TESTS = 'true'
         SLACK_NOTIFICATION_CHANNEL = 'ops-integrations'
         SLACK_NOTIFICATIONS_ENABLED = 'true'
         SLACK_TOKEN_CREDENTIAL_ID = 'inviqa-slack-integration-token'
         SSH_PRIVATE_KEY_CREDENTIAL_ID = 'ansible-roles-test-ssh-private-key'
-    }
-
-    parameters {
-        booleanParam(
-            name: 'RUN_LIVE_TESTS',
-            defaultValue: true,
-            description: 'Run the DigitalOcean-backed JumpCloud live integration test matrix.'
-        )
-        string(
-            name: 'LIVE_TEST_LIMIT',
-            defaultValue: '',
-            description: 'Optional Ansible host limit for ws test-live. Leave blank to run the full live matrix.'
-        )
-        string(
-            name: 'RELEASE_VERSION',
-            defaultValue: '',
-            description: 'Optional release version to publish. Leave blank to use the latest concrete CHANGELOG.md release section.'
-        )
-        booleanParam(
-            name: 'PUBLISH_GITHUB_RELEASE',
-            defaultValue: true,
-            description: 'On main only, publish the GitHub release after validation succeeds.'
-        )
-        booleanParam(
-            name: 'PUBLISH_ANSIBLE_GALAXY_RELEASE',
-            defaultValue: true,
-            description: 'On main only, import the validated release into Ansible Galaxy after validation succeeds.'
-        )
     }
 
     stages {
@@ -99,7 +76,7 @@ pipeline {
             steps {
                 sh '''
                     set +e
-                    RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release check
+                    ws github release check
                     github_release_status="$?"
                     set -e
 
@@ -118,11 +95,11 @@ pipeline {
 
         stage('Live DigitalOcean JumpCloud tests') {
             when {
-                expression { return params.RUN_LIVE_TESTS }
+                expression { return env.RUN_LIVE_TESTS == 'true' }
             }
             steps {
                 sshagent(credentials: [env.SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
-                    sh 'ws test-live "${LIVE_TEST_LIMIT:-}"'
+                    sh 'ws test-live "${LIVE_TEST_TARGET}"'
                 }
             }
             post {
@@ -136,11 +113,11 @@ pipeline {
             when {
                 allOf {
                     branch 'main'
-                    expression { return params.PUBLISH_GITHUB_RELEASE }
+                    expression { return env.PUBLISH_GITHUB_RELEASE == 'true' }
                 }
             }
             steps {
-                sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release publish'
+                sh 'ws github release publish'
             }
             post {
                 failure {
@@ -153,11 +130,11 @@ pipeline {
             when {
                 allOf {
                     branch 'main'
-                    expression { return params.PUBLISH_ANSIBLE_GALAXY_RELEASE }
+                    expression { return env.PUBLISH_ANSIBLE_GALAXY_RELEASE == 'true' }
                 }
             }
             steps {
-                sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws ansible-galaxy publish'
+                sh 'ws ansible-galaxy publish'
             }
             post {
                 failure {

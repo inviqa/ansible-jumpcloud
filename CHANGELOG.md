@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [3.0.3] - 2026-05-20 - Jenkins Credential and Documentation Updates
+## [3.1.0] - 2026-05-20 - Jenkins Credential and Documentation Updates
 
 - Corrected Jenkins credential IDs for DigitalOcean live tests and reduced
   duplicate Jenkins credential bindings for compatible token environment names.
@@ -15,6 +15,11 @@
   only when forwarding it to the console container.
 - Validated live-test SSH agent access against DigitalOcean MD5 fingerprints and
   always selected the matching DigitalOcean public key for SSH authentication.
+- Replaced free-form live-test limits with explicit Workspace targets:
+  `ws test-live all`, `ws test-live debian`, `ws test-live redhat`, and
+  `ws test-live ubuntu`.
+- Consolidated DigitalOcean live tests on `tests/inventory` and removed
+  redundant per-family inventory files.
 - Updated Jenkins CI documentation to match the current credential IDs.
 
 ## [3.0.2] - 2026-05-20 - Galaxy Check Output
@@ -93,7 +98,7 @@
   `docker compose exec -e`.
 - Defaulted Jenkins `main` builds to publish the GitHub release and import the
   role into Galaxy after validation, while keeping both steps separately
-  disableable with build parameters.
+  disableable with top-level environment values.
 - Added release preflight checks for pending GitHub releases, Galaxy token
   configuration, and Galaxy role read access while avoiding the Galaxy
   import-status endpoint because it can return server errors.
@@ -106,7 +111,7 @@
 - Documented reusable Workspace GitHub release and Ansible Galaxy publication
   commands for both local operators and Jenkins.
 - Updated Jenkins CI documentation with credential requirements, release
-  parameters, top-level credential binding, and centralized Workspace console
+  controls, top-level credential binding, and centralized Workspace console
   credential forwarding.
 - Added README and agent guidance for the changelog, Workspace-first linting,
   Jenkins validation, and release-publication boundaries.

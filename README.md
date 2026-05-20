@@ -221,9 +221,9 @@ The commands use `github.api_token` and `ansible.galaxy.token` from
 shell environment.
 
 Jenkins can also create the GitHub release and import the role into Galaxy from
-the `main` branch with separate build parameters for each publication stage.
-See [docs/jenkins-ci.md](docs/jenkins-ci.md) for the required Jenkins
-credentials and publication controls.
+the `main` branch with separate publication environment values. See
+[docs/jenkins-ci.md](docs/jenkins-ci.md) for the required Jenkins credentials
+and publication controls.
 
 ## Development Notes
 

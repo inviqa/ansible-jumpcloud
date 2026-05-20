@@ -5,7 +5,7 @@
 jumpcloud_test_x_connect_key: "your-jumpcloud-connect-key"
 jumpcloud_test_api_key: "your-jumpcloud-api-key"
 
-# Required for tests/inventory-digitalocean-droplets.
+# Required for tests/inventory.
 do_test_api_token: "dop_v1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 do_ssh_keys:
   - "12345678"

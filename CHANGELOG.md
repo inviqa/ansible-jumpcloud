@@ -2,6 +2,10 @@
 
 ## [3.1.0] - 2026-05-20 - Jenkins Credential and Documentation Updates
 
+- Added a Workspace-provided DigitalOcean project name for live-test droplets
+  and assigned created test droplets to that project.
+- Documented that DigitalOcean live-test project assignment belongs in
+  `workspace.override.yml`, not test variable files.
 - Corrected Jenkins credential IDs for DigitalOcean live tests and reduced
   duplicate Jenkins credential bindings for compatible token environment names.
 - Standardized Jenkins and Workspace release credentials on the expanded

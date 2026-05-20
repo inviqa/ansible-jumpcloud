@@ -189,8 +189,8 @@ For local checkout testing before Galaxy publication, use the local role name
 
 The current test workflow is documented in [docs/testing.md](docs/testing.md).
 It covers Workspace commands, container tests, DigitalOcean live tests,
-Jenkinsfile lint, cleanup, the Workspace CLI install command, and the Debian 13
-maintenance check.
+Jenkinsfile lint, cleanup, DigitalOcean project assignment for test droplets,
+the Workspace CLI install command, and the Debian 13 maintenance check.
 
 ## Jenkins CI
 

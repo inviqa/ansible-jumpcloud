@@ -22,6 +22,11 @@ jumpcloud_test_do_ssh_keys_from_env: >-
 do_ssh_keys: "{{ jumpcloud_test_do_ssh_keys_from_env | default([], true) }}"
 jumpcloud_test_do_api_base_url: "https://api.digitalocean.com/v2"
 jumpcloud_test_do_tag: "{{ do_test_tag | default('ANSIBLE-JUMPCLOUD-TEST') }}"
+jumpcloud_test_do_project_name: >-
+  {{
+    lookup('env', 'DIGITAL_OCEAN_PROJECT_NAME')
+    | default('', true)
+  }}
 jumpcloud_test_target_name: "{{ inventory_hostname | regex_replace('^jumpcloud-', '') }}"
 jumpcloud_test_droplet_name: "ansible-jumpcloud-{{ jumpcloud_test_target_name }}-test"
 jumpcloud_test_system_groups_from_env: >-

@@ -17,6 +17,17 @@
   register: jumpcloud_test_do_create
   no_log: true
 
+- name: Assign the JumpCloud test droplet to the DigitalOcean project
+  digitalocean.cloud.project_resources:
+    state: present
+    project_name: "{{ jumpcloud_test_do_project_name }}"
+    token: "{{ digital_ocean_api_token }}"
+    resources:
+      - "do:droplet:{{ jumpcloud_test_do_create.droplet.id }}"
+  delegate_to: localhost
+  no_log: true
+  when: jumpcloud_test_do_project_name | length > 0
+
 - name: Store DigitalOcean droplet metadata
   ansible.builtin.set_fact:
     jumpcloud_test_droplet_id: "{{ jumpcloud_test_do_create.droplet.id }}"

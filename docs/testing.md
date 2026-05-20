@@ -58,10 +58,10 @@ cp workspace.override.yml.example workspace.override.yml
 ```
 
 For live tests, fill the DigitalOcean API token, DigitalOcean SSH key selector
-list, JumpCloud connect key, and JumpCloud API key. The selected DigitalOcean
-SSH key must match a private key loaded in the forwarded SSH agent. The harness
-validates that match and uses the selected DigitalOcean public key to steer SSH
-agent authentication.
+list, DigitalOcean project name, JumpCloud connect key, and JumpCloud API key.
+The selected DigitalOcean SSH key must match a private key loaded in the
+forwarded SSH agent. The harness validates that match and uses the selected
+DigitalOcean public key to steer SSH agent authentication.
 
 ## Workspace Commands
 
@@ -249,6 +249,8 @@ with `jumpcloud_install_on_unsupported_distribution: true`.
 - The default container harness does not register containers in JumpCloud.
 - The DigitalOcean harness creates billable droplets and deletes droplets tagged
   with `ANSIBLE-JUMPCLOUD-TEST` during cleanup.
+- Live-test droplets are assigned to the DigitalOcean project configured by
+  `test.digitalocean.project_name` in `workspace.override.yml`.
 - `tests/test_variables.yml` is gitignored and may contain local secrets.
 - Test display names and droplets use `ansible-jumpcloud-<target>-test`; if an
   inventory host starts with `jumpcloud-`, that prefix is removed from the

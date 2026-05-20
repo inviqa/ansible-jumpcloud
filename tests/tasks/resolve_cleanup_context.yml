@@ -1,0 +1,26 @@
+---
+- name: Resolve cleanup credentials
+  ansible.builtin.set_fact:
+    jumpcloud_api_key: >-
+      {{
+        lookup('env', 'JUMPCLOUD_API_KEY')
+        | default(jumpcloud_test_api_key | default(''), true)
+      }}
+  no_log: true
+
+- name: Resolve cleanup test identity
+  ansible.builtin.import_tasks: resolve_test_target_identity.yml
+
+- name: Resolve cleanup display name
+  ansible.builtin.set_fact:
+    jumpcloud_effective_display_name: "{{ jumpcloud_test_display_name }}"
+  no_log: true
+
+- name: Check whether JumpCloud API cleanup should run
+  ansible.builtin.set_fact:
+    jumpcloud_test_run_api_cleanup: >-
+      {{
+        jumpcloud_test_run_agent_install | default(false) | bool
+        and jumpcloud_api_key | length > 0
+      }}
+  no_log: true

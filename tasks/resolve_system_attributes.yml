@@ -1,0 +1,37 @@
+---
+- name: Resolve JumpCloud system attribute variables
+  ansible.builtin.set_fact:
+    jumpcloud_effective_display_name: >-
+      {{ lookup('ansible.builtin.vars', 'jumpcloud_displayName', default=jumpcloud_display_name) }}
+    jumpcloud_effective_allow_public_key_authentication: >-
+      {{
+        lookup(
+          'ansible.builtin.vars',
+          'jumpcloud_allowPublicKeyAuthentication',
+          default=jumpcloud_allow_public_key_authentication
+        )
+      }}
+    jumpcloud_effective_allow_ssh_password_authentication: >-
+      {{
+        lookup(
+          'ansible.builtin.vars',
+          'jumpcloud_allowSshPasswordAuthentication',
+          default=jumpcloud_allow_ssh_password_authentication
+        )
+      }}
+    jumpcloud_effective_allow_ssh_root_login: >-
+      {{
+        lookup(
+          'ansible.builtin.vars',
+          'jumpcloud_allowSshRootLogin',
+          default=jumpcloud_allow_ssh_root_login
+        )
+      }}
+    jumpcloud_effective_allow_multi_factor_authentication: >-
+      {{
+        lookup(
+          'ansible.builtin.vars',
+          'jumpcloud_allowMultiFactorAuthentication',
+          default=jumpcloud_allow_multi_factor_authentication
+        )
+      }}

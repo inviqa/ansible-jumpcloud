@@ -1,0 +1,39 @@
+---
+- name: Delete registered systems with the same displayName from JumpCloud
+  ansible.builtin.uri:
+    url: "{{ jumpcloud_api_v1_url }}/systems/{{ item._id }}"
+    method: DELETE
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
+    follow_redirects: all
+    return_content: true
+    status_code:
+      - 200
+      - 204
+      - 404
+    timeout: 60
+  loop: "{{ jc_registered_systems_json_response.json.results }}"
+  delegate_to: localhost
+  become: false
+  register: jc_deleted_systems_json_response
+  retries: 5
+  delay: 5
+  until: jc_deleted_systems_json_response.status in [200, 204, 404]
+  failed_when: false
+  throttle: 1
+  no_log: true
+
+- name: Collect JumpCloud duplicate system delete response statuses
+  ansible.builtin.set_fact:
+    jc_deleted_system_statuses: >-
+      {{ jc_deleted_systems_json_response.results | default([]) | map(attribute='status') | list }}
+
+- name: Validate JumpCloud duplicate system delete responses
+  ansible.builtin.assert:
+    that:
+      - jc_deleted_system_statuses | default([]) | difference([200, 204, 404]) | length == 0
+    fail_msg: >-
+      JumpCloud duplicate-system deletion returned unexpected HTTP statuses:
+      {{ jc_deleted_system_statuses | default([]) | unique | sort }}.

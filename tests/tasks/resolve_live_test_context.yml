@@ -1,0 +1,28 @@
+---
+- name: Resolve live test credentials
+  ansible.builtin.set_fact:
+    jumpcloud_x_connect_key: >-
+      {{
+        lookup('env', 'JUMPCLOUD_X_CONNECT_KEY')
+        | default(jumpcloud_test_x_connect_key | default(''), true)
+      }}
+    jumpcloud_api_key: >-
+      {{
+        lookup('env', 'JUMPCLOUD_API_KEY')
+        | default(jumpcloud_test_api_key | default(''), true)
+      }}
+  no_log: true
+
+- name: Resolve live test identity
+  ansible.builtin.import_tasks: resolve_test_target_identity.yml
+
+- name: Set live test role variables
+  ansible.builtin.set_fact:
+    jumpcloud_display_name: "{{ jumpcloud_test_display_name }}"
+    jumpcloud_system_groups: "{{ jumpcloud_test_system_groups | default([]) }}"
+    jumpcloud_create_missing_system_groups: >-
+      {{ jumpcloud_test_create_missing_system_groups | default(false) }}
+    jumpcloud_delete_duplicate_systems: >-
+      {{ jumpcloud_test_delete_duplicate_systems | default(true) }}
+    jumpcloud_install_on_unsupported_distribution: >-
+      {{ jumpcloud_test_install_on_unsupported_distribution | default(false) }}

@@ -1,49 +1,45 @@
 ---
-- name:                     stop JumpCloud
-  service:
-    name:                   "{{ jumpcloud_agent_service }}"
-    state:                  stopped
-  become:                   "{{ jumpcloud_use_sudo }}"
+- name: Stop JumpCloud
+  ansible.builtin.service:
+    name: "{{ jumpcloud_agent_service }}"
+    state: stopped
 
-- name:                     remove JumpCloud CA certificate
-  file:
-    path:                   "{{ jumpcloud_ca_cert }}"
-    state:                  absent
-  become:                   "{{ jumpcloud_use_sudo }}"
+- name: Remove JumpCloud CA certificate
+  ansible.builtin.file:
+    path: "{{ jumpcloud_ca_cert }}"
+    state: absent
 
-- name:                     remove JumpCloud Client certificate
-  file:
-    path:                   "{{ jumpcloud_client_cert }}"
-    state:                  absent
-  become:                   "{{ jumpcloud_use_sudo }}"
+- name: Remove JumpCloud client certificate
+  ansible.builtin.file:
+    path: "{{ jumpcloud_client_cert }}"
+    state: absent
 
-- name:                     remove JumpCloud Client Key
-  file:
-    path:                   "{{ jumpcloud_client_key }}"
-    state:                  absent
-  become:                   "{{ jumpcloud_use_sudo }}"
+- name: Remove JumpCloud client key
+  ansible.builtin.file:
+    path: "{{ jumpcloud_client_key }}"
+    state: absent
 
-- name:                     Start JumpCloud
-  service:
-    name:                   "{{ jumpcloud_agent_service }}"
-    state:                  started
-  become:                   "{{ jumpcloud_use_sudo }}"
+- name: Start JumpCloud
+  ansible.builtin.service:
+    name: "{{ jumpcloud_agent_service }}"
+    state: started
 
-- name:                     Make Sure that jcagent.conf has been created
-  wait_for:
-    path:                   "{{ jumpcloud_agent_config }}"
-    state:                  present
-    timeout:                60
-    msg:                    Timeout to find file "{{ jumpcloud_agent_config }}"
-  become:                   "{{ jumpcloud_use_sudo }}"
+- name: Make sure jcagent.conf has been created
+  ansible.builtin.wait_for:
+    path: "{{ jumpcloud_agent_config }}"
+    state: present
+    timeout: 60
+    msg: "Timed out waiting for {{ jumpcloud_agent_config }}"
 
-- name:                     check JumpCloud agent config again
-  stat:
-    path:                   "{{ jumpcloud_agent_config }}"
-  register:                 jumpcloud_agent_config_status
-  become:                   "{{ jumpcloud_use_sudo }}"
+- name: Check JumpCloud agent config again
+  ansible.builtin.stat:
+    path: "{{ jumpcloud_agent_config }}"
+  register: jumpcloud_agent_config_status
 
-- name:                     check again if JumpCloud is installed
-  set_fact:
-    jumpcloud_is_installed: "{{ jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg }}"
-...
+- name: Check again if JumpCloud is installed
+  ansible.builtin.set_fact:
+    jumpcloud_is_installed: >-
+      {{
+        jumpcloud_agent_config_status.stat.isreg is defined
+        and jumpcloud_agent_config_status.stat.isreg
+      }}

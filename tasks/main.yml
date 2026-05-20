@@ -1,40 +1,18 @@
 ---
-- name:       Find JumpCloud agent config to define if JumpCloud is installed
-  stat:
-    path:     "{{ jumpcloud_agent_config }}"
-  register:   jumpcloud_agent_config_status
-  become:     "{{ jumpcloud_use_sudo }}"
+- name: Validate target host support
+  ansible.builtin.import_tasks: validate_prerequisites.yml
 
-- name: Set whether Jumpcloud is already installed
-  set_fact:
-    jumpcloud_is_installed: "{{ (jumpcloud_agent_config_status.stat.isreg is defined and jumpcloud_agent_config_status.stat.isreg) }}"
+- name: Detect current JumpCloud installation state
+  ansible.builtin.import_tasks: detect_install_state.yml
 
-- name:       Remove registered systems with the same displayName from JumpCloud
-  import_tasks: remove_registered_systems.yml
-  when:       not jumpcloud_is_installed or jumpcloud_force_install
+- name: Resolve requested JumpCloud system attributes
+  ansible.builtin.import_tasks: resolve_system_attributes.yml
 
-- name:       Install JumpCloud dependencies if required
-  import_tasks: install_deps.yml
-  when:       not jumpcloud_is_installed or jumpcloud_force_install
+- name: Install JumpCloud when required
+  ansible.builtin.include_tasks: install_agent.yml
+  when:
+    - not jumpcloud_is_installed or jumpcloud_force_install | bool
 
-- name:       Install JumpCloud if required
-  import_tasks: install.yml
-  when:       not jumpcloud_is_installed or jumpcloud_force_install
-
-- name:       Get JumpCloud SystemKey
-  import_tasks: get_system_key.yml
-  when:       jumpcloud_is_installed or jumpcloud_force_install
-
-- name:       Check System registration
-  import_tasks:    check_system_registration.yml
-  when:       jumpcloud_system_key is defined
-
-- name:       Update system attributes if the system is registered in JumpCloud
-  import_tasks:    update_system.yml
-  when:       jc_system_is_registered
-
-- name:       Add system to groups if groups are defined and the system is registered in JumpCloud
-  import_tasks:    update_groups.yml
-  when:       jc_system_is_registered and jumpcloud_system_groups is defined
-
-...
+- name: Reconcile registered JumpCloud system state
+  ansible.builtin.import_tasks: reconcile_registered_system.yml
+  when: jumpcloud_is_installed or jumpcloud_force_install | bool

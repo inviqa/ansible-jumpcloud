@@ -1,0 +1,32 @@
+---
+- name: Verify requested JumpCloud system group memberships
+  delegate_to: localhost
+  become: false
+  no_log: true
+  when:
+    - jc_system_groups | default([]) | length > 0
+    - jumpcloud_system_key is defined
+  block:
+    - name: Retrieve JumpCloud groups for the registered system
+      ansible.builtin.uri:
+        url: "{{ jumpcloud_api_v2_url }}/systems/{{ jumpcloud_system_key }}/memberof"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Accept: application/json
+          x-api-key: "{{ jumpcloud_api_key }}"
+        follow_redirects: all
+        return_content: true
+        status_code: 200
+      register: jc_system_memberof_json_response
+
+    - name: Set registered system JumpCloud group IDs
+      ansible.builtin.set_fact:
+        jc_system_memberof: "{{ jc_system_memberof_json_response.json | map(attribute='id') | list }}"
+
+    - name: Verify registered system is member of requested JumpCloud groups
+      ansible.builtin.assert:
+        that:
+          - item.id in jc_system_memberof
+        fail_msg: "The registered JumpCloud system is not a member of a requested system group."
+      loop: "{{ jc_system_groups }}"

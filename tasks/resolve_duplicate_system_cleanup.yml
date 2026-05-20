@@ -1,0 +1,10 @@
+---
+- name: Check whether duplicate system removal can use the JumpCloud API
+  ansible.builtin.set_fact:
+    jumpcloud_can_remove_duplicate_systems: >-
+      {{
+        jumpcloud_api_key is defined
+        and jumpcloud_api_key | length > 0
+        and jumpcloud_effective_display_name is defined
+      }}
+  no_log: true

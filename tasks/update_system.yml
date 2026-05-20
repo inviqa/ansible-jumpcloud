@@ -1,23 +1,24 @@
 ---
-
-- name: Update System Information
-  uri:
+- name: Update system information
+  ansible.builtin.uri:
     url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
     method: PUT
     headers:
-      "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{ jumpcloud_api_key }}"
-    body_format:  json
-    body: '{ "displayName" : "{{ jumpcloud_displayName }}",
-    "allowPublicKeyAuthentication" : "{{ jumpcloud_allowPublicKeyAuthentication }}",
-    "allowSshPasswordAuthentication" : "{{ jumpcloud_allowSshPasswordAuthentication }}",
-    "allowSshRootLogin" : "{{ jumpcloud_allowSshRootLogin }}",
-    "allowMultiFactorAuthentication" : "{{ jumpcloud_allowMultiFactorAuthentication }}" }'
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
+    body_format: json
+    body:
+      displayName: "{{ jumpcloud_effective_display_name }}"
+      allowPublicKeyAuthentication: "{{ jumpcloud_effective_allow_public_key_authentication | bool }}"
+      allowSshPasswordAuthentication: "{{ jumpcloud_effective_allow_ssh_password_authentication | bool }}"
+      allowSshRootLogin: "{{ jumpcloud_effective_allow_ssh_root_login | bool }}"
+      allowMultiFactorAuthentication: "{{ jumpcloud_effective_allow_multi_factor_authentication | bool }}"
     follow_redirects: all
-    return_content: yes
+    return_content: true
     status_code: 200
   delegate_to: localhost
-  register: http_outcome
+  become: false
+  register: jumpcloud_update_system_response
+  no_log: true
   when: jumpcloud_system_key is defined
-...

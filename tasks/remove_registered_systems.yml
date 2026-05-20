@@ -1,45 +1,13 @@
 ---
-- name: Retrieve the list of the registered systems with the same displayName from JumpCloud
-  uri:
-    url: "{{ jumpcloud_api_v1_url }}/search/systems"
-    method: POST
-    headers:
-      "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{ jumpcloud_api_key }}"
-    body_format:  json
-    body: '{ "filter" :
-    {"and" :
-    [{ "displayName" : "{{ jumpcloud_displayName }}" }]
-    },
-    "fields": "displayName _id" }'
-    follow_redirects: all
-    return_content: yes
-    status_code: 200
-  delegate_to: localhost
-  register: jc_registered_systems_json_response
-  when: jumpcloud_displayName is defined
-  ignore_errors: yes
+- name: Check whether duplicate system removal can use the JumpCloud API
+  ansible.builtin.import_tasks: resolve_duplicate_system_cleanup.yml
 
-- name: Set count of inactive registere systems
-  set_fact:
-    jc_count_of_inactive_registered_systems: "{{ jc_registered_systems_json_response.json.totalCount }}"
+- name: Query JumpCloud systems with the same displayName
+  ansible.builtin.import_tasks: query_duplicate_registered_systems.yml
+  when: jumpcloud_can_remove_duplicate_systems | bool
 
-- name: Delete the registered systems with the same name from JumpCloud
-  uri:
-    url: "{{ jumpcloud_api_v1_url }}/systems/{{ item._id }}"
-    method: DELETE
-    headers:
-      "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{ jumpcloud_api_key }}"
-    follow_redirects: all
-    return_content: yes
-    status_code: 200
-  with_items: "{{ jc_registered_systems_json_response.json.results }}"
-  delegate_to: localhost
-  register: jc_deleted_systems_json_response
-  when: jc_count_of_inactive_registered_systems != "0"
-  ignore_errors: yes
-
-...
+- name: Delete matching JumpCloud systems and validate responses
+  ansible.builtin.import_tasks: delete_duplicate_registered_systems.yml
+  when:
+    - jc_count_of_duplicate_registered_systems | default(0) | int > 0
+    - jc_registered_systems_json_response is defined

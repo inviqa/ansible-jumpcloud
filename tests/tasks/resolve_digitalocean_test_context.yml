@@ -1,0 +1,3 @@
+---
+- name: Resolve DigitalOcean test identity
+  ansible.builtin.import_tasks: resolve_test_target_identity.yml

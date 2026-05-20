@@ -1,2 +1,5 @@
-- src: chrismeyersfsu.provision_docker
-  version: "d68ce0a"
+---
+collections:
+  - name: community.docker
+  - name: digitalocean.cloud
+    version: 1.9.0

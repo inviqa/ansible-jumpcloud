@@ -1,0 +1,38 @@
+---
+- name: Ensure test SSH keys are configured
+  ansible.builtin.assert:
+    that:
+      - digital_ocean_ssh_keys | length > 0
+    fail_msg: >-
+      Set do_ssh_keys in tests/test_variables.yml to one or more DigitalOcean
+      SSH key IDs or fingerprints before running the DigitalOcean test harness.
+  delegate_to: localhost
+
+- name: Gather DigitalOcean SSH keys
+  digitalocean.cloud.ssh_keys_info:
+    token: "{{ digital_ocean_api_token }}"
+  delegate_to: localhost
+  register: jumpcloud_test_do_ssh_keys
+  no_log: true
+
+- name: Resolve DigitalOcean SSH key selector
+  ansible.builtin.set_fact:
+    jumpcloud_test_do_ssh_key: "{{ item }}"
+  loop: "{{ jumpcloud_test_do_ssh_keys.ssh_keys }}"
+  delegate_to: localhost
+  no_log: true
+  when: >-
+    item.id | string == (digital_ocean_ssh_keys | first | string)
+    or item.fingerprint == (digital_ocean_ssh_keys | first | string)
+    or item.name == (digital_ocean_ssh_keys | first | string)
+
+- name: Validate DigitalOcean SSH key selector
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_test_do_ssh_key is defined
+      - jumpcloud_test_do_ssh_key.fingerprint is defined
+      - jumpcloud_test_do_ssh_key.public_key is defined
+    fail_msg: >-
+      The first do_ssh_keys entry was not found in DigitalOcean as an ID,
+      fingerprint, or name.
+  delegate_to: localhost

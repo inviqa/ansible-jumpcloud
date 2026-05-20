@@ -1,14 +1,27 @@
 ---
-- name: Look for Jumpcloud System Key
-  command:    grep -o -P '(?<=systemKey\":\")[a-zA-Z0-9]*' {{ jumpcloud_agent_config }}
-  register:   jumpcloud_system_key_result
-  become:     "{{ jumpcloud_use_sudo }}"
+- name: Read JumpCloud agent config
+  ansible.builtin.slurp:
+    src: "{{ jumpcloud_agent_config }}"
+  register: jumpcloud_agent_config_content
   retries: 5
   delay: 3
-  until: jumpcloud_system_key_result.rc == 0
-  changed_when: "not jumpcloud_system_key_result.stdout"
+  until: >-
+    (
+      jumpcloud_agent_config_content.content
+      | default('')
+      | b64decode
+      | regex_search('"systemKey"\\s*:\\s*"[a-zA-Z0-9]+"')
+    ) is not none
+  no_log: true
 
-- name: Set Jumpcloud System Key
-  set_fact:
-    jumpcloud_system_key: "{{ jumpcloud_system_key_result.stdout }}"
-...
+- name: Set JumpCloud system key
+  ansible.builtin.set_fact:
+    jumpcloud_system_key: >-
+      {{
+        (
+          jumpcloud_agent_config_content.content
+          | b64decode
+          | from_json
+        ).systemKey
+      }}
+  no_log: true

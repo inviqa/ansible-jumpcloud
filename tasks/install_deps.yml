@@ -1,42 +1,38 @@
 ---
-- name: Define Jumpcloud dependencies according to the platform
-  set_fact:
-    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_all_dependencies }}"
+- name: Define JumpCloud dependencies for this platform
+  ansible.builtin.set_fact:
+    jumpcloud_dependencies: >-
+      {{
+        jumpcloud_common_dependencies
+        + (jumpcloud_apt_dependencies if ansible_facts.pkg_mgr == "apt" else [])
+        + (jumpcloud_debian_dependencies if ansible_facts.distribution == "Debian" else [])
+        + (jumpcloud_ubuntu_dependencies if ansible_facts.distribution == "Ubuntu" else [])
+        + (jumpcloud_yum_dependencies if ansible_facts.pkg_mgr == "yum" else [])
+        + (jumpcloud_dnf_dependencies if ansible_facts.pkg_mgr == "dnf" else [])
+        + (jumpcloud_amazon_dependencies if ansible_facts.distribution == "Amazon" else [])
+        + (jumpcloud_redhat_dependencies if ansible_facts.distribution == "RedHat" else [])
+        + (jumpcloud_fedora_dependencies if ansible_facts.distribution == "Fedora" else [])
+        + (jumpcloud_oracle_dependencies if ansible_facts.distribution == "OracleLinux" else [])
+        + (jumpcloud_rocky_dependencies if ansible_facts.distribution == "Rocky" else [])
+      }}
 
-- name: Define YUM based systems dependencies
-  set_fact:
-    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_yum_dependencies }}"
-  when: ansible_pkg_mgr == "yum"
+- name: Normalize JumpCloud dependency list
+  ansible.builtin.set_fact:
+    jumpcloud_dependencies: "{{ jumpcloud_dependencies | unique | sort }}"
 
-- name: Define APT based systems dependencies
-  set_fact:
-    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_apt_dependencies }}"
-  when: ansible_pkg_mgr == "apt"
+- name: Refresh APT package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts.pkg_mgr == "apt"
 
-- name: Define RedHat/CentOS 6 systems dependencies
-  set_fact:
-    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_redhat6_dependencies }}"
-  when: (ansible_distribution == "Red Hat Enterprise Linux" or ansible_distribution == "CentOS") and ansible_distribution_version.split(".")[0] == '6'
+- name: Report JumpCloud dependencies
+  ansible.builtin.debug:
+    var: jumpcloud_dependencies
+  when: debug | default(false) | bool
 
-- name: Define RedHat/CentOS 7 systems dependencies
-  set_fact:
-    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_redhat7_dependencies }}"
-  when: (ansible_distribution == "Red Hat Enterprise Linux" or ansible_distribution == "CentOS") and ansible_distribution_version.split(".")[0] == '7'
-
-- name: Define Debian systems dependencies
-  set_fact:
-    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_debian_dependencies }}"
-  when: ansible_distribution == "Debian"
-
-- name: Define Ubuntu systems dependencies
-  set_fact:
-    jumpcloud_dependencies: "{{ jumpcloud_dependencies + jumpcloud_ubuntu_dependencies }}"
-  when: ansible_distribution == "Ubuntu"
-
-- name: Install Jumpcloud dependencies
-  package:
+- name: Install JumpCloud dependencies
+  ansible.builtin.package:
     name: "{{ jumpcloud_dependencies }}"
     state: present
-  become: "{{ jumpcloud_use_sudo }}"
-
-...
+  when: jumpcloud_dependencies | length > 0

@@ -1,0 +1,423 @@
+---
+workspace('ansible-jumpcloud'):
+  description: Workspace environment for the JumpCloud Ansible role
+
+# Leave these values blank in this file.
+# Copy them to workspace.override.yml with real values for live testing.
+
+attribute('test.digitalocean.api_token'): ''
+attribute('test.digitalocean.ssh_keys'): ''
+attribute('test.jumpcloud.api_key'): ''
+attribute('test.jumpcloud.x_connect_key'): ''
+attribute('test.jumpcloud.system_groups'): ''
+attribute('test.jumpcloud.create_missing_system_groups'): false
+attribute('test.jumpcloud.delete_duplicate_systems'): true
+attribute('ansible.galaxy.token'): ''
+attribute('github.api_token'): ''
+
+command('enable %', 'enable'):
+  description: "Usage: ws enable [service]. Start all services or one service."
+  env:
+    PARAMETER: = input.argument('%')
+    HOST_DOCKER_SOCK: "= env('HOST_DOCKER_SOCK') ?: '/var/run/docker.sock'"
+    HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
+  exec: |
+    #!bash(workspace:/)|@
+    # Compose uses this GID as a supplemental group for Docker socket access.
+    if [[ -z "${HOST_DOCKER_GID:-}" ]]; then
+      HOST_DOCKER_GID="$(stat -c '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || true)"
+      if [[ ! "${HOST_DOCKER_GID}" =~ ^[0-9]+$ ]]; then
+        HOST_DOCKER_GID="$(stat -f '%g' "${HOST_DOCKER_SOCK}" 2>/dev/null || true)"
+      fi
+    fi
+    if [[ ! "${HOST_DOCKER_GID}" =~ ^[0-9]+$ ]]; then
+      echo "Unable to resolve Docker socket group ID for '${HOST_DOCKER_SOCK}'." >&2
+      exit 1
+    fi
+    export HOST_DOCKER_GID HOST_DOCKER_SOCK
+
+    docker_args=(up -d)
+    service_name="${PARAMETER}"
+
+    case "${service_name}" in
+      --force-recreate)
+        docker_args+=(--build --force-recreate)
+        service_name=''
+        ;;
+      --force-recreate\ *)
+        docker_args+=(--build --force-recreate)
+        service_name=${service_name#--force-recreate }
+        ;;
+      --*)
+        echo "Unsupported ws enable option '${service_name}'." >&2
+        exit 1
+        ;;
+    esac
+
+    if [[ "${service_name}" == *[[:space:]]* ]]; then
+      echo "Unsupported ws enable service argument '${service_name}'." >&2
+      exit 1
+    fi
+
+    if [[ -n "${service_name}" ]]; then
+      docker_args+=("${service_name}")
+    fi
+
+    passthru docker compose "${docker_args[@]}"
+
+command('rebuild %', 'rebuild'):
+  description: "Usage: ws rebuild [service]. Rebuild and recreate services."
+  env:
+    PARAMETER: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)
+    if [[ -n "${PARAMETER}" ]]; then
+      ws enable --force-recreate "${PARAMETER}"
+    else
+      ws enable --force-recreate
+    fi
+
+command('disable', 'disable'):
+  description: Stop workspace containers.
+  exec: |
+    #!bash(workspace:/)|@
+    passthru docker compose stop
+
+command('destroy', 'destroy'):
+  description: Remove workspace containers, local images, and volumes.
+  exec: |
+    #!bash(workspace:/)|@
+    passthru docker compose down \
+      --rmi local \
+      --volumes \
+      --remove-orphans \
+      --timeout 120
+
+command('console %', 'console'):
+  description: "Usage: ws console [command]. Run a command in the Ansible console container."
+  env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+    DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
+    DO_OAUTH_TOKEN: "= @('test.digitalocean.api_token') ?: env('DO_OAUTH_TOKEN') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: ''"
+    DO_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ?: env('DO_SSH_KEYS') ?: ''"
+    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
+    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
+    HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
+    JUMPCLOUD_API_KEY: "= @('test.jumpcloud.api_key') ?: env('JUMPCLOUD_API_KEY') ?: ''"
+    JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS: "= @('test.jumpcloud.create_missing_system_groups')"
+    JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS: "= @('test.jumpcloud.delete_duplicate_systems')"
+    JUMPCLOUD_TEST_SYSTEM_GROUPS: "= @('test.jumpcloud.system_groups') ?: env('JUMPCLOUD_TEST_SYSTEM_GROUPS') ?: ''"
+    JUMPCLOUD_X_CONNECT_KEY: "= @('test.jumpcloud.x_connect_key') ?: env('JUMPCLOUD_X_CONNECT_KEY') ?: ''"
+    PARAMETER: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)|@
+    console_command="${PARAMETER}"
+    docker_exec_args=(exec)
+
+    if [[ -z "${console_command}" ]]; then
+      docker_command=(bash)
+    else
+      docker_exec_args+=(-T)
+      read -r -a docker_command <<< "${console_command}"
+    fi
+
+    ws enable console
+    passthru docker compose "${docker_exec_args[@]}" \
+      -e ANSIBLE_GALAXY_TOKEN \
+      -e DIGITAL_OCEAN_API_TOKEN \
+      -e DO_OAUTH_TOKEN \
+      -e DO_SSH_KEYS \
+      -e GH_TOKEN \
+      -e GITHUB_TOKEN \
+      -e JUMPCLOUD_API_KEY \
+      -e JUMPCLOUD_TEST_CREATE_MISSING_SYSTEM_GROUPS \
+      -e JUMPCLOUD_TEST_DELETE_DUPLICATE_SYSTEMS \
+      -e JUMPCLOUD_TEST_SYSTEM_GROUPS \
+      -e JUMPCLOUD_X_CONNECT_KEY \
+      -e HOME=/home/ansible \
+      -u ansible \
+      console \
+      "${docker_command[@]}"
+
+command('ansible-playbook <playbook> <inventory>', 'ansible-playbook'):
+  description: "Usage: ws ansible-playbook <playbook> <inventory>. Run an Ansible playbook."
+  env:
+    INVENTORY: = input.argument('inventory')
+    PLAYBOOK: = input.argument('playbook')
+    PLAYBOOK_LIMIT: "= env('WS_PLAYBOOK_LIMIT') ?: ''"
+    PLAYBOOK_SYNTAX_CHECK: "= env('WS_PLAYBOOK_SYNTAX_CHECK') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    extra_args=()
+    if [[ "${PLAYBOOK_SYNTAX_CHECK}" = "1" ]]; then
+      extra_args+=(--syntax-check)
+    fi
+    if [[ -n "${PLAYBOOK_LIMIT}" ]]; then
+      extra_args+=(--limit "${PLAYBOOK_LIMIT}")
+    fi
+
+    ws console ansible-playbook "${PLAYBOOK}" -i "${INVENTORY}" "${extra_args[@]}"
+
+command('syntax', 'syntax'):
+  description: Run Ansible syntax checks for Docker and DigitalOcean inventories.
+  exec: |
+    #!bash(workspace:/)|@
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory-docker
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory-digitalocean-droplets
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook_cleanup.yml tests/inventory-digitalocean-droplets
+
+command('ansible-lint', 'ansible-lint'):
+  description: Run ansible-lint for the role inside the console container.
+  exec: |
+    #!bash(workspace:/)|@
+    ws console ansible-lint .
+
+command('github release version', 'github release version'):
+  description: Print the latest concrete changelog release version.
+  env:
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    requested_version="${RELEASE_VERSION}"
+    version="$(
+      awk -v requested_version="${requested_version}" '/^## \[/ && $0 !~ /Unreleased/ {
+        sub(/^## \[/, "")
+        sub(/\].*/, "")
+        if (requested_version == "" || $0 == requested_version) {
+          print
+          exit
+        }
+      }' CHANGELOG.md
+    )"
+    if [[ -z "${version}" ]]; then
+      if [[ -n "${requested_version}" ]]; then
+        echo "CHANGELOG.md has no concrete ${requested_version} release section." >&2
+      else
+        echo "CHANGELOG.md has no concrete release section." >&2
+      fi
+      exit 1
+    fi
+    printf '%s\n' "${version}"
+
+command('github release check', 'github release check'):
+  description: Check the latest changelog release against GitHub releases.
+  env:
+    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
+    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    version="$(ws github release version)"
+
+    ws console bash -s -- "${version}" <<'CONSOLE'
+    set -euo pipefail
+
+    version=${1:?"Usage: github release check <version>"}
+    error_file="$(mktemp)"
+    trap 'rm -f "${error_file}"' EXIT
+
+    if gh api --silent "repos/inviqa/ansible-jumpcloud/releases/tags/${version}" 2>"${error_file}"; then
+      printf 'GitHub release %s already exists.\n' "${version}"
+      exit 0
+    fi
+
+    api_rc=$?
+    if grep -q '(HTTP 404)' "${error_file}"; then
+      printf 'CHANGELOG.md release %s exists locally but is not published on GitHub.\n' "${version}" >&2
+      exit 2
+    fi
+
+    cat "${error_file}" >&2
+    exit "${api_rc}"
+    CONSOLE
+
+command('github release publish', 'github release publish'):
+  description: Publish the latest concrete changelog release to GitHub.
+  env:
+    GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: env('GH_TOKEN') ?: ''"
+    GH_TOKEN: "= @('github.api_token') ?: env('GH_TOKEN') ?: env('GITHUB_TOKEN') ?: ''"
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    if [[ -z "${GITHUB_TOKEN}" ]]; then
+      echo "Set github.api_token in workspace.override.yml, GITHUB_TOKEN, or GH_TOKEN before publishing." >&2
+      exit 1
+    fi
+
+    set +e
+    ws github release check
+    check_rc=$?
+    set -e
+    if [[ "${check_rc}" -eq 0 ]]; then
+      exit 0
+    fi
+    if [[ "${check_rc}" -ne 2 ]]; then
+      exit "${check_rc}"
+    fi
+
+    version="$(ws github release version)"
+    passthru ws console bash -s -- "${version}" <<'CONSOLE'
+    set -euo pipefail
+
+    version=${1:?"Usage: github release publish <version>"}
+    notes_file="$(mktemp)"
+    trap 'rm -f "${notes_file}"' EXIT
+
+    awk -v version="${version}" '
+      $0 ~ "^## \\[" version "\\]" { found = 1; next }
+      found && /^## \[/ { exit }
+      found { print }
+    ' CHANGELOG.md > "${notes_file}"
+
+    gh release create "${version}" \
+      --repo inviqa/ansible-jumpcloud \
+      --target main \
+      --title "${version}" \
+      --notes-file "${notes_file}" \
+      --latest
+    CONSOLE
+
+command('ansible-galaxy check-token', 'ansible-galaxy check-token'):
+  description: Check that an Ansible Galaxy token is configured.
+  env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    if [[ -z "${ANSIBLE_GALAXY_TOKEN}" ]]; then
+      echo "Set ansible.galaxy.token in workspace.override.yml or ANSIBLE_GALAXY_TOKEN before using token-required Galaxy commands." >&2
+      exit 1
+    fi
+
+command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
+  description: Check that the changelog release is on GitHub and Galaxy.
+  env:
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    set +e
+    ws github release check
+    github_rc=$?
+    set -e
+    if [[ "${github_rc}" -eq 2 ]]; then
+      echo "Run ws github release publish before importing Ansible Galaxy." >&2
+      exit 1
+    fi
+    if [[ "${github_rc}" -ne 0 ]]; then
+      echo "Fix CHANGELOG.md or GitHub release state before checking Ansible Galaxy." >&2
+      exit "${github_rc}"
+    fi
+
+    version="$(ws github release version)"
+    passthru ws console bash -s -- "${version}" <<'CONSOLE'
+    set -euo pipefail
+
+    version=${1:?"Usage: ansible-galaxy check-release <version>"}
+    tmp_roles="$(mktemp -d)"
+    trap 'rm -rf "${tmp_roles}"' EXIT
+
+    if ! ansible-galaxy role install --roles-path "${tmp_roles}" "inviqa.jumpcloud,${version}"; then
+      printf 'Ansible Galaxy does not expose inviqa.jumpcloud,%s; run ws ansible-galaxy publish after the GitHub release exists.\n' "${version}" >&2
+      exit 1
+    fi
+    CONSOLE
+
+command('ansible-galaxy publish', 'ansible-galaxy publish'):
+  description: Import the main branch into Ansible Galaxy and show role info.
+  env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+    RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    passthru ws ansible-galaxy check-token
+    passthru ws github release check
+    passthru ws console bash -s <<'CONSOLE'
+    set -euo pipefail
+
+    ansible-galaxy role import inviqa ansible-jumpcloud \
+      --branch main \
+      --role-name jumpcloud \
+      --token "${ANSIBLE_GALAXY_TOKEN}"
+    ansible-galaxy role info inviqa.jumpcloud
+    CONSOLE
+    passthru ws ansible-galaxy check-release
+
+command('ansible-galaxy status', 'ansible-galaxy status'):
+  description: Check the latest Ansible Galaxy import status.
+  env:
+    ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    passthru ws ansible-galaxy check-token
+    passthru ws console bash -s <<'CONSOLE'
+    set -euo pipefail
+
+    ansible-galaxy role import --status inviqa ansible-jumpcloud \
+      --token "${ANSIBLE_GALAXY_TOKEN}"
+    CONSOLE
+
+command('ansible-galaxy info', 'ansible-galaxy info'):
+  description: Show the currently indexed Ansible Galaxy role metadata.
+  exec: |
+    #!bash(workspace:/)|@
+    passthru ws console ansible-galaxy role info inviqa.jumpcloud
+
+command('lint-jenkinsfile', 'lint-jenkinsfile'):
+  description: Validate the Jenkinsfile with the Dockerized Jenkins linter.
+  exec: |
+    #!bash(workspace:/)|@
+    ws enable jenkins-lint
+    ws console env JENKINS_LINT_URL=http://jenkins-lint:8080 tests/lint_jenkinsfile.sh Jenkinsfile
+
+command('test-docker', 'test-docker'):
+  description: Run the container-backed role test and cleanup through Workspace.
+  exec: |
+    #!bash(workspace:/)|@
+    run_rc=0
+    cleanup_rc=0
+
+    ws ansible-playbook tests/playbook.yml tests/inventory-docker || run_rc=$?
+    ws ansible-playbook tests/playbook_cleanup.yml tests/inventory-docker || cleanup_rc=$?
+
+    if [[ "${run_rc}" -ne 0 ]]; then
+      exit "${run_rc}"
+    fi
+
+    exit "${cleanup_rc}"
+
+command('test-live %', 'test-live'):
+  description: "Usage: ws test-live [limit]. Run DigitalOcean JumpCloud live tests and cleanup."
+  env:
+    LIMIT: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)|@
+    run_rc=0
+    cleanup_rc=0
+
+    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+      tests/playbook.yml \
+      tests/inventory-digitalocean-droplets || run_rc=$?
+
+    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+      tests/playbook_cleanup.yml \
+      tests/inventory-digitalocean-droplets || cleanup_rc=$?
+
+    if [[ "${run_rc}" -ne 0 ]]; then
+      exit "${run_rc}"
+    fi
+
+    exit "${cleanup_rc}"
+
+command('test-live-rocky', 'test-live-rocky'):
+  description: Run one Rocky Linux 9 DigitalOcean JumpCloud live test.
+  exec: |
+    #!bash(workspace:/)|@
+    ws test-live jumpcloud-rocky9
+
+command('cleanup-live %', 'cleanup-live'):
+  description: "Usage: ws cleanup-live [limit]. Remove live JumpCloud and DigitalOcean test resources."
+  env:
+    LIMIT: = input.argument('%')
+  exec: |
+    #!bash(workspace:/)|@
+    WS_PLAYBOOK_LIMIT="${LIMIT}" ws ansible-playbook \
+      tests/playbook_cleanup.yml \
+      tests/inventory-digitalocean-droplets

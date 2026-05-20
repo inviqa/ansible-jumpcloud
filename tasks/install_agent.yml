@@ -1,0 +1,13 @@
+---
+- name: Validate JumpCloud connect key for installation
+  ansible.builtin.import_tasks: validate_connect_key.yml
+
+- name: Remove registered systems with the same displayName from JumpCloud
+  ansible.builtin.import_tasks: remove_registered_systems.yml
+  when: jumpcloud_delete_duplicate_systems | bool
+
+- name: Install JumpCloud dependencies
+  ansible.builtin.import_tasks: install_deps.yml
+
+- name: Install JumpCloud agent
+  ansible.builtin.import_tasks: install.yml

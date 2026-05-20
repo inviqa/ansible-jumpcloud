@@ -1,0 +1,66 @@
+---
+- name: Check whether temporary JumpCloud install identity backup exists
+  ansible.builtin.stat:
+    path: "{{ jumpcloud_install_os_release_backup }}"
+  register: jumpcloud_install_os_release_backup_status
+
+- name: Restore temporary JumpCloud install identity
+  when: jumpcloud_install_os_release_backup_status.stat.exists | bool
+  block:
+    - name: Check whether temporary JumpCloud install identity symlink target backup exists
+      ansible.builtin.stat:
+        path: "{{ jumpcloud_install_os_release_backup }}.symlink-target"
+      register: jumpcloud_install_os_release_link_backup_status
+
+    - name: Set whether original OS release was a link
+      ansible.builtin.set_fact:
+        jumpcloud_original_os_release_was_link: >-
+          {{ jumpcloud_install_os_release_link_backup_status.stat.exists | bool }}
+
+    - name: Read original OS release backup
+      ansible.builtin.slurp:
+        src: "{{ jumpcloud_install_os_release_backup }}"
+      register: jumpcloud_original_os_release_backup
+
+    - name: Read original OS release symlink target backup
+      ansible.builtin.slurp:
+        src: "{{ jumpcloud_install_os_release_backup }}.symlink-target"
+      register: jumpcloud_original_os_release_link_backup
+      when: jumpcloud_original_os_release_was_link | bool
+
+    - name: Remove temporary OS release before restoring original link
+      ansible.builtin.file:
+        path: /etc/os-release
+        state: absent
+      when: jumpcloud_original_os_release_was_link | bool
+
+    - name: Restore original OS release link after JumpCloud install identity override
+      ansible.builtin.file:
+        path: /etc/os-release
+        src: "{{ jumpcloud_original_os_release_link_backup.content | b64decode | trim }}"
+        state: link
+        force: true
+      when: jumpcloud_original_os_release_was_link | bool
+
+    - name: Restore original OS release file after JumpCloud install identity override
+      ansible.builtin.copy:
+        content: "{{ jumpcloud_original_os_release_backup.content | b64decode }}"
+        dest: /etc/os-release
+        owner: root
+        group: root
+        mode: "0644"
+      when: not jumpcloud_original_os_release_was_link | bool
+
+    - name: Remove temporary JumpCloud install identity backup
+      ansible.builtin.file:
+        path: "{{ jumpcloud_install_os_release_backup }}"
+        state: absent
+
+    - name: Remove temporary JumpCloud install identity symlink target backup
+      ansible.builtin.file:
+        path: "{{ jumpcloud_install_os_release_backup }}.symlink-target"
+        state: absent
+
+    - name: Mark temporary JumpCloud install identity as inactive
+      ansible.builtin.set_fact:
+        jumpcloud_install_os_release_identity_active: false

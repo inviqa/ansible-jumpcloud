@@ -1,0 +1,83 @@
+---
+- name: Determine whether JumpCloud install identity override is needed
+  ansible.builtin.set_fact:
+    jumpcloud_install_os_release_identity_required: >-
+      {{
+        jumpcloud_install_on_unsupported_distribution | bool
+        and ansible_facts.distribution in jumpcloud_supported_linux_versions
+        and ansible_facts.distribution_major_version
+          not in jumpcloud_supported_linux_versions[ansible_facts.distribution]
+      }}
+
+- name: Apply temporary JumpCloud install identity
+  when: jumpcloud_install_os_release_identity_required | bool
+  block:
+    - name: Inspect original OS release path before temporary JumpCloud install identity
+      ansible.builtin.stat:
+        path: /etc/os-release
+        follow: false
+      register: jumpcloud_original_os_release_path
+
+    - name: Read the original OS release before temporary JumpCloud install identity
+      ansible.builtin.slurp:
+        src: /etc/os-release
+      register: jumpcloud_original_os_release
+
+    - name: Back up original OS release before temporary JumpCloud install identity
+      ansible.builtin.copy:
+        content: "{{ jumpcloud_original_os_release.content | b64decode }}"
+        dest: "{{ jumpcloud_install_os_release_backup }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Back up original OS release symlink target before temporary identity
+      ansible.builtin.copy:
+        content: "{{ jumpcloud_original_os_release_path.stat.lnk_source }}\n"
+        dest: "{{ jumpcloud_install_os_release_backup }}.symlink-target"
+        owner: root
+        group: root
+        mode: "0600"
+      when: jumpcloud_original_os_release_path.stat.islnk | default(false) | bool
+
+    - name: Resolve latest supported JumpCloud release for this distribution
+      ansible.builtin.set_fact:
+        jumpcloud_install_supported_distribution_version: >-
+          {{ jumpcloud_supported_linux_versions[ansible_facts.distribution] | last }}
+
+    - name: Resolve temporary JumpCloud install identity values
+      ansible.builtin.set_fact:
+        jumpcloud_install_os_release_identity_values: >-
+          {{
+            jumpcloud_supported_linux_release_identities
+            .get(ansible_facts.distribution, {})
+            .get(jumpcloud_install_supported_distribution_version, {
+              'PRETTY_NAME': ansible_facts.distribution ~ ' '
+                ~ jumpcloud_install_supported_distribution_version,
+              'NAME': ansible_facts.distribution,
+              'VERSION_ID': jumpcloud_install_supported_distribution_version,
+              'VERSION': jumpcloud_install_supported_distribution_version,
+              'ID': ansible_facts.distribution | lower
+            })
+          }}
+
+    - name: Replace original OS release symlink before temporary identity write
+      ansible.builtin.file:
+        path: /etc/os-release
+        state: absent
+      when: jumpcloud_original_os_release_path.stat.islnk | default(false) | bool
+
+    - name: Write temporary OS release identity for JumpCloud installer
+      ansible.builtin.copy:
+        content: |
+          {% for item in jumpcloud_install_os_release_identity_values | dict2items %}
+          {{ item.key }}="{{ item.value }}"
+          {% endfor %}
+        dest: /etc/os-release
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Mark temporary JumpCloud install identity as active
+      ansible.builtin.set_fact:
+        jumpcloud_install_os_release_identity_active: true

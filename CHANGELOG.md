@@ -1,28 +1,121 @@
 # CHANGELOG
 
-v2.4.0
-- Ansible-lint adjustments
-- Ansible requirements pinning for testing environment
-- remove packages installation loops
-- make the Jumpcloud dependencies organisation more organic
+## [3.0.0] - 2026-05-18 - Galaxy and Linux Support Refresh
 
-v2.3.0
-- Ansible requirements pinning for testing environment
-- remove packages installation loops
-- make the Jumpcloud dependencies organisation more organic
+### Breaking Changes
 
-v2.2.0
-- verify if a system is correctly registered in JC
-- automate the deletion of previously registered servers with the same name in JC
-- automate the deletion of the registered servers in JC for testing purposes at the end of the test process
-- remove support for Ubuntu 12.04 testing
+- Removed role-internal sudo control. Set `become: true` on the calling play or
+  role instead of using `jumpcloud_use_sudo`. See
+  [Upgrading to 3.0.0](docs/upgrading-to-3.0.0.md).
+- Removed legacy Ubuntu 12 and CentOS 6/7 install behavior.
+- Renamed the documented system attribute variables to snake_case. Existing
+  camelCase variables still work in `3.0.0`, but new playbooks should use
+  `jumpcloud_display_name`, `jumpcloud_allow_public_key_authentication`,
+  `jumpcloud_allow_ssh_password_authentication`, `jumpcloud_allow_ssh_root_login`,
+  and `jumpcloud_allow_multi_factor_authentication`.
+- Replaced legacy tag terminology with JumpCloud system group terminology. Use
+  `jumpcloud_system_groups` for group membership.
 
-v2.1.0
-- replace Vagrant testing with Docker testing
-- add test tasks and playbook to test on Debian stable, Ubuntu 12.04, 14.04, 16.04, 18.04, Centos 6 and Centos 7
-- add TravisCI testing
+### Platform Support
 
-v2.0.0
-- implemented APIv2 task to handle System Groups
-- removed support for TAGS (as they have been converted in Groups)
-- added conditional check to add system to groups only when system groups are defined in `jumpcloud_system_groups`
+- Refreshed Galaxy metadata, support claims, role defaults, and documentation
+  for current Ansible Galaxy and JumpCloud Linux agent expectations.
+- Added Fedora 43 and RHEL 10 to the validated support matrix.
+- Added opt-in installation for newer unsupported releases in otherwise
+  supported distribution families, including Debian 13 through a temporary
+  `/etc/os-release` identity override.
+
+### Install and Registration
+
+- Modernized Debian, Ubuntu, and RedHat-family install paths, including
+  dependency cleanup, bounded Kickstart execution, non-interactive
+  Debian-family installs, and minimal-package compatibility for DNF targets.
+- Fixed JumpCloud registration delegation, bounded registration checks, and
+  persistent missing-system reporting.
+- Reworked task structure so installation, registered-system reconciliation,
+  system-group synchronization, and verification live in focused task files.
+- Added role-level system-group membership verification after synchronization.
+
+### Security and Secret Handling
+
+- Hardened secret handling so JumpCloud API keys, connect keys, API response
+  bodies, and request headers stay out of task output and failed-test logs.
+- Added sanitized duplicate-system diagnostics and serialized cleanup retries
+  without leaking JumpCloud data.
+- Hardened Workspace console command dispatch so pass-through commands execute
+  as tokenized container arguments instead of shell-evaluated strings.
+
+### Test Harness and CI
+
+- Replaced the legacy Docker, Vagrant, and Travis-era workflow with a
+  Workspace-managed container and DigitalOcean integration harness.
+- Standardized validation through Workspace commands, including `ws enable`,
+  `ws console`, `ws ansible-lint`, `ws syntax`, `ws test-docker`,
+  `ws test-live`, and `ws ansible-playbook <playbook> <inventory>`.
+- Fixed Jenkins live-test reliability around Docker socket access, SSH agent
+  credential binding, job-named workspaces, DigitalOcean SSH readiness, and
+  JumpCloud SSH-attribute propagation.
+- Added Workspace GitHub release and Ansible Galaxy publication commands, then
+  wired optional `main`-branch Jenkins publication stages around them.
+- Centralized Jenkins credential binding in the top-level pipeline environment
+  and credential forwarding at the `ws console` boundary with
+  `docker compose exec -e`.
+- Added release preflight checks for pending GitHub releases, Galaxy token
+  configuration, and Galaxy role read access while avoiding the Galaxy
+  import-status endpoint because it can return server errors.
+
+### Documentation
+
+- Added an upgrade guide for users moving from `2.4.1` to `3.0.0`.
+- Moved test harness guidance into `docs/testing.md` and documented the
+  Workspace CLI install path, validation commands, and live-test cleanup flow.
+- Documented reusable Workspace GitHub release and Ansible Galaxy publication
+  commands for both local operators and Jenkins.
+- Updated Jenkins CI documentation with credential requirements, release
+  parameters, top-level credential binding, and centralized Workspace console
+  credential forwarding.
+- Added README and agent guidance for the changelog, Workspace-first linting,
+  Jenkins validation, and release-publication boundaries.
+
+## [2.4.1] - 2022-04-12
+
+- Added retry handling while reading the JumpCloud agent `systemKey` from
+  `jcagent.conf`, avoiding transient install failures when the agent had not
+  finished writing the key yet.
+- Increased the lookup window to five attempts with a three-second delay so a
+  first role run can complete instead of requiring a manual rerun.
+
+## [2.4.0]
+
+- Ansible-lint adjustments.
+- Ansible requirements pinning for testing environment.
+- Removed package installation loops.
+- Made the JumpCloud dependencies organization more organic.
+
+## [2.3.0]
+
+- Ansible requirements pinning for testing environment.
+- Removed package installation loops.
+- Made the JumpCloud dependencies organization more organic.
+
+## [2.2.0]
+
+- Verified if a system is correctly registered in JumpCloud.
+- Automated deletion of previously registered servers with the same name in
+  JumpCloud.
+- Automated deletion of registered servers in JumpCloud for testing cleanup.
+- Removed support for Ubuntu 12.04 testing.
+
+## [2.1.0]
+
+- Replaced Vagrant testing with Docker testing.
+- Added test tasks and playbook to test on Debian stable, Ubuntu 12.04, Ubuntu
+  14.04, Ubuntu 16.04, Ubuntu 18.04, CentOS 6, and CentOS 7.
+- Added Travis CI testing.
+
+## [2.0.0]
+
+- Implemented API v2 task to handle system groups.
+- Removed support for tags after they were converted to groups.
+- Added a conditional check to add systems to groups only when system groups are
+  defined in `jumpcloud_system_groups`.

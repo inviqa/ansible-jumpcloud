@@ -1,0 +1,16 @@
+FROM jenkins/jenkins:lts-jdk21
+
+ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
+
+COPY tests/jenkins-lint/disable-security.groovy \
+    /usr/share/jenkins/ref/init.groovy.d/disable-security.groovy
+
+RUN jenkins-plugin-cli --plugins \
+    workflow-aggregator \
+    pipeline-model-definition \
+    docker-workflow \
+    credentials-binding \
+    ssh-agent \
+    slack \
+    timestamper \
+    ws-cleanup

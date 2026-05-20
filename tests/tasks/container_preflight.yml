@@ -1,0 +1,56 @@
+---
+- name: Load role defaults for container validation
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../defaults/main.yml"
+
+- name: Validate container target is in the supported role matrix
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.system == "Linux"
+      - ansible_facts.distribution in jumpcloud_supported_linux_versions
+      - ansible_facts.distribution_major_version in jumpcloud_supported_linux_versions[ansible_facts.distribution]
+    fail_msg: >-
+      The container target is not in the current JumpCloud support matrix used
+      by this role.
+  when: not jumpcloud_test_validate_unsupported_release_install_identity | default(false) | bool
+
+- name: Validate unsupported-release install identity handling
+  ansible.builtin.include_tasks: unsupported_release_install_identity.yml
+  when: jumpcloud_test_validate_unsupported_release_install_identity | default(false) | bool
+
+- name: Validate dependency installation path in container
+  ansible.builtin.include_role:
+    name: ansible-jumpcloud
+    tasks_from: install_deps
+
+- name: Check that required dependency executables are available
+  ansible.builtin.stat:
+    path: "/usr/bin/{{ item }}"
+    get_checksum: false
+    get_mime: false
+  loop:
+    - curl
+    - grep
+    - lsof
+    - openssl
+    - tar
+    - timeout
+  register: jumpcloud_test_dependency_executables
+
+- name: Resolve missing dependency executables
+  ansible.builtin.set_fact:
+    jumpcloud_test_missing_dependency_executables: >-
+      {{
+        jumpcloud_test_dependency_executables.results
+        | rejectattr('stat.exists')
+        | map(attribute='item')
+        | list
+      }}
+
+- name: Validate required dependency executables are available
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_test_missing_dependency_executables | length == 0
+    fail_msg: >-
+      Required executables are missing after dependency installation:
+      {{ jumpcloud_test_missing_dependency_executables | join(', ') }}

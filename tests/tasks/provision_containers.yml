@@ -1,0 +1,35 @@
+---
+- name: Ensure JumpCloud test container is running
+  community.docker.docker_container:
+    name: "{{ hostvars[item].ansible_host }}"
+    image: "{{ hostvars[item].jumpcloud_container_image }}"
+    platform: "{{ hostvars[item].jumpcloud_container_platform | default(omit) }}"
+    command: /usr/sbin/init
+    detach: true
+    privileged: true
+    cgroupns_mode: host
+    state: started
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    env:
+      container: docker
+  loop: "{{ groups['jumpcloud_test_hosts'] }}"
+  when: hostvars[item].jumpcloud_test_provision_containers | default(false) | bool
+
+- name: Wait for JumpCloud test container connection
+  community.docker.docker_container_exec:
+    container: "{{ hostvars[item].ansible_host }}"
+    argv:
+      - python3
+      - --version
+  delegate_to: localhost
+  loop: "{{ groups['jumpcloud_test_hosts'] }}"
+  register: jumpcloud_test_container_connection
+  retries: 12
+  delay: 5
+  until: jumpcloud_test_container_connection.rc == 0
+  changed_when: false
+  when: hostvars[item].jumpcloud_test_provision_containers | default(false) | bool

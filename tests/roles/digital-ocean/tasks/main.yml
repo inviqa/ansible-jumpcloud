@@ -1,0 +1,13 @@
+---
+- name: Resolve DigitalOcean SSH key
+  ansible.builtin.import_tasks: resolve_ssh_key.yml
+
+- name: Validate selected SSH key is available locally
+  ansible.builtin.import_tasks: validate_ssh_agent_key.yml
+  when: do_ssh_private_key_file is not defined
+
+- name: Provision DigitalOcean droplet
+  ansible.builtin.import_tasks: provision_droplet.yml
+
+- name: Configure SSH access to DigitalOcean droplet
+  ansible.builtin.import_tasks: configure_ssh_access.yml

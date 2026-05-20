@@ -1,51 +1,58 @@
 ---
-- hosts: localhost
-  gather_facts: false
-  tasks:
-    - include_tasks: tasks/check_docker.yml
-
-- name: Bring up docker containers
+- name: Provision local JumpCloud test containers
   hosts: localhost
-  roles:
-    - role: provision-docker
-      provision_docker_network: host
-      provision_docker_inventory_group: "{{ groups['docker_containers'] }}"
-
-- hosts: docker_containers
   gather_facts: false
-  become: true
-  vars:
-    jumpcloud_use_sudo: true
-
   tasks:
-  - name: Install Python for Ansible requirements
-    import_tasks: tasks/install_python.yml
-  - import_tasks: tasks/install_yum_patch.yml
-  - name: Fix Apt-Show-Versions for APT based systems
-    include_tasks: tasks/fix_apt_show_versions.yml
-    when:  '"debian" in inventory_hostname or "ubuntu" in inventory_hostname'
+    - name: Install test containers when inventory requests them
+      ansible.builtin.include_tasks: tasks/provision_containers.yml
+      when: groups.get('jumpcloud_test_hosts', []) | length > 0
 
-- hosts: docker_containers
-  gather_facts: true
-  become: true
-  vars:
-    test_hostname: "{{ inventory_hostname }}-test-with-ansible"
-    enc_jumpcloud_x_connect_key: "{{ lookup('env','JUMPCLOUD_X_CONNECT_KEY') }}"
-    jumpcloud_api_key: "{{ lookup('env','JUMPCLOUD_API_KEY') }}"
-    jumpcloud_system_groups:
-      - 'ansible_test_1'
-      - 'ansible_test_2'
-    jumpcloud_use_sudo: true
-    jumpcloud_displayName: "ansible-jc-role-{{ test_hostname }}"
-
+- name: Resolve DigitalOcean test credentials
+  hosts: jumpcloud_test_hosts
+  gather_facts: false
   pre_tasks:
-    - name: Update the hostname
-      raw: bash -c "(hostname | grep -x {{ test_hostname }}) || hostname {{ test_hostname }}"
-      register: output
-      changed_when: output.stdout | length == 0
+    - name: Load local test overrides
+      ansible.builtin.include_tasks: tasks/load_local_test_overrides.yml
 
-  roles:
-      - { role: ansible-jumpcloud }
-
+    - name: Resolve DigitalOcean test variables
+      ansible.builtin.include_tasks: tasks/resolve_digitalocean_test_context.yml
   tasks:
-      - include_tasks: tasks/test_tasks.yml
+    - name: Provision DigitalOcean droplets when requested
+      ansible.builtin.include_tasks: tasks/provision_digitalocean_droplet.yml
+      when: jumpcloud_test_provision_droplets | default(false) | bool
+
+- name: Install Python on DigitalOcean test droplets
+  hosts: jumpcloud_test_hosts
+  gather_facts: false
+  tasks:
+    - name: Install Python for Ansible on provisioned droplets
+      ansible.builtin.include_tasks: tasks/install_python.yml
+      when: jumpcloud_test_provision_droplets | default(false) | bool
+
+- name: Validate JumpCloud role on supported Linux targets
+  hosts: jumpcloud_test_hosts
+  vars_files:
+    - ../defaults/main.yml
+  pre_tasks:
+    - name: Load local test overrides
+      ansible.builtin.include_tasks: tasks/load_local_test_overrides.yml
+
+    - name: Resolve live test context
+      ansible.builtin.include_tasks: tasks/resolve_live_test_context.yml
+
+    - name: Validate JumpCloud live-test credentials when requested
+      ansible.builtin.include_tasks: tasks/validate_jumpcloud_live_credentials.yml
+      when: jumpcloud_test_run_agent_install | default(false) | bool
+  tasks:
+    - name: Run live JumpCloud role
+      ansible.builtin.include_role:
+        name: ansible-jumpcloud
+      when: jumpcloud_test_run_agent_install | default(false) | bool
+
+    - name: Run container-safe validation tasks
+      ansible.builtin.include_tasks: tasks/container_preflight.yml
+      when: not jumpcloud_test_run_agent_install | default(false) | bool
+
+    - name: Run live validation tasks
+      ansible.builtin.include_tasks: tasks/test_tasks.yml
+      when: jumpcloud_test_run_agent_install | default(false) | bool

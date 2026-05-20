@@ -1,0 +1,7 @@
+---
+- name: Validate DigitalOcean test credentials
+  ansible.builtin.import_tasks: validate_digitalocean_credentials.yml
+
+- name: Provision DigitalOcean test droplet
+  ansible.builtin.include_role:
+    name: digital-ocean

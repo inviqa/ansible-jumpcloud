@@ -1,9 +1,5 @@
 ---
-
-- name:    restart JumpCloud
-  service:
-    name:  "{{ jumpcloud_agent_service }}"
+- name: Restart JumpCloud
+  ansible.builtin.service:
+    name: "{{ jumpcloud_agent_service }}"
     state: restarted
-  become:  "{{ jumpcloud_use_sudo }}"
-
-...

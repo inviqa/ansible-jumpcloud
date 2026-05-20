@@ -1,31 +1,46 @@
 ---
 galaxy_info:
+  namespace: inviqa
   role_name: jumpcloud
-  author: "marcomc"
-  description: "Install and Configure JumpCloud (https://jumpcloud.com) AD and LDAP agent"
+  author: "Marco Massari Calderone <marco.massari-calder@inviqa.com>"
+  description: "Install, register, and reconcile the JumpCloud Linux agent"
   company: "Inviqa UK Ltd"
   license: MIT
-  min_ansible_version: 2
+  min_ansible_version: "2.16"
   platforms:
     - name: EL
       versions:
-        - 6
-        - 7
-    - name: Fedora
-      versions:
-        - 22
+        - "8"
+        - "9"
+        - "10"
     - name: Debian
       versions:
-        - all
+        - bullseye
+        - bookworm
+        - trixie
+    - name: Fedora
+      versions:
+        - "40"
+        - "41"
+        - "42"
+        - "43"
     - name: Ubuntu
       versions:
-        - trusty
-        - xenial
         - bionic
-  galaxy_tags::
+        - focal
+        - jammy
+        - noble
+  galaxy_tags:
+    - access
     - authentication
-    - monitoring
-    - networking
+    - device
+    - iam
+    - identity
+    - jumpcloud
+    - linux
+    - mfa
+    - security
+    - ssh
+    - system
 
 dependencies: []
-...

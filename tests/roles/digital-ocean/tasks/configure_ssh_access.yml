@@ -1,0 +1,49 @@
+---
+- name: Set SSH private key file when provided
+  ansible.builtin.set_fact:
+    ansible_ssh_private_key_file: "{{ do_ssh_private_key_file }}"
+  when: do_ssh_private_key_file is defined
+
+- name: Create local SSH public key selector directory
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/../.ansible/test-ssh-keys"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  when:
+    - do_ssh_private_key_file is not defined
+    - jumpcloud_test_use_public_key_selector | default(false) | bool
+
+- name: Write local SSH public key selector
+  ansible.builtin.copy:
+    content: "{{ jumpcloud_test_do_ssh_key.public_key }}"
+    dest: "{{ playbook_dir }}/../.ansible/test-ssh-keys/{{ inventory_hostname }}.pub"
+    mode: "0600"
+  delegate_to: localhost
+  no_log: true
+  when:
+    - do_ssh_private_key_file is not defined
+    - jumpcloud_test_use_public_key_selector | default(false) | bool
+
+- name: Use the DigitalOcean public key selector for SSH agent authentication
+  ansible.builtin.set_fact:
+    ansible_ssh_private_key_file: "{{ playbook_dir }}/../.ansible/test-ssh-keys/{{ inventory_hostname }}.pub"
+  when:
+    - do_ssh_private_key_file is not defined
+    - jumpcloud_test_use_public_key_selector | default(false) | bool
+
+- name: Wait for SSH to come up
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: 22
+    delay: 15
+    timeout: 420
+    state: started
+  delegate_to: localhost
+
+- name: Wait for Ansible SSH readiness
+  ansible.builtin.wait_for_connection:
+    delay: 10
+    timeout: 600
+    connect_timeout: 5
+    sleep: 10

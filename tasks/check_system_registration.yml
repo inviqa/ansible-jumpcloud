@@ -1,27 +1,78 @@
 ---
-- name: Retrieve System attributes based on the System ID
-  uri:
+- name: Validate JumpCloud API key for registration checks
+  ansible.builtin.assert:
+    that:
+      - jumpcloud_api_key | length > 0
+    fail_msg: >-
+      Set jumpcloud_api_key or enc_jumpcloud_api_key before checking JumpCloud
+      system registration.
+  no_log: true
+
+- name: Retrieve system attributes based on the system ID
+  ansible.builtin.uri:
     url: "{{ jumpcloud_api_v1_url }}/systems/{{ jumpcloud_system_key }}"
     method: GET
     headers:
-      "Content-Type": "application/json"
-      "Accept":       "application/json"
-      "x-api-key":    "{{ jumpcloud_api_key }}"
+      Content-Type: application/json
+      Accept: application/json
+      x-api-key: "{{ jumpcloud_api_key }}"
     follow_redirects: all
-    return_content: yes
-    status_code: 200
+    return_content: true
+    status_code:
+      - 200
+      - 404
   delegate_to: localhost
-  register:  jc_system_attributes_json_response
-  ignore_errors: yes
+  become: false
+  register: jc_system_attributes_json_response
+  no_log: true
+  retries: "{{ jumpcloud_registration_check_retries | int }}"
+  delay: "{{ jumpcloud_registration_check_delay_seconds | int }}"
+  until: >-
+    (
+      jc_system_attributes_json_response.status == 200
+      and (
+        jumpcloud_registration_expected_display_name is not defined
+        or jc_system_attributes_json_response.json.displayName
+          == jumpcloud_registration_expected_display_name
+      )
+      and (
+        jumpcloud_registration_expected_allow_public_key_authentication is not defined
+        or jc_system_attributes_json_response.json.allowPublicKeyAuthentication
+          == (jumpcloud_registration_expected_allow_public_key_authentication | bool)
+      )
+      and (
+        jumpcloud_registration_expected_allow_ssh_password_authentication is not defined
+        or jc_system_attributes_json_response.json.allowSshPasswordAuthentication
+          == (jumpcloud_registration_expected_allow_ssh_password_authentication | bool)
+      )
+      and (
+        jumpcloud_registration_expected_allow_ssh_root_login is not defined
+        or jc_system_attributes_json_response.json.allowSshRootLogin
+          == (jumpcloud_registration_expected_allow_ssh_root_login | bool)
+      )
+      and (
+        jumpcloud_registration_expected_allow_multi_factor_authentication is not defined
+        or jc_system_attributes_json_response.json.allowMultiFactorAuthentication
+          == (jumpcloud_registration_expected_allow_multi_factor_authentication | bool)
+      )
+    )
+    or (
+      jc_system_attributes_json_response.status == 404
+      and jc_system_attributes_json_response.attempts | default(1) | int
+        >= jumpcloud_registration_check_retries | int
+    )
+  failed_when: jc_system_attributes_json_response.status not in [200, 404]
+  changed_when: false
   when: jumpcloud_system_key is defined
 
-- name: Define if System is registered in JumpCloud
-  set_fact:
-    jc_system_is_registered: "{{ not jc_system_attributes_json_response.failed }}"
+- name: Define if system is registered in JumpCloud
+  ansible.builtin.set_fact:
+    jc_system_is_registered: "{{ jc_system_attributes_json_response.status == 200 }}"
   when: jc_system_attributes_json_response is defined
   delegate_to: localhost
+  become: false
 
-- debug:
-    msg: "Warning ==> the System is not registered in JumpCloud"
-  when: not jc_system_is_registered
-...
+- name: Warn when system is not registered in JumpCloud
+  ansible.builtin.debug:
+    msg: "Warning: the system is not registered in JumpCloud"
+  when: not jc_system_is_registered | default(false) | bool

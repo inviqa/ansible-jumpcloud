@@ -11,6 +11,7 @@
   DigitalOcean API credentials.
 - Simplified the Workspace console Dockerfile requirement-copy paths to generic
   temporary filenames.
+- Reduced the Workspace destroy timeout so local test containers stop faster.
 - Treated `test.digitalocean.ssh_keys` as a Workspace list and serialized it
   only when forwarding it to the console container.
 - Validated live-test SSH agent access against DigitalOcean MD5 fingerprints and
@@ -20,6 +21,8 @@
   `ws test-live ubuntu`.
 - Consolidated DigitalOcean live tests on `tests/inventory` and removed
   redundant per-family inventory files.
+- Matched Jenkins Slack notification gating to the explicit
+  `SLACK_NOTIFICATIONS_ENABLED == 'true'` check used by this pipeline.
 - Updated Jenkins CI documentation to match the current credential IDs.
 
 ## [3.0.2] - 2026-05-20 - Galaxy Check Output

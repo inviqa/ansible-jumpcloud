@@ -57,9 +57,11 @@ from the example first:
 cp workspace.override.yml.example workspace.override.yml
 ```
 
-For live tests, fill the DigitalOcean API token, DigitalOcean SSH key selector,
-JumpCloud connect key, and JumpCloud API key. The selected DigitalOcean SSH key
-must match a private key loaded in the forwarded SSH agent.
+For live tests, fill the DigitalOcean API token, DigitalOcean SSH key selector
+list, JumpCloud connect key, and JumpCloud API key. The selected DigitalOcean
+SSH key must match a private key loaded in the forwarded SSH agent. The harness
+validates that match and uses the selected DigitalOcean public key to steer SSH
+agent authentication.
 
 ## Workspace Commands
 

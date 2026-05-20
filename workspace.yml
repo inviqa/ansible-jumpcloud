@@ -6,7 +6,7 @@ workspace('ansible-jumpcloud'):
 # Copy them to workspace.override.yml with real values for live testing.
 
 attribute('test.digitalocean.api_token'): ''
-attribute('test.digitalocean.ssh_keys'): ''
+attribute('test.digitalocean.ssh_keys'): []
 attribute('test.jumpcloud.api_key'): ''
 attribute('test.jumpcloud.x_connect_key'): ''
 attribute('test.jumpcloud.system_groups'): ''
@@ -14,6 +14,10 @@ attribute('test.jumpcloud.create_missing_system_groups'): false
 attribute('test.jumpcloud.delete_duplicate_systems'): true
 attribute('ansible.galaxy.token'): ''
 attribute('github.api_token'): ''
+
+function('join', [separator, array]): |
+  #!php
+  = is_array($array) ? implode($separator, $array) : $array;
 
 command('enable %', 'enable'):
   description: "Usage: ws enable [service]. Start all services or one service."
@@ -98,7 +102,7 @@ command('console %', 'console'):
   env:
     ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
     DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
-    DIGITAL_OCEAN_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ?: env('DIGITAL_OCEAN_SSH_KEYS') ?: ''"
+    DIGITAL_OCEAN_SSH_KEYS: "= @('test.digitalocean.ssh_keys') ? join(',', @('test.digitalocean.ssh_keys')) : env('DIGITAL_OCEAN_SSH_KEYS') ?: ''"
     GITHUB_TOKEN: "= @('github.api_token') ?: env('GITHUB_TOKEN') ?: ''"
     HOST_SSH_AUTH_SOCK: "= env('HOST_SSH_AUTH_SOCK') ?: env('SSH_AUTH_SOCK') ?: '/run/host-services/ssh-auth.sock'"
     JUMPCLOUD_API_KEY: "= @('test.jumpcloud.api_key') ?: env('JUMPCLOUD_API_KEY') ?: ''"

@@ -3,7 +3,7 @@
 # The override file is gitignored.
 
 attribute('test.digitalocean.api_token'): ''
-attribute('test.digitalocean.ssh_keys'): ''
+attribute('test.digitalocean.ssh_keys'): []
 attribute('test.jumpcloud.api_key'): ''
 attribute('test.jumpcloud.x_connect_key'): ''
 attribute('test.jumpcloud.system_groups'): ''

@@ -1,13 +1,4 @@
 ---
-- name: Resolve selected DigitalOcean SSH key fingerprint
-  ansible.builtin.command: ssh-keygen -lf -
-  args:
-    stdin: "{{ jumpcloud_test_do_ssh_key.public_key }}"
-  delegate_to: localhost
-  register: jumpcloud_test_do_ssh_key_fingerprint
-  changed_when: false
-  no_log: true
-
 - name: List local SSH agent public keys
   ansible.builtin.command: ssh-add -L
   delegate_to: localhost
@@ -16,13 +7,13 @@
   failed_when: false
   no_log: true
 
-- name: Resolve local SSH agent key fingerprints
-  ansible.builtin.command: ssh-keygen -lf -
+- name: Resolve local SSH agent MD5 fingerprints
+  ansible.builtin.command: ssh-keygen -E md5 -lf -
   args:
     stdin: "{{ item }}"
   delegate_to: localhost
   loop: "{{ jumpcloud_test_ssh_agent_public_keys.stdout_lines | default([]) }}"
-  register: jumpcloud_test_ssh_agent_fingerprints
+  register: jumpcloud_test_ssh_agent_md5_fingerprints
   changed_when: false
   no_log: true
   when: jumpcloud_test_ssh_agent_public_keys.rc == 0
@@ -32,15 +23,13 @@
     that:
       - jumpcloud_test_ssh_agent_public_keys.rc == 0
       - >-
-        (jumpcloud_test_do_ssh_key_fingerprint.stdout.split() | length) > 1
-      - >-
-        jumpcloud_test_do_ssh_key_fingerprint.stdout.split()[1]
-        in (
-          jumpcloud_test_ssh_agent_fingerprints.results
+        (
+          jumpcloud_test_ssh_agent_md5_fingerprints.results
           | default([])
           | map(attribute='stdout')
           | join('\n')
-        )
+          | regex_search(jumpcloud_test_do_ssh_key.fingerprint)
+        ) is not none
     fail_msg: >-
       The selected DigitalOcean SSH key is not loaded in the forwarded SSH
       agent. Load the matching private key with ssh-add, choose a DigitalOcean

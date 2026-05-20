@@ -10,7 +10,11 @@
 - Kept `DO_OAUTH_TOKEN` as a backward-compatible local input fallback for
   DigitalOcean API credentials.
 - Simplified the Workspace console Dockerfile requirement-copy paths to generic
-  temporary filenames shared across sibling role repositories.
+  temporary filenames.
+- Treated `test.digitalocean.ssh_keys` as a Workspace list and serialized it
+  only when forwarding it to the console container.
+- Validated live-test SSH agent access against DigitalOcean MD5 fingerprints and
+  always selected the matching DigitalOcean public key for SSH authentication.
 - Updated Jenkins CI documentation to match the current credential IDs.
 
 ## [3.0.2] - 2026-05-20 - Galaxy Check Output

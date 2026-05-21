@@ -201,19 +201,14 @@ command sequence.
 ## Publishing
 
 [docs/ansible-galaxy-release.md](docs/ansible-galaxy-release.md) documents the
-GitHub release and Ansible Galaxy import runbook. Maintainers can inspect the
-available publication commands with:
-
-```bash
-ws ansible-galaxy
-```
+GitHub release and Ansible Galaxy import runbook.
 
 After the GitHub release and tag exist on `main`, import the role into Galaxy
 with:
 
 ```bash
 ws github release check
-ws ansible-galaxy publish
+ws ansible galaxy publish
 ```
 
 The commands use `github.api_token` and `ansible.galaxy.token` from

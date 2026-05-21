@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## Unreleased
+
+### Mermaid Preview
+
+- Split Mermaid flowcharts into shorter phase-oriented blocks for Markdown
+  preview readability.
+
+### Maintenance
+
+- Kept optional DigitalOcean project assignment inert in tracked Workspace
+  examples unless an operator configures an existing project.
+- Isolated container Ansible cache paths from host-generated `.ansible/` links
+  during Workspace validation.
+- Set the Jenkins live-test DigitalOcean project name to `Inviqa Sandbox` in
+  the top-level pipeline environment.
+- Made non-interactive `ws console <command>` reject quoted shell snippets
+  instead of corrupting them.
+- Kept non-secret credential setup guidance visible while preserving `no_log`
+  on secret-bearing checks.
+
 ## [3.1.0] - 2026-05-20 - Jenkins Credential and Documentation Updates
 
 - Added a Workspace-provided DigitalOcean project name for live-test droplets
@@ -23,14 +43,30 @@
 - Validated live-test SSH agent access against DigitalOcean MD5 fingerprints and
   always selected the matching DigitalOcean public key for SSH authentication.
 - Replaced free-form live-test limits with explicit Workspace targets:
-  `ws test-live all`, `ws test-live debian`, `ws test-live redhat`, and
-  `ws test-live ubuntu`.
+  `ws test-live provision <target>`, `ws test-live cleanup <target>`, and
+  `ws test-live full-cycle <target>`.
+- Implemented those live-test phases as true Workspace subcommands instead of
+  dispatching them through one `test-live <action> <target>` command.
+- Made live-test targets optional at the Workspace parser level so missing or
+  invalid targets print the same phase-specific usage message.
+- Simplified the live-test subcommand scripts by removing one-off Bash helper
+  functions.
+- Namespaced Ansible helper commands under `ws ansible lint`,
+  `ws ansible syntax`, `ws ansible playbook`, and
+  `ws ansible galaxy <action>` subcommands, with grouped Workspace usage help
+  for Ansible, Galaxy, config, GitHub, global, and secret command groups.
+- Updated testing and release documentation for `ws ansible playbook`,
+  `ws test-live <phase> <target>`, and nested GitHub/Galaxy release actions.
+- Kept Jenkins on the safe `full-cycle` live-test phase with a second
+  idempotent cleanup safety net.
 - Consolidated DigitalOcean live tests on `tests/inventory` and removed
   redundant per-family inventory files.
 - Matched Jenkins Slack notification gating to the explicit
   `SLACK_NOTIFICATIONS_ENABLED == 'true'` check used by this pipeline.
 - Updated README and Jenkins CI documentation to match the current release,
   credential IDs, and comma-separated SSH key selector parsing.
+- Documented all Workspace override attributes used by live tests and release
+  commands in the testing guide.
 - Added agent guidance to keep Jenkins publication and live-test operator
   choices as per-build controls.
 - Clarified where Jenkins maintainers set per-build pipeline parameters.
@@ -99,8 +135,8 @@
 - Replaced the legacy Docker, Vagrant, and Travis-era workflow with a
   Workspace-managed container and DigitalOcean integration harness.
 - Standardized validation through Workspace commands, including `ws enable`,
-  `ws console`, `ws ansible-lint`, `ws syntax`, `ws test-docker`,
-  `ws test-live`, and `ws ansible-playbook <playbook> <inventory>`.
+  `ws console`, `ws ansible lint`, `ws ansible syntax`, `ws test-docker`,
+  `ws test-live`, and `ws ansible playbook <playbook> <inventory>`.
 - Fixed Jenkins live-test reliability around Docker socket access, SSH agent
   credential binding, job-named workspaces, DigitalOcean SSH readiness, and
   JumpCloud SSH-attribute propagation.

@@ -12,6 +12,7 @@ pipeline {
         ANSIBLE_GALAXY_TOKEN = credentials('ansible-roles-galaxy-token')
         DIGITAL_OCEAN_SSH_KEYS = credentials('ansible-roles-tests-digitalocean-ssh-key-id')
         DIGITAL_OCEAN_API_TOKEN = credentials('ansible-roles-digitalocean-oauth-token')
+        DIGITAL_OCEAN_PROJECT_NAME = 'Inviqa Sandbox'
         GITHUB_TOKEN = credentials('inviqa-ansible-roles-releases')
         JUMPCLOUD_API_KEY = credentials('ansible-jumpcloud-api-key')
         JUMPCLOUD_X_CONNECT_KEY = credentials('ansible-jumpcloud-connect-key')
@@ -64,7 +65,7 @@ pipeline {
 
         stage('Linting') {
             steps {
-                sh 'ws ansible-lint'
+                sh 'ws ansible lint'
             }
             post {
                 failure {
@@ -75,7 +76,7 @@ pipeline {
 
         stage('Syntax checks') {
             steps {
-                sh 'ws syntax'
+                sh 'ws ansible syntax'
             }
             post {
                 failure {
@@ -106,8 +107,8 @@ pipeline {
 
                         [ "${github_release_status}" = 0 ] || [ "${github_release_status}" = 2 ] || exit "${github_release_status}"
 
-                        ws ansible-galaxy check-token
-                        ws ansible-galaxy info
+                        ws ansible galaxy check-token
+                        ws ansible galaxy info
                     '''
                 }
             }
@@ -124,7 +125,7 @@ pipeline {
             }
             steps {
                 sshagent(credentials: [env.SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
-                    sh "ws test-live '${params.LIVE_TEST_TARGET}'"
+                    sh "ws test-live full-cycle '${params.LIVE_TEST_TARGET}'"
                 }
             }
             post {
@@ -162,7 +163,7 @@ pipeline {
             }
             steps {
                 withEnv(["RELEASE_VERSION=${params.RELEASE_VERSION ?: ''}"]) {
-                    sh 'ws ansible-galaxy publish'
+                    sh 'ws ansible galaxy publish'
                 }
             }
             post {
@@ -205,6 +206,13 @@ pipeline {
             }
         }
         always {
+            script {
+                if (params.RUN_LIVE_TESTS) {
+                    sshagent(credentials: [env.SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
+                        sh "ws test-live cleanup '${params.LIVE_TEST_TARGET}' || true"
+                    }
+                }
+            }
             sh 'ws destroy'
             cleanWs()
         }

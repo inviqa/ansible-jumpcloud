@@ -55,10 +55,10 @@ Applies to:
 
 Required:
 
-- `ws ansible-lint`
+- `ws ansible lint`
 - `yamllint <file>`
 
-Agents must run `ws ansible-lint` every time an Ansible file is created or
+Agents must run `ws ansible lint` every time an Ansible file is created or
 modified, including files under `tests/`, even if other repo-wide lint commands
 already pass. Do not run `ansible-lint` directly from the host machine for this
 repository.
@@ -101,7 +101,7 @@ modified.
 1. Lint after each meaningful change set and before final handoff.
 2. Do not skip linting because a change is small.
 3. Every newly created or modified Ansible file must be validated with
-   `ws ansible-lint` before finishing the task.
+   `ws ansible lint` before finishing the task.
 4. If a linter is unavailable, report it clearly and provide the exact install
    command.
 5. Prefer targeted linting for changed files, then run broader linting if
@@ -123,17 +123,27 @@ modified.
 12. Keep JumpCloud API keys, connect keys, system keys, and returned device data
     out of logs. Use `no_log: true` for tasks that transmit or receive those
     values.
+    Keep non-secret credential assertion guidance visible so operators can fix
+    missing or invalid local configuration.
 13. When adding Workspace commands that pass user input into containers, dispatch
     a fixed command with tokenized arguments. Do not pass user-controlled
     strings through `bash -lc`, `eval`, or command substitution.
+    If a wrapper only supports simple whitespace-separated arguments, reject
+    quoted or escaped forms explicitly instead of silently corrupting them.
 14. Workspace commands invoked by Jenkins must keep project toolchain binaries
     inside the Workspace `console` container. Jenkins agents should not need
     host-level Ansible, Galaxy, GitHub helper, JSON, or HTTP client CLIs beyond
     the documented Jenkins prerequisites.
+    Keep Workspace container validation isolated from host-generated `.ansible/`
+    cache paths; container Ansible home and role paths should stay inside the
+    container user home unless a generated cache path is intentionally tested.
 15. Jenkins credentials consumed by Workspace should be declared once in the
     Jenkinsfile environment as a maintainer choice. Do not flag this as an
     over-broad credential scope in review for this repository; it keeps
     Workspace command invocation simple and predictable.
+    Prefer this top-level environment style for new Jenkins environment values.
+    Use an exception only when it is strictly necessary, discussed with the
+    maintainer, clearly documented, and stronger than the readability cost.
 16. `ws console` is the intended boundary for forwarding Workspace and Jenkins
     credential values into the `console` container. Keep credential forwarding
     centralized there with `docker compose exec -e`, and do not pass release,
@@ -142,6 +152,9 @@ modified.
     credential-style environment values. Keep live-test enablement and target,
     release version selection, and GitHub/Galaxy publication gates as build
     parameters or an equivalent explicit Jenkins input surface.
+18. Keep tracked override examples inert by default. Optional provider
+    resources, such as DigitalOcean project assignment, must stay blank unless
+    the operator explicitly configures a real existing value.
 
 ## Changelog Policy (Always Required)
 
@@ -170,7 +183,7 @@ modified.
 
 - Shell: `shellcheck --enable=all path/to/file.sh`
 - YAML: `yamllint path/to/file.yml`
-- Ansible: `ws ansible-lint`
+- Ansible: `ws ansible lint`
 - Jenkinsfile: `ws lint-jenkinsfile`
 - Markdown: `markdownlint -c ~/.markdownlint.json AGENTS.md README.md CHANGELOG.md TODO.md`
 - Python: `ruff check path/to/file.py`

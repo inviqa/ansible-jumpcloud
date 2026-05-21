@@ -20,6 +20,34 @@ function('join', [separator, array]): |
   #!php
   = is_array($array) ? implode($separator, $array) : $array;
 
+command('config', 'config'):
+  description: Inspect Workspace configuration values and sources.
+  exec: |
+    #!bash(workspace:/)|@
+    ws config --help
+    exit 1
+
+command('global', 'global'):
+  description: Manage global Workspace configuration and services.
+  exec: |
+    #!bash(workspace:/)|@
+    ws global --help
+    exit 1
+
+command('global config', 'global config'):
+  description: Read global Workspace configuration values.
+  exec: |
+    #!bash(workspace:/)|@
+    ws global config --help
+    exit 1
+
+command('secret', 'secret'):
+  description: Manage Workspace secret helper commands.
+  exec: |
+    #!bash(workspace:/)|@
+    ws secret --help
+    exit 1
+
 command('enable %', 'enable'):
   description: "Usage: ws enable [service]. Start all services or one service."
   env:
@@ -99,7 +127,7 @@ command('destroy', 'destroy'):
       --timeout 10
 
 command('console %', 'console'):
-  description: "Usage: ws console [command]. Run a command in the Ansible console container."
+  description: "Usage: ws console [simple-command]. Open a shell or run a simple command in the Ansible console container."
   env:
     ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
     DIGITAL_OCEAN_API_TOKEN: "= @('test.digitalocean.api_token') ?: env('DIGITAL_OCEAN_API_TOKEN') ?: env('DO_OAUTH_TOKEN') ?: ''"
@@ -121,6 +149,13 @@ command('console %', 'console'):
     if [[ -z "${console_command}" ]]; then
       docker_command=(bash)
     else
+      if [[ "${console_command}" == *"'"* ]] ||
+        [[ "${console_command}" == *'"'* ]] ||
+        [[ "${console_command}" == *\\* ]]; then
+        echo "ws console command mode supports simple whitespace-separated commands only." >&2
+        echo "Open 'ws console' for quoted shell commands, or add a dedicated Workspace command." >&2
+        exit 1
+      fi
       docker_exec_args+=(-T)
       read -r -a docker_command <<< "${console_command}"
     fi
@@ -142,8 +177,8 @@ command('console %', 'console'):
       console \
       "${docker_command[@]}"
 
-command('ansible-playbook <playbook> <inventory>', 'ansible-playbook'):
-  description: "Usage: ws ansible-playbook <playbook> <inventory>. Run an Ansible playbook."
+command('ansible playbook <playbook> <inventory>', 'ansible playbook'):
+  description: "Usage: ws ansible playbook <playbook> <inventory>. Run an Ansible playbook."
   env:
     INVENTORY: = input.argument('inventory')
     PLAYBOOK: = input.argument('playbook')
@@ -161,19 +196,47 @@ command('ansible-playbook <playbook> <inventory>', 'ansible-playbook'):
 
     ws console ansible-playbook "${PLAYBOOK}" -i "${INVENTORY}" "${extra_args[@]}"
 
-command('syntax', 'syntax'):
+command('ansible', 'ansible'):
+  description: Run role-focused Ansible helper commands inside the workspace.
+  exec: |
+    #!bash(workspace:/)|@
+    ws ansible --help
+    exit 1
+
+command('ansible syntax', 'ansible syntax'):
   description: Run Ansible syntax checks for Docker and DigitalOcean inventories.
   exec: |
     #!bash(workspace:/)|@
-    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory-docker
-    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook.yml tests/inventory
-    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible-playbook tests/playbook_cleanup.yml tests/inventory
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible playbook tests/playbook.yml tests/inventory-docker
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible playbook tests/playbook.yml tests/inventory
+    WS_PLAYBOOK_SYNTAX_CHECK=1 ws ansible playbook tests/playbook_cleanup.yml tests/inventory
 
-command('ansible-lint', 'ansible-lint'):
+command('ansible lint', 'ansible lint'):
   description: Run ansible-lint for the role inside the console container.
   exec: |
     #!bash(workspace:/)|@
     ws console ansible-lint .
+
+command('ansible galaxy', 'ansible galaxy'):
+  description: Manage Ansible Galaxy release checks, imports, and role metadata.
+  exec: |
+    #!bash(workspace:/)|@
+    ws ansible galaxy --help
+    exit 1
+
+command('github', 'github'):
+  description: Manage GitHub release helper commands for this role.
+  exec: |
+    #!bash(workspace:/)|@
+    ws github --help
+    exit 1
+
+command('github release', 'github release'):
+  description: Manage GitHub release version checks and publication.
+  exec: |
+    #!bash(workspace:/)|@
+    ws github release --help
+    exit 1
 
 command('github release version', 'github release version'):
   description: Print the latest concrete changelog release version.
@@ -277,7 +340,7 @@ command('github release publish', 'github release publish'):
       --latest
     CONSOLE
 
-command('ansible-galaxy check-token', 'ansible-galaxy check-token'):
+command('ansible galaxy check-token', 'ansible galaxy check-token'):
   description: Check that an Ansible Galaxy token is configured.
   env:
     ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
@@ -288,7 +351,7 @@ command('ansible-galaxy check-token', 'ansible-galaxy check-token'):
       exit 1
     fi
 
-command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
+command('ansible galaxy check-release', 'ansible galaxy check-release'):
   description: Check that the changelog release is on GitHub and Galaxy.
   env:
     RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
@@ -314,7 +377,7 @@ command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
     passthru ws console bash -s -- "${version}" <<'CONSOLE'
     set -euo pipefail
 
-    version=${1:?"Usage: ansible-galaxy check-release <version>"}
+    version=${1:?"Usage: ansible galaxy check-release <version>"}
     tmp_roles="$(mktemp -d)"
     trap 'rm -rf "${tmp_roles}"' EXIT
 
@@ -325,16 +388,16 @@ command('ansible-galaxy check-release', 'ansible-galaxy check-release'):
     printf 'Ansible Galaxy exposes inviqa.jumpcloud,%s and pinned install succeeds.\n' "${version}"
     CONSOLE
 
-command('ansible-galaxy publish', 'ansible-galaxy publish'):
+command('ansible galaxy publish', 'ansible galaxy publish'):
   description: Import the main branch into Ansible Galaxy and show role info.
   env:
     ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
     RELEASE_VERSION: "= env('RELEASE_VERSION') ?: ''"
   exec: |
     #!bash(workspace:/)|@
-    passthru ws ansible-galaxy check-token
+    passthru ws ansible galaxy check-token
     passthru ws github release check
-    if ws ansible-galaxy check-release; then
+    if ws ansible galaxy check-release; then
       exit 0
     fi
     passthru ws console bash -s <<'CONSOLE'
@@ -346,15 +409,15 @@ command('ansible-galaxy publish', 'ansible-galaxy publish'):
       --token "${ANSIBLE_GALAXY_TOKEN}"
     ansible-galaxy role info inviqa.jumpcloud
     CONSOLE
-    passthru ws ansible-galaxy check-release
+    passthru ws ansible galaxy check-release
 
-command('ansible-galaxy status', 'ansible-galaxy status'):
+command('ansible galaxy status', 'ansible galaxy status'):
   description: Check the latest Ansible Galaxy import status.
   env:
     ANSIBLE_GALAXY_TOKEN: "= @('ansible.galaxy.token') ?: env('ANSIBLE_GALAXY_TOKEN') ?: ''"
   exec: |
     #!bash(workspace:/)|@
-    passthru ws ansible-galaxy check-token
+    passthru ws ansible galaxy check-token
     passthru ws console bash -s <<'CONSOLE'
     set -euo pipefail
 
@@ -362,7 +425,7 @@ command('ansible-galaxy status', 'ansible-galaxy status'):
       --token "${ANSIBLE_GALAXY_TOKEN}"
     CONSOLE
 
-command('ansible-galaxy info', 'ansible-galaxy info'):
+command('ansible galaxy info', 'ansible galaxy info'):
   description: Show the currently indexed Ansible Galaxy role metadata.
   exec: |
     #!bash(workspace:/)|@
@@ -382,8 +445,8 @@ command('test-docker', 'test-docker'):
     run_rc=0
     cleanup_rc=0
 
-    ws ansible-playbook tests/playbook.yml tests/inventory-docker || run_rc=$?
-    ws ansible-playbook tests/playbook_cleanup.yml tests/inventory-docker || cleanup_rc=$?
+    ws ansible playbook tests/playbook.yml tests/inventory-docker || run_rc=$?
+    ws ansible playbook tests/playbook_cleanup.yml tests/inventory-docker || cleanup_rc=$?
 
     if [[ "${run_rc}" -ne 0 ]]; then
       exit "${run_rc}"
@@ -391,50 +454,83 @@ command('test-docker', 'test-docker'):
 
     exit "${cleanup_rc}"
 
-command('test-live <target>', 'test-live'):
-  description: "Usage: ws test-live <all|debian|redhat|ubuntu>. Run DigitalOcean JumpCloud live tests and cleanup."
-  env:
-    TARGET: = input.argument('target')
+command('test-live', 'test-live'):
+  description: Run DigitalOcean JumpCloud live-test phases.
   exec: |
     #!bash(workspace:/)|@
-    run_rc=0
-    cleanup_rc=0
-    playbook_limit="${TARGET}"
+    ws test-live --help
+    exit 1
 
-    if [[ ! "${TARGET}" =~ ^(all|debian|redhat|ubuntu)$ ]]; then
-      echo "Usage: ws test-live <all|debian|redhat|ubuntu>" >&2
+command('test-live provision [<target>]', 'test-live provision'):
+  description: "Provision live test resources for <all|debian|redhat|ubuntu>."
+  env:
+    TARGET: "= input.argument('target') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    if [[ -z "${TARGET}" || ! "${TARGET}" =~ ^(all|debian|redhat|ubuntu)$ ]]; then
+      echo "Usage: ws test-live provision <all|debian|redhat|ubuntu>" >&2
       exit 1
     fi
+
+    playbook_limit="${TARGET}"
     [[ "${TARGET}" != "all" ]] || playbook_limit=''
 
-    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible-playbook \
+    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible playbook \
+      tests/playbook.yml \
+      tests/inventory
+    printf '\nLive test resources were left running for inspection.\n'
+    printf 'Run `ws test-live cleanup %s` when finished to remove billable DigitalOcean and JumpCloud resources.\n' "${TARGET}"
+
+command('test-live cleanup [<target>]', 'test-live cleanup'):
+  description: "Remove live test resources for <all|debian|redhat|ubuntu>."
+  env:
+    TARGET: "= input.argument('target') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    if [[ -z "${TARGET}" || ! "${TARGET}" =~ ^(all|debian|redhat|ubuntu)$ ]]; then
+      echo "Usage: ws test-live cleanup <all|debian|redhat|ubuntu>" >&2
+      exit 1
+    fi
+
+    playbook_limit="${TARGET}"
+    [[ "${TARGET}" != "all" ]] || playbook_limit=''
+
+    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible playbook \
+      tests/playbook_cleanup.yml \
+      tests/inventory
+
+command('test-live full-cycle [<target>]', 'test-live full-cycle'):
+  description: "Provision, verify, and clean up <all|debian|redhat|ubuntu>."
+  env:
+    TARGET: "= input.argument('target') ?: ''"
+  exec: |
+    #!bash(workspace:/)|@
+    if [[ -z "${TARGET}" || ! "${TARGET}" =~ ^(all|debian|redhat|ubuntu)$ ]]; then
+      echo "Usage: ws test-live full-cycle <all|debian|redhat|ubuntu>" >&2
+      exit 1
+    fi
+
+    playbook_limit="${TARGET}"
+    [[ "${TARGET}" != "all" ]] || playbook_limit=''
+
+    run_rc=0
+    cleanup_rc=0
+    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible playbook \
       tests/playbook.yml \
       tests/inventory || run_rc=$?
-
-    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible-playbook \
+    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible playbook \
       tests/playbook_cleanup.yml \
       tests/inventory || cleanup_rc=$?
 
     if [[ "${run_rc}" -ne 0 ]]; then
+      echo "Live test provision failed with exit code ${run_rc}." >&2
+      if [[ "${cleanup_rc}" -ne 0 ]]; then
+        echo "Cleanup also failed with exit code ${cleanup_rc}; manual cleanup may be required." >&2
+      fi
       exit "${run_rc}"
     fi
 
-    exit "${cleanup_rc}"
-
-command('cleanup-live <target>', 'cleanup-live'):
-  description: "Usage: ws cleanup-live <all|debian|redhat|ubuntu>. Remove live JumpCloud and DigitalOcean test resources."
-  env:
-    TARGET: = input.argument('target')
-  exec: |
-    #!bash(workspace:/)|@
-    playbook_limit="${TARGET}"
-
-    if [[ ! "${TARGET}" =~ ^(all|debian|redhat|ubuntu)$ ]]; then
-      echo "Usage: ws cleanup-live <all|debian|redhat|ubuntu>" >&2
-      exit 1
+    if [[ "${cleanup_rc}" -ne 0 ]]; then
+      echo "Cleanup failed with exit code ${cleanup_rc}." >&2
     fi
-    [[ "${TARGET}" != "all" ]] || playbook_limit=''
-
-    WS_PLAYBOOK_LIMIT="${playbook_limit}" ws ansible-playbook \
-      tests/playbook_cleanup.yml \
-      tests/inventory
+    exit "${cleanup_rc}"

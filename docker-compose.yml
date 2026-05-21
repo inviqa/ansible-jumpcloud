@@ -20,9 +20,10 @@ services:
       - "${HOST_DOCKER_GID:-1}"
     working_dir: /app
     environment:
+      ANSIBLE_HOME: /home/ansible/.ansible
       ANSIBLE_COLLECTIONS_PATH: /home/ansible/.ansible/collections:/usr/share/ansible/collections
       ANSIBLE_FORCE_COLOR: "false"
-      ANSIBLE_ROLES_PATH: /app/tests/roles:/app/.ansible/roles:/home/ansible/.ansible/roles
+      ANSIBLE_ROLES_PATH: /app/tests/roles:/home/ansible/.ansible/roles
       SSH_AUTH_SOCK: /run/host-services/ssh-auth.sock
     volumes:
       - ${HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock

@@ -92,10 +92,10 @@ Intended Ansible Galaxy role name:
 inviqa.jumpcloud
 ```
 
-After the `3.0.2` Galaxy import is complete, install the pinned release with:
+After the `3.1.0` Galaxy import is complete, install the pinned release with:
 
 ```bash
-ansible-galaxy role install inviqa.jumpcloud,3.0.2
+ansible-galaxy role install inviqa.jumpcloud,3.1.0
 ```
 
 Until that import exists, consume the role from a local checkout or a pinned Git
@@ -189,48 +189,44 @@ For local checkout testing before Galaxy publication, use the local role name
 
 The current test workflow is documented in [docs/testing.md](docs/testing.md).
 It covers Workspace commands, container tests, DigitalOcean live tests,
-Jenkinsfile lint, cleanup, the Workspace CLI install command, and the Debian 13
-maintenance check.
+Jenkinsfile lint, cleanup, DigitalOcean project assignment for test droplets,
+the Workspace CLI install command, and the Debian 13 maintenance check.
 
 ## Jenkins CI
 
 [docs/jenkins-ci.md](docs/jenkins-ci.md) documents the private Jenkins pipeline,
-required credential bindings, Jenkinsfile lint helper, and live-test command
-sequence.
+required credential IDs and bindings, Jenkinsfile lint helper, and live-test
+command sequence.
 
 ## Publishing
 
 [docs/ansible-galaxy-release.md](docs/ansible-galaxy-release.md) documents the
-GitHub release and Ansible Galaxy import runbook. Maintainers can inspect the
-available publication commands with:
-
-```bash
-ws ansible-galaxy
-```
+GitHub release and Ansible Galaxy import runbook.
 
 After the GitHub release and tag exist on `main`, import the role into Galaxy
 with:
 
 ```bash
 ws github release check
-ws ansible-galaxy publish
+ws ansible galaxy publish
 ```
 
 The commands use `github.api_token` and `ansible.galaxy.token` from
-`workspace.override.yml`, or `GITHUB_TOKEN`/`GH_TOKEN` and
-`ANSIBLE_GALAXY_TOKEN` from the shell environment.
+`workspace.override.yml`, or `GITHUB_TOKEN` and `ANSIBLE_GALAXY_TOKEN` from the
+shell environment.
 
 Jenkins can also create the GitHub release and import the role into Galaxy from
-the `main` branch with separate build parameters for each publication stage.
-See [docs/jenkins-ci.md](docs/jenkins-ci.md) for the required Jenkins
-credentials and publication controls.
+the `main` branch with separate publication build parameters. See
+[docs/jenkins-ci.md](docs/jenkins-ci.md) for the required Jenkins credentials
+and publication controls.
 
 ## Development Notes
 
 - `AGENTS.md` defines strict repository linting and documentation rules for AI
   coding agents.
 - `.ansible/` is generated dependency/cache output and should not be committed.
-- `tests/test_variables.yml` is gitignored and may hold local live-test secrets.
+- `workspace.override.yml` and `tests/test_variables.yml` are gitignored and
+  may hold local live-test secrets.
 - Keep the role support matrix aligned with JumpCloud's published Linux agent
   compatibility list before publishing a new Galaxy release.
 
@@ -253,7 +249,7 @@ documented alongside the published source.
 
 - Public repository URL: <https://github.com/inviqa/ansible-jumpcloud>
 - Ansible Galaxy role: <https://galaxy.ansible.com/ui/standalone/roles/inviqa/jumpcloud/>
-- Publication status: pending `3.0.2` Ansible Galaxy refresh
+- Publication status: pending `3.1.0` Ansible Galaxy refresh
 
 ## License
 

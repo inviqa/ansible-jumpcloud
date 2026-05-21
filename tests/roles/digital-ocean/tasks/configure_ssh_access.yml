@@ -12,7 +12,6 @@
   delegate_to: localhost
   when:
     - do_ssh_private_key_file is not defined
-    - jumpcloud_test_use_public_key_selector | default(false) | bool
 
 - name: Write local SSH public key selector
   ansible.builtin.copy:
@@ -23,14 +22,12 @@
   no_log: true
   when:
     - do_ssh_private_key_file is not defined
-    - jumpcloud_test_use_public_key_selector | default(false) | bool
 
 - name: Use the DigitalOcean public key selector for SSH agent authentication
   ansible.builtin.set_fact:
     ansible_ssh_private_key_file: "{{ playbook_dir }}/../.ansible/test-ssh-keys/{{ inventory_hostname }}.pub"
   when:
     - do_ssh_private_key_file is not defined
-    - jumpcloud_test_use_public_key_selector | default(false) | bool
 
 - name: Wait for SSH to come up
   ansible.builtin.wait_for:

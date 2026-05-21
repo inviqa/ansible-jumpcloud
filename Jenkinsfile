@@ -9,19 +9,12 @@ pipeline {
     }
 
     environment {
-        ANSIBLE_GALAXY_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-galaxy-token'
-        ANSIBLE_GALAXY_TOKEN = credentials('ansible-jumpcloud-galaxy-token')
-        DO_SSH_KEYS_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-ssh-key-ids'
-        DO_SSH_KEYS = credentials('ansible-jumpcloud-digitalocean-ssh-key-ids')
-        DO_TOKEN_CREDENTIAL_ID = 'ansible-jumpcloud-digitalocean-oauth-token'
-        DIGITAL_OCEAN_API_TOKEN = credentials('ansible-jumpcloud-digitalocean-oauth-token')
-        DO_OAUTH_TOKEN = credentials('ansible-jumpcloud-digitalocean-oauth-token')
-        GITHUB_RELEASE_CREDENTIAL_ID = 'inviqa-ansible-roles-releases'
+        ANSIBLE_GALAXY_TOKEN = credentials('ansible-roles-galaxy-token')
+        DIGITAL_OCEAN_SSH_KEYS = credentials('ansible-roles-tests-digitalocean-ssh-key-id')
+        DIGITAL_OCEAN_API_TOKEN = credentials('ansible-roles-digitalocean-oauth-token')
+        DIGITAL_OCEAN_PROJECT_NAME = 'Inviqa Sandbox'
         GITHUB_TOKEN = credentials('inviqa-ansible-roles-releases')
-        GH_TOKEN = credentials('inviqa-ansible-roles-releases')
-        JUMPCLOUD_API_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-api-key'
         JUMPCLOUD_API_KEY = credentials('ansible-jumpcloud-api-key')
-        JUMPCLOUD_CONNECT_KEY_CREDENTIAL_ID = 'ansible-jumpcloud-connect-key'
         JUMPCLOUD_X_CONNECT_KEY = credentials('ansible-jumpcloud-connect-key')
         SLACK_NOTIFICATION_CHANNEL = 'ops-integrations'
         SLACK_NOTIFICATIONS_ENABLED = 'true'
@@ -35,10 +28,10 @@ pipeline {
             defaultValue: true,
             description: 'Run the DigitalOcean-backed JumpCloud live integration test matrix.'
         )
-        string(
-            name: 'LIVE_TEST_LIMIT',
-            defaultValue: '',
-            description: 'Optional Ansible host limit for ws test-live. Leave blank to run the full live matrix.'
+        choice(
+            name: 'LIVE_TEST_TARGET',
+            choices: ['all', 'debian', 'redhat', 'ubuntu'],
+            description: 'DigitalOcean live test target passed to ws test-live.'
         )
         string(
             name: 'RELEASE_VERSION',
@@ -72,7 +65,7 @@ pipeline {
 
         stage('Linting') {
             steps {
-                sh 'ws ansible-lint'
+                sh 'ws ansible lint'
             }
             post {
                 failure {
@@ -83,7 +76,7 @@ pipeline {
 
         stage('Syntax checks') {
             steps {
-                sh 'ws syntax'
+                sh 'ws ansible syntax'
             }
             post {
                 failure {
@@ -105,17 +98,19 @@ pipeline {
 
         stage('Release preflight') {
             steps {
-                sh '''
-                    set +e
-                    RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release check
-                    github_release_status="$?"
-                    set -e
+                withEnv(["RELEASE_VERSION=${params.RELEASE_VERSION ?: ''}"]) {
+                    sh '''
+                        set +e
+                        ws github release check
+                        github_release_status="$?"
+                        set -e
 
-                    [ "${github_release_status}" = 0 ] || [ "${github_release_status}" = 2 ] || exit "${github_release_status}"
+                        [ "${github_release_status}" = 0 ] || [ "${github_release_status}" = 2 ] || exit "${github_release_status}"
 
-                    ws ansible-galaxy check-token
-                    ws ansible-galaxy info
-                '''
+                        ws ansible galaxy check-token
+                        ws ansible galaxy info
+                    '''
+                }
             }
             post {
                 failure {
@@ -130,7 +125,7 @@ pipeline {
             }
             steps {
                 sshagent(credentials: [env.SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
-                    sh 'ws test-live "${LIVE_TEST_LIMIT:-}"'
+                    sh "ws test-live full-cycle '${params.LIVE_TEST_TARGET}'"
                 }
             }
             post {
@@ -148,7 +143,9 @@ pipeline {
                 }
             }
             steps {
-                sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws github release publish'
+                withEnv(["RELEASE_VERSION=${params.RELEASE_VERSION ?: ''}"]) {
+                    sh 'ws github release publish'
+                }
             }
             post {
                 failure {
@@ -165,7 +162,9 @@ pipeline {
                 }
             }
             steps {
-                sh 'RELEASE_VERSION="${RELEASE_VERSION:-}" ws ansible-galaxy publish'
+                withEnv(["RELEASE_VERSION=${params.RELEASE_VERSION ?: ''}"]) {
+                    sh 'ws ansible galaxy publish'
+                }
             }
             post {
                 failure {
@@ -199,14 +198,21 @@ pipeline {
                         fields: fields
                     ]
                 ]
-                if (!env.SLACK_NOTIFICATIONS_ENABLED.toBoolean()) {
-                    echo "Slack ${currentBuild.currentResult} notification skipped; SLACK_NOTIFICATIONS_ENABLED is false."
-                } else {
+                if (env.SLACK_NOTIFICATIONS_ENABLED == 'true') {
                     slackSend(channel: env.SLACK_NOTIFICATION_CHANNEL, color: 'danger', attachments: attachments, tokenCredentialId: env.SLACK_TOKEN_CREDENTIAL_ID)
+                } else {
+                    echo "Slack ${currentBuild.currentResult} notification skipped; SLACK_NOTIFICATIONS_ENABLED is false."
                 }
             }
         }
         always {
+            script {
+                if (params.RUN_LIVE_TESTS) {
+                    sshagent(credentials: [env.SSH_PRIVATE_KEY_CREDENTIAL_ID]) {
+                        sh "ws test-live cleanup '${params.LIVE_TEST_TARGET}' || true"
+                    }
+                }
+            }
             sh 'ws destroy'
             cleanWs()
         }

@@ -1,5 +1,55 @@
 # CHANGELOG
 
+## [3.1.0] - 2026-05-20 - Jenkins Credential and Documentation Updates
+
+### CI and Workspace
+
+- Namespaced role helpers under `ws ansible ...`, `ws ansible galaxy ...`, and
+  grouped Workspace help commands, then updated Jenkins and release docs to use
+  the new command surface.
+- Kept Ansible, Galaxy, GitHub, and provider CLIs inside the Workspace
+  `console` container, including offline `ansible-lint` and isolated container
+  Ansible cache paths.
+- Hardened non-interactive `ws console <command>` so simple pass-through commands
+  are tokenized while quoted shell snippets are rejected with clear guidance.
+- Standardized shared credential names for Jenkins and Workspace:
+  `GITHUB_TOKEN`, `DIGITAL_OCEAN_API_TOKEN`, `DIGITAL_OCEAN_SSH_KEYS`, and the
+  shared `ansible-roles-galaxy-token`, while keeping `DO_OAUTH_TOKEN` as a local
+  DigitalOcean API fallback.
+- Kept Jenkins operator choices as build parameters for live-test target,
+  release version, and GitHub/Galaxy publication gates, with failure-only Slack
+  notifications controlled by `SLACK_NOTIFICATIONS_ENABLED == 'true'`.
+
+### Live Tests
+
+- Added optional Workspace-driven DigitalOcean project assignment for live-test
+  Droplets, kept tracked examples inert by default, and set Jenkins to assign
+  live-test Droplets to `Inviqa Sandbox`.
+- Treated `test.digitalocean.ssh_keys` as a Workspace list, serialized it only
+  at the container boundary, and validated the selected DigitalOcean SSH key
+  against forwarded SSH-agent MD5 fingerprints.
+- Replaced free-form live-test limits with explicit phases and targets:
+  `ws test-live provision <target>`, `ws test-live cleanup <target>`, and
+  `ws test-live full-cycle <target>`.
+- Consolidated DigitalOcean live tests on `tests/inventory`, removed redundant
+  per-family live inventories, and kept Jenkins on the safe `full-cycle` path
+  with a second idempotent cleanup safety net.
+
+### Documentation and Release Readiness
+
+- Updated README, testing, Jenkins CI, and Galaxy release documentation for the
+  current credential IDs, Workspace override attributes, release commands, and
+  pinned `3.1.0` install target.
+- Split oversized Mermaid flowcharts into shorter phase-oriented diagrams for
+  Markdown preview readability.
+- Documented plain `YYYY-MM-DD` release-heading dates and clarified that pre-PR
+  release-prep changelog edits should stay compact in the latest concrete
+  release section when no `Unreleased` section exists.
+- Simplified Workspace Dockerfile requirement-copy paths and reduced the
+  Workspace destroy timeout so local test containers stop faster.
+- Kept non-secret credential assertion guidance visible while preserving
+  `no_log` on tasks that transmit or receive secret values.
+
 ## [3.0.2] - 2026-05-20 - Galaxy Check Output
 
 - Clarified the Galaxy release check output so it reports missing GitHub
@@ -64,8 +114,8 @@
 - Replaced the legacy Docker, Vagrant, and Travis-era workflow with a
   Workspace-managed container and DigitalOcean integration harness.
 - Standardized validation through Workspace commands, including `ws enable`,
-  `ws console`, `ws ansible-lint`, `ws syntax`, `ws test-docker`,
-  `ws test-live`, and `ws ansible-playbook <playbook> <inventory>`.
+  `ws console`, `ws ansible lint`, `ws ansible syntax`, `ws test-docker`,
+  `ws test-live`, and `ws ansible playbook <playbook> <inventory>`.
 - Fixed Jenkins live-test reliability around Docker socket access, SSH agent
   credential binding, job-named workspaces, DigitalOcean SSH readiness, and
   JumpCloud SSH-attribute propagation.
@@ -89,7 +139,7 @@
 - Documented reusable Workspace GitHub release and Ansible Galaxy publication
   commands for both local operators and Jenkins.
 - Updated Jenkins CI documentation with credential requirements, release
-  parameters, top-level credential binding, and centralized Workspace console
+  controls, top-level credential binding, and centralized Workspace console
   credential forwarding.
 - Added README and agent guidance for the changelog, Workspace-first linting,
   Jenkins validation, and release-publication boundaries.

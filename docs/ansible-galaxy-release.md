@@ -7,14 +7,20 @@ Use the current release version wherever the examples show `3.0.0`.
 
 ## Release Flow
 
+The release flow groups local preparation and external publication while
+keeping the `main` branch handoff explicit.
+
 ```mermaid
 flowchart LR
-  A["Finish local changes"] --> B["Run local validation"]
-  B --> C["Merge to main"]
-  C --> D["Create GitHub tag and release"]
-  D --> E["Import main into Ansible Galaxy"]
-  E --> F["Check Galaxy import status"]
-  F --> G["Verify pinned role install"]
+  subgraph prepare["Prepare"]
+    direction LR
+    changes["Changes"] --> validate["Validate"] --> merge["Merge main"]
+  end
+  subgraph publish["Publish"]
+    direction LR
+    github["GitHub"] --> galaxy["Galaxy"] --> status["Status"] --> install["Install check"]
+  end
+  merge --> github
 ```
 
 ## Release Order
@@ -34,7 +40,7 @@ Run the repository checks that apply to the release changes. At minimum, use the
 targeted linters for changed files and run the role lint before publishing:
 
 ```bash
-ws ansible-lint
+ws ansible lint
 markdownlint -c ~/.markdownlint.json README.md CHANGELOG.md docs/ansible-galaxy-release.md
 ```
 
@@ -80,6 +86,18 @@ RELEASE_VERSION=3.0.0 ws github release check
 RELEASE_VERSION=3.0.0 ws github release publish
 ```
 
+Use these Workspace release actions:
+
+| Command | Purpose |
+| --- | --- |
+| `ws github release check` | Verify that the changelog release is already published on GitHub. |
+| `ws github release publish` | Create the GitHub release from the latest concrete changelog entry. |
+| `ws ansible galaxy check-token` | Verify that the Galaxy token is available before token-required actions. |
+| `ws ansible galaxy check-release` | Verify that the GitHub release exists and the pinned Galaxy install succeeds. |
+| `ws ansible galaxy info` | Show the currently indexed Galaxy role metadata. |
+| `ws ansible galaxy status` | Show the latest Galaxy import status. |
+| `ws ansible galaxy publish` | Import `main` into Galaxy and verify the pinned Galaxy install. |
+
 ## Ansible Galaxy Token
 
 Use the current Galaxy token page:
@@ -98,7 +116,7 @@ log in, open token management, select `Load Token`, then copy the generated
 token. The same documentation warns that loading a token invalidates the
 previous token, so regenerating the Galaxy token requires updating Jenkins too.
 
-The Workspace publication commands read the Galaxy token from
+The Workspace publication commands read release credentials from
 `workspace.override.yml`:
 
 ```ruby
@@ -107,8 +125,7 @@ attribute('github.api_token'): 'your-token'
 ```
 
 The same commands also accept `ANSIBLE_GALAXY_TOKEN` from the shell
-environment for Galaxy and `GITHUB_TOKEN` or `GH_TOKEN` for GitHub. If neither
-value is set, token-required commands fail with a clear message.
+environment for Galaxy and `GITHUB_TOKEN` for GitHub.
 
 Official Galaxy documentation describes tokens as user-account tokens. It does
 not document a separate public Galaxy machine-user or service-account token
@@ -124,7 +141,7 @@ operational GitHub account when company policy allows it:
    Namespace ownership may need to be granted by an existing namespace owner.
 5. Open `https://galaxy.ansible.com/ui/token/` while logged in as that account.
 6. Select `Load Token`, copy the token once, and store it in Jenkins as the
-   `ansible-jumpcloud-galaxy-token` Secret text credential.
+   `ansible-roles-galaxy-token` Secret text credential.
 
 If a dedicated GitHub publishing account is not allowed, use a maintainer-owned
 Galaxy token as an explicit operational exception and rotate it when the
@@ -143,7 +160,7 @@ ws github release check
 After the GitHub release and tag exist on `main`, run:
 
 ```bash
-ws ansible-galaxy publish
+ws ansible galaxy publish
 ```
 
 This imports the role with the repository's fixed Galaxy publication settings:
@@ -167,7 +184,7 @@ Jenkins needs these credentials:
 | Credential ID | Jenkins type | Purpose |
 | --- | --- | --- |
 | `inviqa-ansible-roles-releases` | Secret text | Creates the GitHub release in `inviqa/ansible-jumpcloud`. |
-| `ansible-jumpcloud-galaxy-token` | Secret text | Imports the role into Ansible Galaxy. Prefer a token loaded by a dedicated Galaxy publishing account rather than a personal maintainer account. |
+| `ansible-roles-galaxy-token` | Secret text | Imports the role into Ansible Galaxy. Prefer a token loaded by a dedicated Galaxy publishing account rather than a personal maintainer account. |
 
 The release stage derives the release notes from `CHANGELOG.md`. Set
 `RELEASE_VERSION` to publish a specific changelog section, or leave it empty to
@@ -180,7 +197,7 @@ Both Jenkins publication stages call Workspace commands directly:
 
 ```bash
 ws github release publish
-ws ansible-galaxy publish
+ws ansible galaxy publish
 ```
 
 This keeps Jenkins as an orchestrator only. The release checks and publication
@@ -200,13 +217,13 @@ Galaxy reimport.
 Check the currently indexed role metadata without a token:
 
 ```bash
-ws ansible-galaxy info
+ws ansible galaxy info
 ```
 
 Check the latest import status with a token:
 
 ```bash
-ws ansible-galaxy status
+ws ansible galaxy status
 ```
 
 After import, confirm that Galaxy reports:
@@ -235,7 +252,7 @@ For future releases, replace `3.0.0` with the release tag.
 ## Troubleshooting
 
 - If Galaxy still reports `github_branch: master`, rerun
-  `ws ansible-galaxy publish` after confirming the GitHub default branch is
+  `ws ansible galaxy publish` after confirming the GitHub default branch is
   `main`.
 - If Galaxy does not show the new version, confirm the tag was pushed to GitHub
   and matches SemVer.
@@ -244,10 +261,11 @@ For future releases, replace `3.0.0` with the release tag.
 - If `ws github release check` exits with code `2`, run
   `ws github release publish` or create the GitHub release manually before the
   Galaxy import.
-- If `ws ansible-galaxy status` fails without a token, set
-  `ansible.galaxy.token` in `workspace.override.yml`.
+- If `ws ansible galaxy status` fails without a token, set
+  `ansible.galaxy.token` in `workspace.override.yml` or export
+  `ANSIBLE_GALAXY_TOKEN`.
 - If Jenkins starts failing after a Galaxy token was reloaded in the UI, update
-  the `ansible-jumpcloud-galaxy-token` Secret text credential. Galaxy invalidates
+  the `ansible-roles-galaxy-token` Secret text credential. Galaxy invalidates
   the previous token when a new one is loaded.
 - If the role description or tags look stale, confirm `meta/main.yml` is merged
   into `main`, then reimport the role.

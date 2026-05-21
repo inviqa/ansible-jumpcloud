@@ -2,71 +2,53 @@
 
 ## [3.1.0] - 2026-05-20 - Jenkins Credential and Documentation Updates
 
-- Split Mermaid flowcharts into shorter phase-oriented blocks for Markdown
-  preview readability.
-- Kept optional DigitalOcean project assignment inert in tracked Workspace
-  examples unless an operator configures an existing project.
-- Isolated container Ansible cache paths from host-generated `.ansible/` links
-  during Workspace validation.
-- Kept Workspace `ansible-lint` offline through the existing `ws console`
-  boundary so container validation uses image-installed collections instead of
-  host-generated role cache links.
-- Documented that concrete changelog release headings must use plain
-  `YYYY-MM-DD` dates.
-- Set the Jenkins live-test DigitalOcean project name to `Inviqa Sandbox` in
-  the top-level pipeline environment.
-- Made non-interactive `ws console <command>` reject quoted shell snippets
-  instead of corrupting them.
-- Kept non-secret credential setup guidance visible while preserving `no_log`
-  on secret-bearing checks.
-- Added a Workspace-provided DigitalOcean project name for live-test droplets
-  and assigned created test droplets to that project.
-- Documented the preferred `workspace.override.yml` live-test configuration
-  path alongside `tests/test_variables.yml` for direct Ansible execution.
-- Corrected Jenkins credential IDs for DigitalOcean live tests and reduced
-  duplicate Jenkins credential bindings for compatible token environment names.
-- Standardized Jenkins and Workspace release credentials on the expanded
-  `GITHUB_TOKEN`, `DIGITAL_OCEAN_API_TOKEN`, and `DIGITAL_OCEAN_SSH_KEYS`
-  environment names.
-- Standardized the Jenkins Ansible Galaxy credential ID on the shared
-  `ansible-roles-galaxy-token` credential.
-- Kept `DO_OAUTH_TOKEN` as a backward-compatible local input fallback for
-  DigitalOcean API credentials.
-- Simplified the Workspace console Dockerfile requirement-copy paths to generic
-  temporary filenames.
-- Reduced the Workspace destroy timeout so local test containers stop faster.
-- Treated `test.digitalocean.ssh_keys` as a Workspace list and serialized it
-  only when forwarding it to the console container.
-- Validated live-test SSH agent access against DigitalOcean MD5 fingerprints and
-  always selected the matching DigitalOcean public key for SSH authentication.
-- Replaced free-form live-test limits with explicit Workspace targets:
+### CI and Workspace
+
+- Namespaced role helpers under `ws ansible ...`, `ws ansible galaxy ...`, and
+  grouped Workspace help commands, then updated Jenkins and release docs to use
+  the new command surface.
+- Kept Ansible, Galaxy, GitHub, and provider CLIs inside the Workspace
+  `console` container, including offline `ansible-lint` and isolated container
+  Ansible cache paths.
+- Hardened non-interactive `ws console <command>` so simple pass-through commands
+  are tokenized while quoted shell snippets are rejected with clear guidance.
+- Standardized shared credential names for Jenkins and Workspace:
+  `GITHUB_TOKEN`, `DIGITAL_OCEAN_API_TOKEN`, `DIGITAL_OCEAN_SSH_KEYS`, and the
+  shared `ansible-roles-galaxy-token`, while keeping `DO_OAUTH_TOKEN` as a local
+  DigitalOcean API fallback.
+- Kept Jenkins operator choices as build parameters for live-test target,
+  release version, and GitHub/Galaxy publication gates, with failure-only Slack
+  notifications controlled by `SLACK_NOTIFICATIONS_ENABLED == 'true'`.
+
+### Live Tests
+
+- Added optional Workspace-driven DigitalOcean project assignment for live-test
+  Droplets, kept tracked examples inert by default, and set Jenkins to assign
+  live-test Droplets to `Inviqa Sandbox`.
+- Treated `test.digitalocean.ssh_keys` as a Workspace list, serialized it only
+  at the container boundary, and validated the selected DigitalOcean SSH key
+  against forwarded SSH-agent MD5 fingerprints.
+- Replaced free-form live-test limits with explicit phases and targets:
   `ws test-live provision <target>`, `ws test-live cleanup <target>`, and
   `ws test-live full-cycle <target>`.
-- Implemented those live-test phases as true Workspace subcommands instead of
-  dispatching them through one `test-live <action> <target>` command.
-- Made live-test targets optional at the Workspace parser level so missing or
-  invalid targets print the same phase-specific usage message.
-- Simplified the live-test subcommand scripts by removing one-off Bash helper
-  functions.
-- Namespaced Ansible helper commands under `ws ansible lint`,
-  `ws ansible syntax`, `ws ansible playbook`, and
-  `ws ansible galaxy <action>` subcommands, with grouped Workspace usage help
-  for Ansible, Galaxy, config, GitHub, global, and secret command groups.
-- Updated testing and release documentation for `ws ansible playbook`,
-  `ws test-live <phase> <target>`, and nested GitHub/Galaxy release actions.
-- Kept Jenkins on the safe `full-cycle` live-test phase with a second
-  idempotent cleanup safety net.
-- Consolidated DigitalOcean live tests on `tests/inventory` and removed
-  redundant per-family inventory files.
-- Matched Jenkins Slack notification gating to the explicit
-  `SLACK_NOTIFICATIONS_ENABLED == 'true'` check used by this pipeline.
-- Updated README and Jenkins CI documentation to match the current release,
-  credential IDs, and comma-separated SSH key selector parsing.
-- Documented all Workspace override attributes used by live tests and release
-  commands in the testing guide.
-- Added agent guidance to keep Jenkins publication and live-test operator
-  choices as per-build controls.
-- Clarified where Jenkins maintainers set per-build pipeline parameters.
+- Consolidated DigitalOcean live tests on `tests/inventory`, removed redundant
+  per-family live inventories, and kept Jenkins on the safe `full-cycle` path
+  with a second idempotent cleanup safety net.
+
+### Documentation and Release Readiness
+
+- Updated README, testing, Jenkins CI, and Galaxy release documentation for the
+  current credential IDs, Workspace override attributes, release commands, and
+  pinned `3.1.0` install target.
+- Split oversized Mermaid flowcharts into shorter phase-oriented diagrams for
+  Markdown preview readability.
+- Documented plain `YYYY-MM-DD` release-heading dates and clarified that pre-PR
+  release-prep changelog edits should stay compact in the latest concrete
+  release section when no `Unreleased` section exists.
+- Simplified Workspace Dockerfile requirement-copy paths and reduced the
+  Workspace destroy timeout so local test containers stop faster.
+- Kept non-secret credential assertion guidance visible while preserving
+  `no_log` on tasks that transmit or receive secret values.
 
 ## [3.0.2] - 2026-05-20 - Galaxy Check Output
 

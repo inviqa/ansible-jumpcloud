@@ -163,14 +163,19 @@ modified.
 2. Whenever documentation is added or updated, mention it in `CHANGELOG.md` in
    the same task.
 3. Add new work under an `Unreleased` section unless a release is being
-   finalized.
+   finalized, or the branch is a pre-PR release-prep branch whose changelog
+   already uses the latest concrete release section as the pending PR body.
+   In that pre-PR case, add or merge entries into the latest concrete release
+   section instead of creating a new `Unreleased` section.
 4. Do not assign or change a release date for an unreleased section unless
    requested by the user or the change is part of release finalization.
 5. Only create or date a release entry when the release is actually being
    finalized.
 6. Concrete release headings must use a plain `YYYY-MM-DD` date with no
    suffixes.
-7. Group entries under clear headings and keep wording concise.
+7. Group entries under clear headings and keep wording concise. During pre-PR
+   remediation, compact repeated entries about the same feature, command,
+   credential, or workflow so the changelog is easy for a reviewer to scan.
 
 ## README Update Policy (Always Required)
 

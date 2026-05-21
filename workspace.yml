@@ -215,7 +215,7 @@ command('ansible lint', 'ansible lint'):
   description: Run ansible-lint for the role inside the console container.
   exec: |
     #!bash(workspace:/)|@
-    ws console ansible-lint .
+    ws console ansible-lint --offline .
 
 command('ansible galaxy', 'ansible galaxy'):
   description: Manage Ansible Galaxy release checks, imports, and role metadata.

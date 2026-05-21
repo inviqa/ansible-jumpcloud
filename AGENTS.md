@@ -168,7 +168,9 @@ modified.
    requested by the user or the change is part of release finalization.
 5. Only create or date a release entry when the release is actually being
    finalized.
-6. Group entries under clear headings and keep wording concise.
+6. Concrete release headings must use a plain `YYYY-MM-DD` date with no
+   suffixes.
+7. Group entries under clear headings and keep wording concise.
 
 ## README Update Policy (Always Required)
 

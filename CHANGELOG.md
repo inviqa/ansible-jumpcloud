@@ -1,27 +1,24 @@
 # CHANGELOG
 
-## Unreleased
-
-### Mermaid Preview
+## [3.1.0] - 2026-05-20 - Jenkins Credential and Documentation Updates
 
 - Split Mermaid flowcharts into shorter phase-oriented blocks for Markdown
   preview readability.
-
-### Maintenance
-
 - Kept optional DigitalOcean project assignment inert in tracked Workspace
   examples unless an operator configures an existing project.
 - Isolated container Ansible cache paths from host-generated `.ansible/` links
   during Workspace validation.
+- Kept Workspace `ansible-lint` offline through the existing `ws console`
+  boundary so container validation uses image-installed collections instead of
+  host-generated role cache links.
+- Documented that concrete changelog release headings must use plain
+  `YYYY-MM-DD` dates.
 - Set the Jenkins live-test DigitalOcean project name to `Inviqa Sandbox` in
   the top-level pipeline environment.
 - Made non-interactive `ws console <command>` reject quoted shell snippets
   instead of corrupting them.
 - Kept non-secret credential setup guidance visible while preserving `no_log`
   on secret-bearing checks.
-
-## [3.1.0] - 2026-05-20 - Jenkins Credential and Documentation Updates
-
 - Added a Workspace-provided DigitalOcean project name for live-test droplets
   and assigned created test droplets to that project.
 - Documented the preferred `workspace.override.yml` live-test configuration
